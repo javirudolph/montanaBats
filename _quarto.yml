@@ -5,6 +5,7 @@ project:
 website:
   title: "montanaBats"
   navbar:
+    search: true
     left:
       - href: index.qmd
         text: Home
