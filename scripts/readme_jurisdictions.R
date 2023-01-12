@@ -59,7 +59,7 @@ mtpublands %>%
 
 mtreservations %>% 
   select(geometry) %>% 
-  rename(jurisd = 'Reservations') -> B
+  mutate(jurisd = 'Reservations') -> B
 
 bind_rows(A, B) -> C
 
@@ -67,3 +67,5 @@ C %>%
   ggplot() +
   geom_sf(data = states_mt) +
   geom_sf(aes(fill = jurisd, color = jurisd))
+
+saveRDS(C, file = "datafiles/jurisdictions/merged_jurisdictions.RDS")
