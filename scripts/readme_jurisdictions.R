@@ -49,9 +49,21 @@ mtreservations %>%
 
 
 # Create a single dataframe with the geometries of interest
+our_jurisd <- owners[c(5, 7, 10, 13, 17, 18)]
 
+mtpublands %>% 
+  select(OWNER, geometry) %>% 
+  janitor::clean_names() %>% 
+  filter(owner %in% our_jurisd) %>% 
+  rename(jurisd = owner) -> A
 
+mtreservations %>% 
+  select(geometry) %>% 
+  rename(jurisd = 'Reservations') -> B
 
+bind_rows(A, B) -> C
 
-
-
+C %>% 
+  ggplot() +
+  geom_sf(data = states_mt) +
+  geom_sf(aes(fill = jurisd, color = jurisd))
