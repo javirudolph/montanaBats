@@ -82,10 +82,25 @@ st_crs(juris_geom)
 
 mt_covs_NAD83 <- st_transform(mt_covariates, st_crs(juris_geom))
 
+juris_plus_covs <- st_join(mt_covs_NAD83, juris_geom)
 
 
+juris_plus_covs %>% 
+  filter(is.na(jurisdiction)) -> test
 
+test %>% 
+  ggplot() + 
+  geom_sf()
 
+# Jurisdictions we are focused on and working with:
+unique(juris_plus_covs$jurisdiction)
+focus_juris <- c("Montana Fish, Wildlife, and Parks", "US Bureau of Land Management", "US Forest Service",
+                 "Reservations", "US Fish and Wildlife Service", "National Park Service")
 
+focus_jurs_covs <- st_join(mt_covs_NAD83, juris_geom %>% 
+          filter(jurisdiction %in% focus_juris))
 
+focus_jurs_covs %>% 
+  ggplot() + 
+  geom_sf(aes(color = jurisdiction, fill = jurisdiction))
 
