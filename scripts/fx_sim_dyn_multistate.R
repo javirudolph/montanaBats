@@ -86,3 +86,30 @@ for(t in 2:nyears){
   }
 }
 
+
+# What if we are changing actions yearly? 
+# Then this transition matrix also changes... would have a transition matrix for each site and for each year
+# Better idea... have each parameter be a matrix, where we have a parameter for each site and for each year
+# Then we call the matrix for that with indices
+
+# This transition matrix is for site and year specific
+gamma1 <- matrix(runif(ncells*nyears), ncol = nyears)
+gamma2 <- matrix(runif(ncells*nyears), ncol = nyears)
+phi1 <- matrix(runif(ncells*nyears), ncol = nyears)
+G <- matrix(runif(ncells*nyears), ncol = nyears)
+phi2 <- matrix(runif(ncells*nyears), ncol = nyears)
+D <- matrix(runif(ncells*nyears), ncol = nyears)
+
+
+# fill the next years
+for(t in 2:nyears){
+  for(i in 1:ncells){
+    
+    Phi <- matrix(c(1-gamma1[i,t-1], gamma1[i,t-1]*(1-gamma2[i,t-1]), gamma1[i,t-1]*gamma2[i,t-1],
+                    1-phi1[i,t-1], phi1[i,t-1]*(1-G[i,t-1]), phi1[i,t-1]*G[i,t-1],
+                    1-phi2[i,t-1], phi2[i,t-1]*D[i,t-1], phi2[i,t-1]*(1-D[i,t-1])), nrow = 3, byrow = TRUE)
+    
+    draw1 <- rmultinom(1,1,Phi[z[i,t-1], ])
+    z[i,t] <- which(draw1 == 1)
+  }
+}
