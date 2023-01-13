@@ -13,7 +13,7 @@ library(maps)
 
 # load the shapefiles
 
-mtpublands <- st_read("datafiles/jurisdictions/MTPublicLands_SHP/Montana_PublicLands/Montana_PublicLands.shp")
+mtpublands <- read_sf("datafiles/jurisdictions/MTPublicLands_SHP/Montana_PublicLands/Montana_PublicLands.shp")
 
 # Get state outline
 states <- st_as_sf(map("state", plot = FALSE, fill = TRUE))
