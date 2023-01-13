@@ -59,18 +59,6 @@ dyn_multistate_fx <- function(nyears = 5, ncells = 12, psi = NULL, r = NULL,
 dyn_multistate_fx()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 # This transition matrix is for site specific
 gamma1 <- runif(ncells)
 gamma2 <- runif(ncells)
