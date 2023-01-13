@@ -10,6 +10,13 @@ website:
       - href: index.qmd
         text: Home
       - about.qmd
+    right:
+      - icon: github
+        menu:
+          - text: Source Code
+            url:  https://github.com/javirudolph/montanaBats
+          - text: Report a Bug
+            url:  https://github.com/javirudolph/montanaBats/issues
 
 format:
   html:
