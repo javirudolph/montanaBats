@@ -67,21 +67,15 @@ G <- runif(ncells)
 phi2 <- runif(ncells)
 D <- runif(ncells)
 
-Phi_array <- array(NA, dim = c(3,3,ncells))
-Phi_array[1,1,] <- 1-gamma1-gamma2
-Phi_array[1,2,] <- gamma1
-Phi_array[1,3,] <- gamma2
-Phi_array[2,1,] <- 1-phi1
-Phi_array[2,2,] <- phi1*(1-G)
-Phi_array[2,3,] <- phi1*G
-Phi_array[3,1,] <- 1-phi2
-Phi_array[3,2,] <- phi2*D
-Phi_array[3,3,] <- phi2*(1-D)
-
 # fill the next years
 for(t in 2:nyears){
   for(i in 1:ncells){
-    draw1 <- rmultinom(1,1,Phi_array[z[i,t-1], , i])
+    
+    Phi <- matrix(c(1-gamma1[i], gamma1[i]*(1-gamma2[i]), gamma1[i]*gamma2[i],
+                    1-phi1[i], phi1[i]*(1-G[i]), phi1[i]*G[i],
+                    1-phi2[i], phi2[i]*D[i], phi2[i]*(1-D[i])), nrow = 3, byrow = TRUE)
+    
+    draw1 <- rmultinom(1,1,Phi[z[i,t-1], ])
     z[i,t] <- which(draw1 == 1)
   }
 }
