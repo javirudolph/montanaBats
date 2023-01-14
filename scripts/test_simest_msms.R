@@ -1,0 +1,118 @@
+# TEST SIMULATION AND ESTIMATION FOR SINGLE SEASON MULTISTATE MULTISCALE MODEL
+
+# F. JAVIERA RUDOLPH
+# Questions: f.javierarudolph at gmail com
+
+# ISSUE
+# I can't fit the model and get errors with JAGS
+# There's too much nuisance with the data
+# simulate a theoretical dataset and fit model to estimate coeffs
+
+library(tidyverse)
+library(sf)
+
+
+mt_covariates <- readRDS("datafiles/mt_covariates.RDS")
+
+grid_geometry <- mt_covariates %>% 
+  select(GRTS_ID)
+
+ggplot(data = grid_geometry) + geom_sf()
+
+
+# what are we trying to do here?
+# Create a prediction for occupancy state given a set of covariates
+
+# intercepts
+alpha.lpsi <- c(0, 1.968, 1.719, 1.126, 0.150, 1.134, 0.332)
+alpha.lr <- c(0, 0.115, -0.409, 0.321, 0.871, -0.465, 0.855)
+
+# Coefficients
+beta.lpsi <- c(0.64, 5.3, 1.2, 4.6, 0.15, 1.054, 0.051, -0.029)
+beta.lr <- c(0.566, -0.43, 0.346)
+
+
+# build the parameters psi and r based on covariates
+# center and scale the covariates
+center_scale <- function(x){
+  center <- mean(x, na.rm = TRUE)
+  x <- x - center
+  scale <- sd(x, na.rm=TRUE)
+  x <- x / scale
+  x
+}
+
+
+
+mt_covariates %>% 
+  st_drop_geometry() %>% 
+  transmute(GRTS_ID,
+            elev = center_scale(DEM_max),
+            forest = center_scale(p_forest),
+            temp = center_scale(mean_temp),
+            precip = center_scale(precip),
+            wetlands = center_scale(p_wetland),
+            physdiv = center_scale(physio_div),
+            karst = karst,
+            region = as.numeric(as.factor(eco3_name))) -> scaled_covariates
+
+
+scaled_covariates %>% 
+  # st_drop_geometry() %>% 
+  transmute(GRTS_ID,
+            lpsi = alpha.lpsi[as.numeric(region)] + beta.lpsi[1] * elev + beta.lpsi[2] * elev^2 + beta.lpsi[3] * temp + beta.lpsi[4] * temp^2 + beta.lpsi[5] * physdiv + beta.lpsi[6] * precip + beta.lpsi[7] * forest + beta.lpsi[8] * wetlands,
+            psi = exp(lpsi)/(1+exp(lpsi)),
+            lr = alpha.lr[as.numeric(region)] + beta.lr[1] * karst + beta.lr[2] * forest + beta.lr[3] * physdiv,
+            r = exp(lr)/(1+exp(lr))) -> psi_and_r
+
+psi <- psi_and_r$psi
+r <- psi_and_r$r
+Omega <- matrix(c(1-psi, psi*(1-r), psi*r), ncol = 3)
+
+ncells <- nrow(scaled_covariates)
+nyears <- 5
+z <- array(NA, dim = c(ncells, nyears))
+
+# Calculate state for each cell in year 1
+for(i in 1:ncells){
+  draw1 <- rmultinom(1,1,Omega[i,])
+  z[i,1] <- which(draw1 == 1)
+}
+
+# Viz year 1
+cbind(grid_geometry, z1 = z[,1]) %>% 
+  mutate(z1 = as.factor(z1)) %>% 
+  ggplot() +
+  geom_sf(aes(fill = z1, color = z1))
+
+# Define transition probability matrix (Phi)
+# for now, just using the same matrix for all sites and all years.
+gamma1 <- 0.001
+gamma2 <- 0.001
+phi1 <- 0.5
+G <- 0.01
+phi2 <- 0.3
+D <- 0.5
+
+Phi <- matrix(c(1-gamma1, gamma1*(1-gamma2), gamma1*gamma2,
+                1-phi1, phi1*(1-G), phi1*G,
+                1-phi2, phi2*D, phi2*(1-D)), nrow = 3, byrow = TRUE)
+
+# fill the next years
+for(t in 2:nyears){
+  for(i in 1:ncells){
+    draw1 <- rmultinom(1,1,Phi[z[i,t-1],])
+    z[i,t] <- which(draw1 == 1)
+  }
+}
+
+# Viz year 1
+as.data.frame(z) %>% 
+  cbind(grid_geometry, .) %>% 
+  pivot_longer(., cols = starts_with("V"), names_to = "year", values_to = "yms") %>% 
+  mutate(yms = as.factor(yms)) -> yms_prediction
+
+yms_prediction %>% 
+  ggplot() +
+  facet_wrap(~year) +
+  geom_sf(aes(fill = yms, color = yms))
