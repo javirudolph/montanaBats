@@ -15,6 +15,10 @@
 # D - prob a site with many bats last year declines to have few bats
 
 
+logit_fx <- function(logitvar){
+  exp(logitvar)/(1+exp(logitvar))
+}
+
 calc_psi <- function(coeffs = NULL, celldata = NULL){
   
   lpsi <- 0
