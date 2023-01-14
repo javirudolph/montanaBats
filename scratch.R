@@ -82,6 +82,34 @@ cbind(grid_geometry, z1 = z[,1]) %>%
   ggplot() +
   geom_sf(aes(fill = z1, color = z1))
 
+# Define transition probability matrix (Phi)
+# for now, just using the same matrix for all sites and all years.
+gamma1 <- 0.001
+gamma2 <- 0.001
+phi1 <- 0.5
+G <- 0.01
+phi2 <- 0.3
+D <- 0.5
 
+Phi <- matrix(c(1-gamma1, gamma1*(1-gamma2), gamma1*gamma2,
+                1-phi1, phi1*(1-G), phi1*G,
+                1-phi2, phi2*D, phi2*(1-D)), nrow = 3, byrow = TRUE)
 
+# fill the next years
+for(t in 2:nyears){
+  for(i in 1:ncells){
+    draw1 <- rmultinom(1,1,Phi[z[i,t-1],])
+    z[i,t] <- which(draw1 == 1)
+  }
+}
 
+# Viz year 1
+as.data.frame(z) %>% 
+cbind(grid_geometry, .) %>% 
+  pivot_longer(., cols = starts_with("V"), names_to = "year", values_to = "yms") %>% 
+  mutate(yms = as.factor(yms)) -> yms_prediction
+  
+yms_prediction %>% 
+  ggplot() +
+  facet_wrap(~year) +
+  geom_sf(aes(fill = yms, color = yms))
