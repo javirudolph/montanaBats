@@ -124,6 +124,94 @@ yms_prediction %>%
 ## SITE LEVEL ------
 # local occupancy simulation
 
+# Take a year from the previous simulation to have the base
+
+
+as.data.frame(z) %>% 
+  cbind(grid_geometry, .) %>%
+  select(GRTS_ID, V2) %>% 
+  rename(yms = V2) %>% 
+  slice_sample(n = 65) -> sample_grids
+
+sample_grids %>% 
+  ggplot() +
+  geom_sf(aes(fill = as.factor(yms)))
+
+samp_grts <- pull(sample_grids, GRTS_ID)
+
+scaled_covariates %>% 
+  filter(GRTS_ID %in% sampled_grts) -> samp_covariates
+
+# Create the observation data frame, with 4 sites per grid cell
+
+# Probability matrix Theta
+theta1 <- 0.65
+theta2 <- 0.8
+theta3 <- 0.7
+
+Theta <- matrix(c(1,0,0,
+                  1-theta1, theta1, 0,
+                  1-theta2, theta2*(1-theta3), theta2*theta3), nrow = 3, byrow = TRUE)
+
+
+# create array to fill
+
+
+# build the for loop to sample for each site with the given theta matrix of probabilities
+ni <- length(samp_grts)
+nj <- 4
+
+u <- array(NA, dim = c(ni, nj))
+
+for(i in 1:ni){
+  for(j in 1:nj){
+    draw1 <- rmultinom(1,1,Theta[sample_grids$yms[i],])
+    u[i,j] <- which(draw1 == 1)
+  }
+}
+
+cbind(sample_grids, u) %>% 
+  pivot_longer(cols = starts_with("X"), names_to = "site", values_to = "site_ms") %>% 
+  ggplot() +
+  facet_wrap(~site) +
+  geom_sf(aes(fill = as.factor(site_ms)))
+
+
+## DETECTION ---------
+
+p2 <- 0.9
+p3 <- c(0.1, 0.2, 0.7)
+
+P_var<- matrix(c(1,0,0,
+                 1-p2, p2, 0,
+                 p3[1], p3[2], p3[3]), nrow = 3, byrow = TRUE)
+
+nk <- 5
+y_obs <- array(NA, dim = c(ni, nj, nk))
+
+for(i in 1:ni){
+  for(j in 1:nj){
+    for(k in 1:nk){
+      draw1 <- rmultinom(1,1,Theta[u[i,j],])
+      y_obs[i,j,k] <- which(draw1 == 1)
+    }
+  }
+}
+
+
+# ESTIMATION -------
+# now that we have a dataset of simulated observations, for a subset of grid cells
+# where each grid cell has four sites surveyed on five occasions each
+# we also have the associated covariates for this
+
+# Build the jags model to fit this multiscale, multistate model for one year only
+
+
+
+
+
+
+
 
 
 
