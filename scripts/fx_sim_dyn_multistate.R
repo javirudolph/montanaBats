@@ -11,9 +11,11 @@
 # The vector of this probabilities is defined as Omega
 # Omega is the vector of probabilities given to a multinomial distribution
 
-dyn_multistate_fx <- function(nyears = 5, ncells = 12, psi = NULL, r = NULL, 
-                              gamma1 = NULL, gamma2 = NULL, phi1 = NULL, G = NULL,
-                              phi2 = NULL, D = NULL){
+# params should be given as a list and probably be the output of a different function
+# So that each item in the list can be called from this function
+# Also give the alternative to give no parameters and it runs a simulation
+
+dyn_multistate_fx <- function(nyears = 5, ncells = 12, params = NULL){
   # set initial parameters
   # nyears <- 5
   # ncells <- 12
