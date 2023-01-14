@@ -52,3 +52,5 @@ ggplot(data = mt_covariates) + geom_sf(aes(fill = DEM_max))
 ggplot(data = mt_covariates) + geom_sf(aes(fill = physio_div))
 ggplot(data = mt_covariates) + geom_sf(aes(fill = dist_mines))
 
+saveRDS(mt_covariates, file = "datafiles/mt_covariates.RDS")
+
