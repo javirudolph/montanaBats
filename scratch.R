@@ -53,17 +53,6 @@ mt_covariates %>%
             karst = karst,
             region = as.numeric(as.factor(eco3_name))) -> scaled_covariates
 
-scaled_covariates[16,] %>% 
-  mutate(alpha.lpsi[as.numeric(region)],
-         beta.lpsi[1] * elev,
-         beta.lpsi[2] * elev^2,
-         beta.lpsi[3] * temp,
-         beta.lpsi[4] * temp^2,
-         beta.lpsi[5] * physdiv,
-         beta.lpsi[6] * precip,
-         beta.lpsi[7] * forest,
-         beta.lpsi[8] * wetlands) -> bug
-
 
 scaled_covariates %>% 
   # st_drop_geometry() %>% 
