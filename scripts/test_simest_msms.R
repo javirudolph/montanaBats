@@ -8,10 +8,14 @@
 # There's too much nuisance with the data
 # simulate a theoretical dataset and fit model to estimate coeffs
 
+
+# Libraries
 library(tidyverse)
 library(sf)
 
+# SIMULATION ----------
 
+## COVARIATES --------
 mt_covariates <- readRDS("datafiles/mt_covariates.RDS")
 
 grid_geometry <- mt_covariates %>% 
@@ -22,6 +26,8 @@ ggplot(data = grid_geometry) + geom_sf()
 
 # what are we trying to do here?
 # Create a prediction for occupancy state given a set of covariates
+
+## CELL LEVEL --------
 
 # intercepts
 alpha.lpsi <- c(0, 1.968, 1.719, 1.126, 0.150, 1.134, 0.332)
@@ -41,8 +47,6 @@ center_scale <- function(x){
   x <- x / scale
   x
 }
-
-
 
 mt_covariates %>% 
   st_drop_geometry() %>% 
@@ -116,3 +120,10 @@ yms_prediction %>%
   ggplot() +
   facet_wrap(~year) +
   geom_sf(aes(fill = yms, color = yms))
+
+## SITE LEVEL ------
+# local occupancy simulation
+
+
+
+
