@@ -66,6 +66,8 @@ psi <- psi_and_r$psi
 r <- psi_and_r$r
 Omega <- matrix(c(1-psi, psi*(1-r), psi*r), ncol = 3)
 
+ncells <- nrow(scaled_covariates)
+nyears <- 5
 z <- array(NA, dim = c(ncells, nyears))
 
 # Calculate state for each cell in year 1
@@ -74,7 +76,11 @@ for(i in 1:ncells){
   z[i,1] <- which(draw1 == 1)
 }
 
-
+# Viz year 1
+cbind(grid_geometry, z1 = z[,1]) %>% 
+  mutate(z1 = as.factor(z1)) %>% 
+  ggplot() +
+  geom_sf(aes(fill = z1, color = z1))
 
 
 

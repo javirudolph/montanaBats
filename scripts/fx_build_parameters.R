@@ -25,3 +25,13 @@ calc_psi <- function(coeffs = NULL, celldata = NULL){
   psi <- exp(lpsi)/(1+exp(lsi))
   
 }
+
+
+
+
+
+
+
+
+
+
