@@ -221,7 +221,7 @@ array(y_obs, dim = c(ni, nj, nk),
 
 nregion <- length(unique(samp_covariates$region))
 
-str(testsimData <- list(y = test, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = dim(yms)[3], 
+str(testsimData <- list(u = test[,,1], ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = dim(yms)[3], 
                         nregion = nregion,
                       region = samp_covariates$region,
                       elev = samp_covariates$elev, 
@@ -302,7 +302,6 @@ model {
       u[i,j] ~ dcat(Theta[z[i], ])
     }
   }
-  
   
 }
 ")
