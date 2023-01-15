@@ -33,11 +33,9 @@ model {
   
   ## detP
   # Priors for parameters in observation process
-  p2 ~ dunif(0, 1)              # detection with few bats locally
-  for (s in 1:3) {                  # detection with many bats locally
-    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
-    p3[s] <- beta[s] / sum(beta[])
-  }
+  p1 ~ dunif(0, 1)
+  p2 ~ dunif(0, 1)
+  p3 ~ dunif(0, 1)
   
   ### (2) Define relationships between basic model structure and parameters
   # Define initial state vector
@@ -64,12 +62,12 @@ model {
   detP[1,1] <- 1
   detP[1,2] <- 0
   detP[1,3] <- 0
-  detP[2,1] <- 1-p2
-  detP[2,2] <- p2
+  detP[2,1] <- 1-p1
+  detP[2,2] <- p1
   detP[2,3] <- 0
-  detP[3,1] <- p3[1]
-  detP[3,2] <- p3[2]
-  detP[3,3] <- p3[3]
+  detP[3,1] <- 1-p2
+  detP[3,2] <- p2 * (1-p3)
+  detP[3,3] <- p2 * p3
   
   
   ### (3) Likelihood
