@@ -362,11 +362,9 @@ model {
   
   ## Theta 
   # Priors for parameters in local occupancy
-  theta2 ~ dunif(0, 1)              # Local occupancy when cell has few bats
-  for (s in 1:3) {                  # Local occupancy when cell has many bats
-    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
-    theta3[s] <- beta[s] / sum(beta[])
-  }
+  theta1 ~ dunif(0, 1)
+  theta2 ~ dunif(0, 1)
+  theta3 ~ dunif(0, 1)
   
   ## detP
   # Priors for parameters in observation process
@@ -389,12 +387,12 @@ model {
   Theta[1,1] <- 1
   Theta[1,2] <- 0
   Theta[1,3] <- 0
-  Theta[2,1] <- 1-theta2
-  Theta[2,2] <- theta2
+  Theta[2,1] <- 1-theta1
+  Theta[2,2] <- theta1
   Theta[2,3] <- 0
-  Theta[3,1] <- theta3[1]
-  Theta[3,2] <- theta3[2]
-  Theta[3,3] <- theta3[3]
+  Theta[3,1] <- 1-theta2
+  Theta[3,2] <- theta2 * (1-theta3)
+  Theta[3,3] <- theta2 * theta3
   
   # Define observation probability matrix (detP)
   # Order of indices: true local state, observed local state
@@ -423,14 +421,14 @@ model {
     }
   }
   
-  # # detection
-  # for (i in 1:ncells){
-  #   for (j in 1:nsites){
-  #     for (k in 1:nsurveys){
-  #       y[i,j,k] ~ dcat(detP[u[i,j], ])
-  #     }
-  #   }
-  # }
+  # detection
+  for (i in 1:ncells){
+    for (j in 1:nsites){
+      for (k in 1:nsurveys){
+        y[i,j,k] ~ dcat(detP[u[i,j], ])
+      }
+    }
+  }
   
   ## (4) Derived quantities
   # number of cells with each state
@@ -449,7 +447,7 @@ model {
 
 
 # Initial values (chosen to avoid data/model/init conflict)
-zst <- array(2, dim = c(testsimData$ncells))
+zst <- array(3, dim = c(testsimData$ncells))
 inits <- function(){list(z = zst)}
 
 inits <- function(){
@@ -458,7 +456,7 @@ inits <- function(){
 
 # Parameters monitored
 params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr", 
-            "theta2", "theta3", "p2", "p3",
+            "theta1", "theta2", "theta3", "p2", "p3",
             "n.occ")
 
 # MCMC settings
