@@ -117,6 +117,7 @@ as.data.frame(z) %>%
   pivot_longer(., cols = starts_with("V"), names_to = "year", values_to = "yms") %>% 
   mutate(yms = as.factor(yms)) -> yms_prediction
 
+# viz all
 yms_prediction %>% 
   ggplot() +
   facet_wrap(~year) +
@@ -132,7 +133,7 @@ as.data.frame(z) %>%
   cbind(grid_geometry, .) %>%
   select(GRTS_ID, V2) %>% 
   rename(yms = V2) %>% 
-  slice_sample(n = 65) -> sample_grids
+  slice_sample(n = 200) -> sample_grids
 
 sample_grids %>% 
   ggplot() +
@@ -141,7 +142,7 @@ sample_grids %>%
 samp_grts <- pull(sample_grids, GRTS_ID)
 
 scaled_covariates %>% 
-  filter(GRTS_ID %in% sampled_grts) -> samp_covariates
+  filter(GRTS_ID %in% samp_grts) -> samp_covariates
 
 # Create the observation data frame, with 4 sites per grid cell
 
@@ -183,7 +184,7 @@ cbind(sample_grids, u) %>%
 p2 <- 0.9
 p3 <- c(0.1, 0.2, 0.7)
 
-P_var<- matrix(c(1,0,0,
+detP<- matrix(c(1,0,0,
                  1-p2, p2, 0,
                  p3[1], p3[2], p3[3]), nrow = 3, byrow = TRUE)
 
@@ -193,7 +194,7 @@ y_obs <- array(NA, dim = c(ni, nj, nk))
 for(i in 1:ni){
   for(j in 1:nj){
     for(k in 1:nk){
-      draw1 <- rmultinom(1,1,Theta[u[i,j],])
+      draw1 <- rmultinom(1,1,detP[u[i,j],])
       y_obs[i,j,k] <- which(draw1 == 1)
     }
   }
