@@ -317,13 +317,13 @@ params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
 
 # MCMC settings
 # na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
-na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 mins
+na <- 1000 ; n.iter <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 mins
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
 test_fit <- jags(data = testsimData, inits = inits, parameters.to.save = params,
                  model.file = "testsim_msms.txt", 
-                 n.adapt = na, n.chains = nc, n.thin = nt, n.iter = ni, 
+                 n.adapt = na, n.chains = nc, n.thin = nt, n.iter = n.iter, 
                  n.burnin = nb, parallel = TRUE)
 
 traceplot(test_fit)
@@ -331,6 +331,25 @@ print(test_fit)
 
 
 ## Model v.2 ----------------------------
+
+yms <- array(NA, dim = c(ni, nj, nk),
+             dimnames = list(samp_grts, 1:nj, 1:nk))
+
+array(y_obs, dim = c(ni, nj, nk),
+      dimnames = list(samp_grts, 1:nj, 1:nk)) -> test
+
+nregion <- length(unique(samp_covariates$region))
+
+str(testsimData <- list(y = test, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = dim(yms)[3], 
+                        nregion = nregion,
+                        region = samp_covariates$region,
+                        elev = samp_covariates$elev, 
+                        temp = samp_covariates$temp,
+                        physdiv = samp_covariates$physdiv,
+                        precip = samp_covariates$precip,
+                        forest = samp_covariates$forest,
+                        wetlands = samp_covariates$wetlands,
+                        karst = samp_covariates$karst))
 
 cat(file = "testsim_msms_det.txt", "
 model {
@@ -460,13 +479,13 @@ params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
 
 # MCMC settings
 # na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
-na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 mins
+na <- 1000 ; n.iter <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 mins
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
 test_fit_det <- jags(data = testsimData, inits = inits, parameters.to.save = params,
                  model.file = "testsim_msms_det.txt", 
-                 n.adapt = na, n.chains = nc, n.thin = nt, n.iter = ni, 
+                 n.adapt = na, n.chains = nc, n.thin = nt, n.iter = n.iter, 
                  n.burnin = nb, parallel = TRUE)
 
 traceplot(test_fit_det)
