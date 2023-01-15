@@ -264,11 +264,9 @@ model {
   
   ## Theta 
   # Priors for parameters in local occupancy
-  theta2 ~ dunif(0, 1)              # Local occupancy when cell has few bats
-  for (s in 1:3) {                  # Local occupancy when cell has many bats
-    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
-    theta3[s] <- beta[s] / sum(beta[])
-  }
+  theta1 ~ dunif(0, 1)
+  theta2 ~ dunif(0, 1)
+  theta3 ~ dunif(0, 1)
   
   ### (2) Define relationships between basic model structure and parameters
   # Define initial state vector
@@ -283,12 +281,12 @@ model {
   Theta[1,1] <- 1
   Theta[1,2] <- 0
   Theta[1,3] <- 0
-  Theta[2,1] <- 1-theta2
-  Theta[2,2] <- theta2
+  Theta[2,1] <- 1-theta1
+  Theta[2,2] <- theta1
   Theta[2,3] <- 0
-  Theta[3,1] <- theta3[1]
-  Theta[3,2] <- theta3[2]
-  Theta[3,3] <- theta3[3]
+  Theta[3,1] <- 1-theta2
+  Theta[3,2] <- theta2 * (1-theta3)
+  Theta[3,3] <- theta2 * theta3
   
   
   ### (3) Likelihood
@@ -311,16 +309,12 @@ model {
 
 
 # Initial values (chosen to avoid data/model/init conflict)
-zst <- array(2, dim = c(testsimData$ncells))
+zst <- array(3, dim = c(testsimData$ncells))
 inits <- function(){list(z = zst)}
-
-inits <- function(){
-  list()
-}
 
 # Parameters monitored
 params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr", 
-            "theta2", "theta3", "z", "u")
+            "theta1", "theta2", "theta3")
 
 # MCMC settings
 # na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
@@ -378,8 +372,8 @@ model {
   # Priors for parameters in observation process
   p2 ~ dunif(0, 1)              # detection with few bats locally
   for (s in 1:3) {                  # detection with many bats locally
-    alpha[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
-    p3[s] <- alpha[s] / sum(alpha[])
+    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
+    p3[s] <- beta[s] / sum(beta[])
   }
   
   ### (2) Define relationships between basic model structure and parameters
