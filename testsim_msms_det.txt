@@ -88,14 +88,14 @@ model {
     }
   }
   
-  # detection
-  for (i in 1:ncells){
-    for (j in 1:nsites){
-      for (k in 1:nsurveys){
-        y[i,j,k] ~ dcat(detP[u[i,j], ])
-      }
-    }
-  }
+  # # detection
+  # for (i in 1:ncells){
+  #   for (j in 1:nsites){
+  #     for (k in 1:nsurveys){
+  #       y[i,j,k] ~ dcat(detP[u[i,j], ])
+  #     }
+  #   }
+  # }
   
   ### (4) Derived quantities
   # number of cells with each state
