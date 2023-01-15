@@ -233,10 +233,114 @@ str(testsimData <- list(y = test, ncells = dim(yms)[1], nsites = dim(yms)[2], ns
                       karst = samp_covariates$karst))
 
 
-## Specify model----------------------------
+## Model v.1----------------------------
 cat(file = "testsim_msms.txt", "
 model {
 
+  ### (1) Priors
+  ## Omega
+  for (i in 1:ncells){
+    logit(psi[i]) <- alpha.lpsi[region[i]] + beta.lpsi[1] * elev[i] + beta.lpsi[2] * elev[i]^2 + beta.lpsi[3] * temp[i] + beta.lpsi[4] * temp[i]^2 + beta.lpsi[5] * physdiv[i] + beta.lpsi[6] * precip[i] + beta.lpsi[7] * forest[i] + beta.lpsi[8] * wetlands[i]
+    logit(r[i]) <- alpha.lr[region[i]] + beta.lr[1] * karst[i] + beta.lr[2] * forest[i] + beta.lr[3] * physdiv[i]
+  }
+  
+  # Priors for parameters in the linear models of psi and r
+  # Region-specific intercepts
+  for (k in 1:nregion){
+    alpha.lpsi[k] <- logit(mean.psi[k])
+    mean.psi[k] ~ dunif(0, 1)
+    alpha.lr[k] <- logit(mean.r[k])
+    mean.r[k] ~ dunif(0, 1)
+  }
+  
+  # Priors for coefficients of covariates in Omega
+  for (k in 1:8){
+    beta.lpsi[k] ~ dnorm(0, 0.1)
+  }
+  
+  for (k in 1:3){
+    beta.lr[k] ~ dnorm(0, 0.1)
+  }
+  
+  ## Theta 
+  # Priors for parameters in local occupancy
+  theta2 ~ dunif(0, 1)              # Local occupancy when cell has few bats
+  for (s in 1:3) {                  # Local occupancy when cell has many bats
+    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
+    theta3[s] <- beta[s] / sum(beta[])
+  }
+  
+  ### (2) Define relationships between basic model structure and parameters
+  # Define initial state vector
+  for (i in 1:ncells){
+    Omega[i,1] <- 1 - psi[i]                 # Prob. of no bats
+    Omega[i,2] <- psi[i] * (1-r[i])          # Prob. of occ. by a few bats
+    Omega[i,3] <- psi[i] * r[i]              # Prob. of occ. by many bats
+  }
+  
+  # Define local occupancy probability matrix (Theta)
+  # Order of indices: global state, local state
+  Theta[1,1] <- 1
+  Theta[1,2] <- 0
+  Theta[1,3] <- 0
+  Theta[2,1] <- 1-theta2
+  Theta[2,2] <- theta2
+  Theta[2,3] <- 0
+  Theta[3,1] <- theta3[1]
+  Theta[3,2] <- theta3[2]
+  Theta[3,3] <- theta3[3]
+  
+  
+  ### (3) Likelihood
+  
+  # global occupancy
+  for (i in 1:ncells){
+    z[i] ~ dcat(Omega[i,])
+  }
+  
+  # local occupancy
+  for (i in 1:ncells){
+    for (j in 1:nsites){
+      u[i,j] ~ dcat(Theta[z[i], ])
+    }
+  }
+  
+  
+}
+")
+
+
+# Initial values (chosen to avoid data/model/init conflict)
+zst <- array(2, dim = c(testsimData$ncells))
+inits <- function(){list(z = zst)}
+
+inits <- function(){
+  list()
+}
+
+# Parameters monitored
+params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr", 
+            "theta2", "theta3", "z", "u")
+
+# MCMC settings
+# na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
+na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 mins
+
+# Call JAGS (ART 21 min), check convergence and summarize posteriors
+# odms stands for 'output dynamic multi-state'
+test_fit <- jags(data = testsimData, inits = inits, parameters.to.save = params,
+                 model.file = "testsim_msms.txt", 
+                 n.adapt = na, n.chains = nc, n.thin = nt, n.iter = ni, 
+                 n.burnin = nb, parallel = TRUE)
+
+traceplot(test_fit)
+print(test_fit)
+
+
+## Model v.2 ----------------------------
+
+cat(file = "testsim_msms_det.txt", "
+model {
   ### (1) Priors
   ## Omega
   for (i in 1:ncells){
@@ -292,7 +396,7 @@ model {
   Theta[1,2] <- 0
   Theta[1,3] <- 0
   Theta[2,1] <- 1-theta2
-  Theta[2,2] <- p2
+  Theta[2,2] <- theta2
   Theta[2,3] <- 0
   Theta[3,1] <- theta3[1]
   Theta[3,2] <- theta3[2]
@@ -360,10 +464,8 @@ inits <- function(){
 }
 
 # Parameters monitored
-params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr", "psi", "r","theta2", "theta3", "p2", "p3", "Omega",
-            "Theta", "detP",
-            # "n.occ", "n.occ.total",
-            "z")
+params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr", 
+            "theta2", "theta3", "p2", "p3")
 
 # MCMC settings
 # na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
@@ -371,20 +473,13 @@ na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 m
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
-test_fit <- jags(data = testsimData, inits = inits, parameters.to.save = params,
-                 model.file = "testsim_msms.txt", 
+test_fit_det <- jags(data = testsimData, inits = inits, parameters.to.save = params,
+                 model.file = "testsim_msms_det.txt", 
                  n.adapt = na, n.chains = nc, n.thin = nt, n.iter = ni, 
                  n.burnin = nb, parallel = TRUE)
 
-saveRDS(odms_null, file = "odms_null.RDS")
-
-traceplot(odms_null)
-print(odms_null, 3)
+traceplot(test_fit_det)
+print(test_fit_det)
 
 
 
-# PhiMat
-round(odms_null$mean$PhiMat, 2)
-
-# Observation probabilities
-round(odms_null$mean$Theta, 2)
