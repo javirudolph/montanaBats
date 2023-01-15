@@ -97,17 +97,16 @@ model {
   #   }
   # }
   
-  ### (4) Derived quantities
+  ## (4) Derived quantities
   # number of cells with each state
-  # for(i in 1:ncells){
-  #   state1[i] <- equals[z[i],1]
-  #   state2[i] <- equals[z[i],2]
-  #   state3[i] <- equals[z[i],3]
-  #   
-  #   n.occ[1] <- sum(state1)
-  #   n.occ[2] <- sum(state2)
-  #   n.occ[3] <- sum(state3)
-  #   n.occ.total <- n.occ[2] + n.occ[3] 
-  # }
+  for(i in 1:ncells){
+    state1[i] <- equals(z[i],1)
+    state2[i] <- equals(z[i],2)
+    state3[i] <- equals(z[i],3)
+  }
+  
+    n.occ[1] <- sum(state1)
+    n.occ[2] <- sum(state2)
+    n.occ[3] <- sum(state3)
   
 }

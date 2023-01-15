@@ -429,27 +429,26 @@ model {
     }
   }
   
-  # detection
-  for (i in 1:ncells){
-    for (j in 1:nsites){
-      for (k in 1:nsurveys){
-        y[i,j,k] ~ dcat(detP[u[i,j], ])
-      }
-    }
+  # # detection
+  # for (i in 1:ncells){
+  #   for (j in 1:nsites){
+  #     for (k in 1:nsurveys){
+  #       y[i,j,k] ~ dcat(detP[u[i,j], ])
+  #     }
+  #   }
+  # }
+  
+  ## (4) Derived quantities
+  # number of cells with each state
+  for(i in 1:ncells){
+    state1[i] <- equals(z[i],1)
+    state2[i] <- equals(z[i],2)
+    state3[i] <- equals(z[i],3)
   }
   
-  ### (4) Derived quantities
-  # number of cells with each state
-  # for(i in 1:ncells){
-  #   state1[i] <- equals[z[i],1]
-  #   state2[i] <- equals[z[i],2]
-  #   state3[i] <- equals[z[i],3]
-  #   
-  #   n.occ[1] <- sum(state1)
-  #   n.occ[2] <- sum(state2)
-  #   n.occ[3] <- sum(state3)
-  #   n.occ.total <- n.occ[2] + n.occ[3] 
-  # }
+    n.occ[1] <- sum(state1)
+    n.occ[2] <- sum(state2)
+    n.occ[3] <- sum(state3)
   
 }
 ")
@@ -465,7 +464,8 @@ inits <- function(){
 
 # Parameters monitored
 params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr", 
-            "theta2", "theta3", "p2", "p3")
+            "theta2", "theta3", "p2", "p3",
+            "n.occ")
 
 # MCMC settings
 # na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
