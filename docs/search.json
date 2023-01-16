@@ -5,5 +5,26 @@
     "title": "montanaBats: decision analysis project",
     "section": "",
     "text": "This site has been developed to organize information regarding the management of bats in the state of Montana as a response to the effects of White Nose Syndrome.\n\nAny questions about this site or code please contact Javi Rudolph: frudolph at usgs dot gov"
+  },
+  {
+    "objectID": "predictions.html",
+    "href": "predictions.html",
+    "title": "Multistate occupancy predictions",
+    "section": "",
+    "text": "Show the code\n# SIMULATION ----------\n\n## COVARIATES --------\nmt_covariates <- readRDS(\"datafiles/mt_covariates.RDS\")\n\ngrid_geometry <- mt_covariates %>% \n  select(GRTS_ID)\n\nggplot(data = grid_geometry) + geom_sf()\n\n\n\n\n\nShow the code\n# what are we trying to do here?\n# Create a prediction for occupancy state given a set of covariates\n\n\n\n\nShow the code\n## CELL LEVEL --------\n\n# intercepts\nalpha.lpsi <- c(0, 1.968, 1.719, 1.126, 0.150, 1.134, 0.332)\nalpha.lr <- c(0, 0.115, -0.409, 0.321, 0.871, -0.465, 0.855)\n\n# Coefficients\nbeta.lpsi <- c(0.64, 5.3, 1.2, 4.6, 0.15, 1.054, 0.051, -0.029)\nbeta.lr <- c(0.566, -0.43, 0.346)\n\n\n# build the parameters psi and r based on covariates\n# center and scale the covariates\ncenter_scale <- function(x){\n  center <- mean(x, na.rm = TRUE)\n  x <- x - center\n  scale <- sd(x, na.rm=TRUE)\n  x <- x / scale\n  x\n}\n\nmt_covariates %>% \n  st_drop_geometry() %>% \n  transmute(GRTS_ID,\n            elev = center_scale(DEM_max),\n            forest = center_scale(p_forest),\n            temp = center_scale(mean_temp),\n            precip = center_scale(precip),\n            wetlands = center_scale(p_wetland),\n            physdiv = center_scale(physio_div),\n            karst = karst,\n            region = as.numeric(as.factor(eco3_name))) -> scaled_covariates\n\n\nscaled_covariates %>% \n  # st_drop_geometry() %>% \n  transmute(GRTS_ID,\n            lpsi = alpha.lpsi[as.numeric(region)] + beta.lpsi[1] * elev + beta.lpsi[2] * elev^2 + beta.lpsi[3] * temp + beta.lpsi[4] * temp^2 + beta.lpsi[5] * physdiv + beta.lpsi[6] * precip + beta.lpsi[7] * forest + beta.lpsi[8] * wetlands,\n            psi = exp(lpsi)/(1+exp(lpsi)),\n            lr = alpha.lr[as.numeric(region)] + beta.lr[1] * karst + beta.lr[2] * forest + beta.lr[3] * physdiv,\n            r = exp(lr)/(1+exp(lr))) -> psi_and_r\n\npsi <- psi_and_r$psi\nr <- psi_and_r$r\nOmega <- matrix(c(1-psi, psi*(1-r), psi*r), ncol = 3)\n\nncells <- nrow(scaled_covariates)\nnyears <- 5\nz <- array(NA, dim = c(ncells, nyears))\n\n# Calculate state for each cell in year 1\nfor(i in 1:ncells){\n  draw1 <- rmultinom(1,1,Omega[i,])\n  z[i,1] <- which(draw1 == 1)\n}\n\n# Viz year 1\ncbind(grid_geometry, z1 = z[,1]) %>% \n  mutate(z1 = as.factor(z1)) %>% \n  ggplot() +\n  geom_sf(aes(fill = z1, color = z1))\n\n\n\n\n\nShow the code\n# Define transition probability matrix (Phi)\n# for now, just using the same matrix for all sites and all years.\ngamma1 <- 0.001\ngamma2 <- 0.001\nphi1 <- 0.5\nG <- 0.01\nphi2 <- 0.3\nD <- 0.5\n\nPhi <- matrix(c(1-gamma1, gamma1*(1-gamma2), gamma1*gamma2,\n                1-phi1, phi1*(1-G), phi1*G,\n                1-phi2, phi2*D, phi2*(1-D)), nrow = 3, byrow = TRUE)\n\n# fill the next years\nfor(t in 2:nyears){\n  for(i in 1:ncells){\n    draw1 <- rmultinom(1,1,Phi[z[i,t-1],])\n    z[i,t] <- which(draw1 == 1)\n  }\n}\n\n# Viz year 1\nas.data.frame(z) %>% \n  cbind(grid_geometry, .) %>% \n  pivot_longer(., cols = starts_with(\"V\"), names_to = \"year\", values_to = \"yms\") %>% \n  mutate(yms = as.factor(yms)) -> yms_prediction\n\n# viz all\nyms_prediction %>% \n  ggplot() +\n  facet_wrap(~year) +\n  geom_sf(aes(fill = yms, color = yms))"
+  },
+  {
+    "objectID": "predictions.html#year-1",
+    "href": "predictions.html#year-1",
+    "title": "Predictions",
+    "section": "Year 1",
+    "text": "Year 1"
+  },
+  {
+    "objectID": "predictions.html#year-10",
+    "href": "predictions.html#year-10",
+    "title": "Predictions",
+    "section": "Year 10",
+    "text": "Year 10"
   }
 ]
