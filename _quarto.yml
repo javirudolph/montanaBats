@@ -18,6 +18,7 @@ website:
           - estimation.qmd
       - text: "More"
         menu:
+          - expert_elicitation.qmd
           - toymodel.qmd
           - old.qmd
     right:
