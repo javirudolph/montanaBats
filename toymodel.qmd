@@ -1,0 +1,1080 @@
+---
+title: "Dynamic Multistate Conditional Model Simulation"
+subtitle: "Montana bats and White Nose Syndrome"
+author: "javirudolph"
+format:
+  revealjs:
+    scrollable: true
+    theme: simple
+    self-contained: true
+slide-number: c/t
+execute: 
+  echo: false
+project:
+  execute-dir: project
+---
+
+:::{.incremental}
+## Where we are: {.smaller}
+-   The current approach for NABat data has been focused on species-specific occupancy models
+    -   Our focus is not only on occupancy, but also levels of activity
+    -   Incorporating *Pd* effects
+    -   Including environmental change over time
+-   Considering *Pd* susceptible species to work with levels of activity and not just occupancy
+    -   workaround for species identifiability issues
+-   Building a predictive model that incorporates bat and *Pd* dynamics over time
+    -   The effects of WNS/*Pd* can show up in decreases of bat activity
+    -   Building a multistate model based on activity levels
+-   This model will help us understand how potential management actions will have an effect on bat populations
+-   As we evaluate objectives and tradeoffs for different management actions, we want to account for *Pd* spread over time
+    -   A dynamic model is important when the environment and disease transmission are changing
+    
+:::
+
+
+# Model description {.smaller}
+We are working on a dynamic multistate model. This means it changes in time, is site-specific, and has two different levels of occupancy for bats: few bats and many bats. 
+
+```{r}
+#| echo: false
+#| message: false
+#| include: false
+
+library(tidyverse)
+library(sf)
+library(cowplot)
+library(scales)
+library(stats)
+```
+
+```{r}
+
+#| include: false
+
+set.seed(83745)
+
+mytheme <- theme(
+  plot.subtitle = element_text(color = "gray")
+)
+```
+
+## Model description cont. {.smaller} 
+
+We consider a simple dynamic model with potential occupancy states for each site $i$: *unoccupied*, *few bats*, *many bats*. The probability of each site $i$ being in one of those occupancy states at time $t$ is given by a combination of the state of the site in the last year $t-1$ and some environmental covariates. 
+
+With $z_i,t$ being the state of site $i$ at time $t$, drawn from a multinomial distribution with a vector of probabilities for each state. Given the dependency on the state of the previous year, we define the state of sites in the first year separately as:
+
+$$
+z_{i,1} \sim \text{Categorical}(\Omega_i)
+$$
+The initial state vector ($\Omega_i$) gives the probability of a site $i$ being in one of the three states: *unoccupied* (coded as 1), *few bats* (coded as 2), *many bats* (coded at 3), and is a combination of the probability of a site being occupied ($\psi$) and the probability that an occupied site is occupied by *many bats* ($r$).
+
+$$
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+$$
+For us to relate these two probabilities ($\psi$ and $r$) to covariates, we use a logit link as follows:
+
+$$
+\text{logit}(\psi) = \beta_0 + \beta_1 ForestCover
+\\
+\text{logit}(r) = \alpha_0 + \alpha_1 CaveDensity
+$$
+
+In this simple example, we have only added one covariate to each probability. Therefore, we establish that the probability of a site being occupied by bats in the first year is a function of percent forest cover, and the probability that those occupied sites are occupied by many bats is a function of cave density. 
+
+The state of each site $i$ in the following years ($t = 2 \dots T$) is given by: 
+
+$$
+z_{i,t}|z_{i,t-1} \sim Categorical(\Phi_{z{(t-1)}, z{(t)}, i, t})
+$$
+where the transition matrix ($\Phi$) determines the probabilities of a site going from one state to another, or remaining in the same state, depending on covariates and the state at time $t-1$. We have parameterized the transition matrix in terms of colonization, persistence, growth, and decline:
+
+$$
+\Phi_{z{(t-1)}, z{(t)}, i,t} =  \begin{bmatrix}
+                                1-\gamma & \gamma & 0 \\
+                                1-\phi_1 & \phi_1(1-G) &  \phi_1G\\
+                                1-\phi_2 & \phi_2D & \phi_2(1 - D)
+                                \end{bmatrix}_{i,t}
+$$
+Where $\gamma$ parameters are state specific. This means $\gamma$ is the probability of an empty site at time $t-1$ being colonized by *few bats* at time $t$. We assume empty sites cannot be colonized by many bats in one time step. Persistence ($\phi$) describes the probability of a site staying in the same state from one year to another. Growth and decline probabilities are shown by $G$ and $D$. 
+
+For us to relate the rates in the transition matrix to covariates and management actions, we use a logit-link. 
+
+## Colonization, persistence, growth, and decline {.smaller} 
+
+### Colonization
+
+We define colonization as the process of going from no bats (*unoccupied* site) to having *few bats* ($\gamma$) in the next year. For simplicity, in this simulation we assume that the only factor influencing colonization is forest cover.
+
+$$
+\text{logit}(\gamma) = b_0 + b_1Forest
+$$
+
+### Persistence 
+
+Persistence is the probability that an occupied site continues to be occupied the following year. In our model, the probability that a site occupied with *few bats* continues to be occupied the next year is given by $\phi_1$. And the probability that such a site continues to be occupied, but also sees a growth ($G$) in the bat population is given by $\phi_1 G$.  
+
+Persistence will be influenced by presence of *Pd* or WNS, but also by maintenance of forest cover and other environmental variables. For simplicity we only include forest cover and Pd.
+
+$$
+\text{logit}(\phi) = a_0 + a_1Forest - a_2Pd
+$$
+#### Growth and decline 
+
+We think of variables directly affecting population growth as those related to improved winter survival and recruitment, such as access to water and supplemental feeding.
+
+$$
+\text{logit}(G) = m_0 + m_1Water + m_2Feeding
+$$
+In the case of declines, we can associate these to disturbances and disease: 
+
+$$
+\text{logit}(D) = n_0 + n_1Disturb + n_2Pd
+$$
+
+#### Transition matrix 
+Just as a reminder: 
+
+$$
+\Phi_{z{(t-1)}, z{(t)}, i,t} =  \begin{bmatrix}
+                                1-\gamma & \gamma & 0 \\
+                                1-\phi_1 & \phi_1(1-G) &  \phi_1G\\
+                                1-\phi_2 & \phi_2D & \phi_2(1 - D)
+                                \end{bmatrix}_{i,t}
+$$
+
+
+# Toy model 
+To illustrate our model and how predictions will work, we developed a simple toy model. Keep in mind that all values asigned to parameters here are theoretical and have little to no biological basis associated to them.
+
+## Setting up simulation {.smaller}
+
+We start by generating a grid of 100 sites, and simulating covariates for each of the grids.
+
+:::{.panel-tabset}
+
+### Forest + Caves {.smaller}
+
+```{r}
+# Create the bounding box
+mybbox <- st_sfc(st_polygon(list(rbind(c(0,0), c(0,10), c(10, 0), c(10,10), c(0,0)))))
+# Then the grids inside it
+mygrids <- st_make_grid(mybbox, cellsize = 1, square = TRUE)
+
+# Now make it the sf object easy to work with:
+toysp <- st_as_sf(mygrids) %>% 
+  rename(., geometry = x)
+
+# Create some covariates
+expand.grid(x = 1:10, y = 1:10) %>% 
+  mutate(
+    # The site ID
+    siteid = 1:100,
+    # Simulate forest cover
+    forest = rbeta(n = n(), 2, 5),
+    # Simulate hibernacula
+    caves = rbinom(n = n(), 4, 0.4),
+    water = rbinom(n(), 1, 0.3),
+    feeding = rbinom(n(), 1, 0.2),
+    disturb = rbinom(n(), 5, 0.2),
+    roost = rbinom(n(), 3, 0.3),
+    # Pd = rbinom(n(), 2, c(0.5, 0.3)),
+    Pd = case_when(
+      x %in% c(8,9,10) & y %in% c(1:3) ~ 2,
+      x %in% c(6,7) & y %in% c(4:5) ~ 1,
+      x %in% c(6,7) & y %in% c(1:4) ~ 1,
+      x %in% c(8:10) & y %in% c(4:5) ~ 1,
+      TRUE ~ 0
+    ),
+    jurisd = case_when(
+      x == 10 & y %in% c(2:8) ~ 1,
+      x %in% c(8,9) & y %in% c(3:8) ~ 1,
+      x == 7 & y %in% c(5:9) ~ 1,
+      x == 6 & y %in% c(4:8) ~ 1,
+      TRUE ~ 0
+    ),
+    jurisd = as.factor(jurisd)
+  ) -> toycovs
+
+toydf <- bind_cols(toycovs, toysp) %>% 
+  st_as_sf()
+
+```
+
+
+```{r}
+
+toydf %>% 
+  ggplot() +
+  geom_sf(aes(fill = forest)) +
+  labs(title = "Forest cover") +
+  scale_fill_gradient(low = "#e5f5f9", high = "#005824") +
+  # scale_fill_distiller(palette = "Greens", direction = 1) +
+  guides(fill = guide_colorbar(barwidth = 0.5, title = element_blank())) +
+  mytheme -> ForestCov
+
+toydf %>% 
+  ggplot() +
+  geom_sf(aes(fill = factor(caves))) +
+  scale_fill_brewer(palette = "Greys") +
+  # scale_fill_manual(values = c("white", "brown")) +
+  labs(title = "Cave Density") +
+  mytheme +
+  theme(legend.title = element_blank()) -> CaveDens
+
+
+toydf %>% 
+  ggplot() +
+  geom_sf(aes(fill = factor(water))) +
+  labs(title = "Water") +
+  scale_fill_manual(values = c("white", "darkblue")) + 
+  mytheme +
+  theme(legend.title = element_blank()) -> WaterAcc
+
+toydf %>% 
+  ggplot() +
+  geom_sf(aes(fill = factor(Pd))) +
+  labs(title = "Pd") +
+  scale_fill_manual(values = c("white", "grey", "red")) +
+  mytheme +
+  theme(legend.title = element_blank()) -> PdOcc
+
+toydf %>% 
+  ggplot() +
+  geom_sf(aes(fill = factor(disturb))) +
+  scale_fill_brewer(palette = "Reds") +
+  labs(title = "Human disturbance") +
+  mytheme +
+  theme(legend.title = element_blank()) -> HumDisturb
+
+toydf %>% 
+  ggplot() +
+  geom_sf(aes(fill = factor(feeding))) +
+  scale_fill_brewer(palette = "Oranges") +
+  labs(title = "Supp Feeding") +
+  mytheme +
+  theme(legend.title = element_blank()) -> SuppFeed
+
+toydf %>% 
+  ggplot() +
+  geom_sf(aes(fill = factor(roost))) +
+  scale_fill_brewer(palette = "Greys") +
+  labs(title = "Roosting") +
+  mytheme +
+  theme(legend.title = element_blank()) -> RoostLev
+
+```
+
+```{r}
+plot_grid(ForestCov, CaveDens, nrow = 1)
+```
+
+
+### Pd + Disturb {.smaller}
+```{r}
+plot_grid(PdOcc, HumDisturb, nrow = 1)
+```
+
+### Others {.smaller}
+
+```{r}
+plot_grid(WaterAcc, SuppFeed, nrow = 1)
+```
+
+
+:::
+
+## Initial state ($t=1$) {.smaller}
+
+We estimate first year occupancy as a function of forest cover and cave density:
+
+:::{.panel-tabset}
+
+### $t=1$ occupancy {.smaller}
+
+```{r}
+beta0 <- 1 #intercept
+beta1 <- 1.9 # effect of forest
+alpha0 <- 0.5 # intercept
+alpha1 <- 0.2 # effect of cave density
+
+nsites <- nrow(toydf)
+
+toydf %>% 
+  # first, scale continuous variables
+  mutate(stforest = scale(forest)) %>% 
+  # then run the formula
+  mutate(logitpsi = beta0 + beta1 * stforest,
+         psi = exp(logitpsi)/(1+exp(logitpsi)),
+         logitr = alpha0 + alpha1 * caves,
+         r = exp(logitr)/(1 + exp(logitr))) -> simdf
+
+psi <- simdf$psi
+r <- simdf$r
+
+omega <- data.frame(unoccupied = 1- psi, fewbats = psi*(1-r), manybats = psi*r) %>% 
+  as.matrix()
+# head(omega)
+
+
+get_state<- function(x) which(x==1)
+
+nyears <- 5
+z <- array(NA, dim = c(nsites, nyears))
+
+for(i in 1:nsites){
+  draw1 <- rmultinom(1,1,omega[i,])
+  z[i,1] <-get_state(draw1)
+}
+
+
+simdf %>% 
+  mutate(z_1 = factor(z[,1], levels = c(1,2,3))) %>%  
+  ggplot() +
+  geom_sf(aes(fill = z_1)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "First year occupancy (t=1)", fill = "State") +
+  mytheme
+```
+This draw shows that `r length(which(z[,1] == 1))` sites are unoccupied, `r length(which(z[,1] == 2))` have a few bats, and `r length(which(z[,1] == 3))` have many bats in the first year ($t=1$).
+
+### Equations 
+
+Initial state for each site given by the probability of a site being occupied, and if occupied having many bats:
+$$
+z_{i,1} \sim \text{Categorical}(\Omega_i) 
+\\
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+$$
+
+These probabilities related to the forest cover and cave covariates 
+
+$$
+\text{logit}(\psi) = \beta_0 + \beta_1 ForestCover
+\\
+\text{logit}(r) = \alpha_0 + \alpha_1 CaveDensity
+$$
+
+:::
+
+
+
+## Years $t=2\dots T$ {.smaller}
+Generating transition probabilities
+
+:::{.panel-tabset}
+### Matrix 
+$$
+\Phi_{z{(t-1)}, z{(t)}, i} =  \begin{bmatrix}
+                                1-\gamma & \gamma & 0 \\
+                                1-\phi_1 & \phi_1(1-G) &  \phi_1G\\
+                                1-\phi_2 & \phi_2D & \phi_2(1 - D)
+                                \end{bmatrix}_{i}
+$$
+
+### Colonization 
+
+```{r}
+inv_logit <- function(x){
+  val <- exp(x)/(1+exp(x))
+  return(val)
+}
+```
+
+
+```{r}
+#| echo: true
+
+# Get gamma
+
+bset <- c(b0 = 0.2, # intercept
+          b1 = 1.2 # effect of forest
+          )
+
+logitgamma <- bset[1] + bset[2]*simdf$forest
+
+# Gamma as the probability of an unoccupied site to become occupied
+gammaparam <- inv_logit(logitgamma)
+hist(gammaparam)
+  
+```
+
+### Persistence 
+For simplicity in this toy model, we are setting persistence for few bats and many bats the same.
+
+```{r}
+#| echo: true
+
+
+
+# Going to persistence 
+# set coefficients
+# For now and simplicity, we make persistence the same for few bats and many bats.
+aset1 <- c(a0 = 0.1, # intercept
+           a1 = 0.8, # forest
+           a2 = -0.5 # Pd
+           )
+
+aset2 <- c(a0 = 0.1, # intercept
+           a1 = 0.8, # forest
+           a2 = -0.5 # Pd
+           )
+
+logitphi <- function(aset, forest, pd){
+  logitfi <- aset[1] + aset[2]*forest + aset[3]*pd
+  phi <- inv_logit(logitfi)
+  return(phi)
+}
+
+phi1 <- logitphi(aset1, simdf$forest, simdf$Pd)
+phi2 <- logitphi(aset2, simdf$forest, simdf$Pd)
+
+
+hist(phi1)
+hist(phi2)
+
+```
+
+### Growth 
+
+```{r}
+#| echo: true
+
+
+# Growth 
+mset <- c(m0 = 0.1, # intercept
+           m1 = 0.2, # water
+           m2 = 0.3 # feeding associated to insect lures
+           )
+
+
+logitgrowth <- mset[1] + mset[2]*simdf$water + mset[3]*simdf$feeding
+G <- inv_logit(logitgrowth)
+hist(G)
+```
+
+### Decline
+
+```{r}
+#| echo: true
+#| 
+# Decline
+nset <- c(n0 = 0.1, # intercept
+           n1 = 0.4, # Disturbance
+           n2 = 0.3 # Pd
+           )
+
+logitdecline <- nset[1] + nset[2]*simdf$disturb + nset[3]*simdf$Pd
+D <- inv_logit(logitdecline)
+hist(D)
+```
+
+:::
+
+
+## Years $t=2\dots T$ cont.
+
+```{r}
+# Assembling the matrix for each site:
+
+
+for(i in 1:nsites){
+  # Get transition matrix for site i
+  Phi <- matrix(
+    c(1 - gammaparam[i], gammaparam[i], 0,
+      1 - phi1[i], phi1[i]*(1-G[i]), phi1[i]*G[i],
+      1 - phi2[i], phi2[i]*D[i], phi2[i]*(1-D[i])), nrow = 3, byrow = TRUE
+    )
+  
+  for(t in 2:nyears){
+    # get state of site i in year t-1
+    ztm1 <- z[i, t-1]
+    # get corresponding transition probs
+    Phi_i <- Phi[ztm1,]
+    # Calc state for time t
+    z[i, t] <- get_state(rmultinom(1,1,Phi_i))
+  }
+  
+}
+```
+
+
+```{r}
+# Make z nice for plotting
+
+simdf %>% 
+  mutate(z_1 = factor(z[,1], levels = c(1,2,3)),
+         z_2 = factor(z[,2], levels = c(1,2,3)),
+         z_3 = factor(z[,3], levels = c(1,2,3)),
+         z_4 = factor(z[,4], levels = c(1,2,3)),
+         z_5 = factor(z[,5], levels = c(1,2,3))) -> zdf
+```
+
+```{r}
+
+zdf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_1)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=1", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T1
+
+zdf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_2)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=2", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T2
+
+zdf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_3)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=3", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T3
+
+zdf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_4)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=4", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T4
+
+zdf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_5)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=5", fill = "State") +
+  mytheme -> T5
+
+Tleg <- get_legend(T5)
+
+
+plot_grid(T1, T2, T3, T4, T5 +
+  theme(legend.position = "none"), Tleg, nrow = 2)
+
+staticPdTrend <- plot_grid(T1, T2, T3, T4, T5 +
+  theme(legend.position = "none"), Tleg, nrow = 1)
+```
+
+## Trend 
+
+```{r}
+
+zdf %>% 
+  select(starts_with("z")) %>% 
+  st_drop_geometry() %>% 
+  pivot_longer(cols = starts_with("z")) %>% 
+  mutate(year = str_remove(name, "z_")) %>% 
+  group_by(year, value) %>%
+  tally() %>% 
+  mutate(year = as.numeric(year)) %>% 
+  ggplot(aes(x = year, y = n, color = value)) + 
+  geom_point() +
+  geom_smooth() +
+  scale_color_brewer(palette = "Blues", labels = c("Unoccupied", "Few bats", "Many bats")) +
+  theme_bw()
+  
+```
+
+
+## Dynamic *Pd* {.smaller}
+
+:::: {.columns}
+
+::: {.column width="40%"}
+Transition matrix is the same across years, but different for each site: 
+
+$$
+\Phi_{z{(t-1)}, z{(t)}, i} =  \begin{bmatrix}
+                                1-\gamma & \gamma & 0 \\
+                                1-\phi_1 & \phi_1(1-G) &  \phi_1G\\
+                                1-\phi_2 & \phi_2D & \phi_2(1 - D)
+                                \end{bmatrix}_{i}
+$$
+:::
+
+::: {.column width="60%"}
+
+```{r}
+PdOcc
+```
+
+
+:::
+
+::::
+
+
+## Dynamic *Pd* cont. {.smaller}
+
+::: {.panel-tabset}
+
+### Pd Spread
+
+```{r}
+# Create a grid for Pd change over time
+expand.grid(x = 1:10, y = 1:10) %>% 
+  mutate(Pd1 = case_when(
+    x %in% c(8,9,10) & y %in% c(1:3) ~ 2,
+    x %in% c(6,7) & y %in% c(4:5) ~ 1,
+    x %in% c(6,7) & y %in% c(1:4) ~ 1,
+    x %in% c(8:10) & y %in% c(4:5) ~ 1,
+    TRUE ~ 0),
+    Pd2 = case_when(
+      x %in% c(6:10) & y %in% c(1:4) ~ 2,
+      x %in% c(3:5) & y %in% c(1:6) ~ 1,
+      x %in% c(6:10) & y %in% c(4:6) ~1,
+      TRUE ~ 0),
+    Pd3 = case_when(
+      x %in% c(3:10) & y %in% c(1:4) ~ 2,
+      x %in% c(1:2) & y %in% c(1:7) ~ 1,
+      x %in% c(1:10) & y %in% c(5:7) ~ 1,
+      TRUE ~ 0),
+    Pd4 = case_when(
+      x %in% c(3:10) & y %in% c(1:4) ~ 2,
+      x %in% c(1:2) & y %in% c(1:7) ~ 1,
+      x %in% c(1:10) & y %in% c(5:7) ~ 1,
+      TRUE ~ 0),
+    Pd5 = case_when(
+      x %in% c(1:10) & y %in% c(1:5) ~ 2,
+      x %in% c(1:10) & y %in% c(6:8) ~ 1,
+      TRUE ~0
+    ))%>% 
+  bind_cols(., toysp) %>% 
+  st_as_sf() -> Pd_df
+
+Pd_df %>% 
+  pivot_longer(cols = starts_with("Pd"), names_to = "PdYear", values_to = "PdStatus") %>% 
+  ggplot() +
+  facet_wrap(~PdYear, nrow = 1) +
+  geom_sf(aes(fill = factor(PdStatus))) +
+  labs(title = "Pd") +
+  scale_fill_manual(values = c("white", "grey", "red")) +
+  mytheme +
+  theme(legend.title = element_blank())
+```
+
+### Phi & D
+
+```{r}
+# Phi
+phi_pd <- array(NA, dim = c(nsites, nyears))
+
+phi_pd[,1] <-logitphi(aset1, simdf$forest, Pd_df$Pd1)
+phi_pd[,2] <-logitphi(aset1, simdf$forest, Pd_df$Pd2)
+phi_pd[,3] <-logitphi(aset1, simdf$forest, Pd_df$Pd3)
+phi_pd[,4] <-logitphi(aset1, simdf$forest, Pd_df$Pd4)
+phi_pd[,5] <-logitphi(aset1, simdf$forest, Pd_df$Pd5)
+
+# Decline
+D_pd <- array(NA, dim = c(nsites, nyears))
+
+logitdecline <- function(nset, disturb, pd){
+  logitd <- nset[1] + nset[2]*disturb + nset[3]*pd
+  decline <- inv_logit(logitd)
+  return(decline)
+}
+
+D_pd[,1] <- logitdecline(nset, simdf$disturb, Pd_df$Pd1)
+D_pd[,2] <- logitdecline(nset, simdf$disturb, Pd_df$Pd2)
+D_pd[,3] <- logitdecline(nset, simdf$disturb, Pd_df$Pd3)
+D_pd[,4] <- logitdecline(nset, simdf$disturb, Pd_df$Pd4)
+D_pd[,5] <- logitdecline(nset, simdf$disturb, Pd_df$Pd5)
+
+
+```
+
+
+```{r}
+colnames(phi_pd) <- paste0("Y", 1:5)
+
+phi_pd %>%
+  as_tibble() %>% 
+  pivot_longer(., cols = starts_with("Y"), names_to = "year") %>% 
+  ggplot(., aes(x = value)) +
+  facet_wrap(~year) +
+  geom_histogram() +
+  labs(title = "Phi_values") -> phiplot
+
+colnames(D_pd) <- paste0("Y", 1:5)
+
+D_pd %>%
+  as_tibble() %>% 
+  pivot_longer(., cols = starts_with("Y"), names_to = "year") %>% 
+  ggplot(., aes(x = value)) +
+  facet_wrap(~year) +
+  geom_histogram() +
+  labs(title = "D_values") -> Dplot
+
+plot_grid(phiplot, Dplot, nrow = 1)
+
+
+```
+
+### Static Phi & D 
+
+
+```{r}
+hist(phi1)
+hist(phi2)
+hist(D)
+```
+
+### Bats Occ
+
+```{r}
+# Assembling the matrix for each site:
+
+zPd <- z
+
+for(i in 1:nsites){
+  for(t in 2:nyears){
+    # Get transition matrix for site i
+  Phi <- matrix(
+    c(1 - gammaparam[i], gammaparam[i], 0,
+      1 - phi_pd[i,t], phi_pd[i,t]*(1-G[i]), phi_pd[i,t]*G[i],
+      1 - phi_pd[i,t], phi_pd[i,t]*D_pd[i,t], phi_pd[i,t]*(1-D_pd[i,t])), nrow = 3, byrow = TRUE
+    )
+  
+    # get state of site i in year t-1
+    ztm1 <- zPd[i, t-1]
+    # get corresponding transition probs
+    Phi_i <- Phi[ztm1,]
+    # Calc state for time t
+    zPd[i, t] <- get_state(rmultinom(1,1,Phi_i))
+  }
+  
+}
+```
+
+```{r}
+# Make z nice for plotting
+
+simdf %>% 
+  mutate(z_1 = factor(zPd[,1], levels = c(1,2,3)),
+         z_2 = factor(zPd[,2], levels = c(1,2,3)),
+         z_3 = factor(zPd[,3], levels = c(1,2,3)),
+         z_4 = factor(zPd[,4], levels = c(1,2,3)),
+         z_5 = factor(zPd[,5], levels = c(1,2,3))) -> zPddf
+```
+
+```{r}
+
+zPddf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_1)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=1", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T1
+
+zPddf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_2)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=2", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T2
+
+zPddf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_3)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=3", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T3
+
+zPddf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_4)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=4", fill = "State") +
+  mytheme +
+  theme(legend.position = "none") -> T4
+
+zPddf %>% 
+  ggplot() +
+  geom_sf(aes(fill = z_5)) +
+  scale_fill_brewer(palette = "Blues") +
+  # scale_fill_manual(values = c("darkgrey", "#33001a", "#660033")) +
+  labs(title = "t=5", fill = "State") +
+  mytheme -> T5
+
+Tleg <- get_legend(T5)
+
+
+plot_grid(T1, T2, T3, T4, T5 +
+  theme(legend.position = "none"), Tleg, nrow = 1)
+```
+
+
+### Static Pd
+
+```{r}
+staticPdTrend
+```
+
+:::
+
+
+## Trend Comparison
+
+:::{.panel-tabset}
+### Static Pd
+
+```{r}
+
+zdf %>% 
+  select(starts_with("z")) %>% 
+  st_drop_geometry() %>% 
+  pivot_longer(cols = starts_with("z")) %>% 
+  mutate(year = str_remove(name, "z_")) %>% 
+  group_by(year, value) %>%
+  tally() %>% 
+  mutate(year = as.numeric(year)) %>% 
+  ggplot(aes(x = year, y = n, color = value)) + 
+  geom_point() +
+  geom_smooth() +
+  scale_color_brewer(palette = "Blues", labels = c("Unoccupied", "Few bats", "Many bats")) +
+  theme_bw()
+  
+```
+
+### Dynamic Pd
+
+```{r}
+
+zPddf %>% 
+  select(starts_with("z")) %>% 
+  st_drop_geometry() %>% 
+  pivot_longer(cols = starts_with("z")) %>% 
+  mutate(year = str_remove(name, "z_")) %>% 
+  group_by(year, value) %>%
+  tally() %>% 
+  mutate(year = as.numeric(year)) %>% 
+  ggplot(aes(x = year, y = n, color = value)) + 
+  geom_point() +
+  geom_smooth() +
+  scale_color_brewer(palette = "Blues", labels = c("Unoccupied", "Few bats", "Many bats")) +
+  theme_bw()
+  
+```
+:::
+
+
+
+# Using NABat predictions 
+
+## NABat model {.smaller}
+
+:::{.panel-tabset}
+
+### Info
+
+-   We are using the covariates and [occupancy predictions and trends](https://www.sciencebase.gov/catalog/item/620e6f3bd34e6c7e83baa603) developed by NABat. 
+-   With the associated report [here](https://ecos.fws.gov/ServCat/DownloadFile/216681). 
+    -   We used the ecological model described in the NABat report to calculate grid-cell level occupancy following the ecological model used for MYLU (pg 100 of the report), and coefficients estimated from Figure C1 (pg 195).  
+
+### Model 
+
+The occupancy of a grid $i$ is given by
+
+$$
+z_i \sim \text{Bernoulli}(\psi_i)
+$$
+
+
+where the probability of MYLU occurring at site $i$ ($\psi_i$) is modeled as a function of the specific grid-cell covariates using a logit link: 
+
+
+
+$$
+logit(\psi_i) = \beta_0 + \beta_1(elevation) + \beta_2({elevation}^2) + \beta_3(temp) + \beta_4({temp}^2) + \beta_5(physio\_div) + \beta_6(precip) + \beta_7(p\_forest) + \beta_8(p\_wetlands)
+$$
+
+### Caveats 
+
+-   There are two more covariates: 'karst' and 'distance to mines', but the appendix says these are only for the east, so I didn't include here. 
+-   The intercept should include ecoregion data, which is not included here.
+-   I couldn't find information on winter-to-summer connectivity, thus did not include here. 
+:::
+
+
+## Coefficients {.smaller}
+
+::: {.panel-tabset}
+
+
+
+### Original {.smaller}
+
+![](images/covariatesplot_fromNABat_report.png)
+
+### Estimate from image {.smaller} 
+
+```{r}
+grid_covariates <- read_sf("datafiles/nabat_covariates/NABat_grid_covariates/NABat_grid_covariates.shp")
+
+
+mt_covariates <- grid_covariates %>% 
+  filter(., admin1 == "Montana")
+
+```
+
+```{r}
+est_juicr <- read.csv("datafiles/juicr_value_extraction_covariates.csv")
+
+zero_x <- est_juicr$x.calibrated[est_juicr$jr.notes=="0"]
+
+# the names of the covariates in the order I did them in the juicr GUI
+covs_names <- c("annual_precip", "dist_mines", "karst", "max_elev", "max_elev_sqrd", "mean_annual_temp", "mean_annual_temp_sqrd",
+                "prcnt_forest", "prcnt_wetland", "physio_div", "winter_summ_connect")
+
+
+est_juicr %>% 
+  filter(., jr.notes %in% c("center", "rhs")) %>% 
+  mutate(covnames = rep(covs_names, 2)) %>% 
+  select(., jr.notes, x.calibrated, covnames) %>%
+  pivot_wider(., names_from = jr.notes, values_from = x.calibrated) %>% 
+  mutate(errorbar = rhs-center,
+         correctedx = center-zero_x) %>% 
+  mutate(lower = correctedx-errorbar, upper = correctedx+errorbar,
+         covnamesf = factor(covnames, levels = c("annual_precip", "dist_mines", "karst", "max_elev", "max_elev_sqrd",
+                                                 "mean_annual_temp", "mean_annual_temp_sqrd", "prcnt_forest", "prcnt_wetland",
+                                                 "physio_div", "winter_summ_connect"))) -> cov_coefficients_df
+
+
+cov_coefficients_df %>% 
+  ggplot(., aes(x = correctedx, y = covnamesf)) +
+  geom_point() +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper)) +
+  labs(x = "Estimate", y = "Covariate") +
+  theme_bw()
+```
+
+:::
+
+
+## Quick Predictions  
+
+::: {.panel-tabset} 
+
+### Simulation
+
+```{r}
+cov_coefficients_df %>% 
+  dplyr::select(covnames, correctedx) %>% 
+  filter(., covnames != "karst", covnames != "dist_mines", covnames != "winter_summ_connect") -> subset_coeffs
+
+betas <- as.vector(subset_coeffs$correctedx)
+# betas <- c(1, betas)
+
+
+mt_covariates %>%
+  rename(annual_precip = precip,
+         max_elev = DEM_max,
+         mean_annual_temp = mean_temp,
+         prcnt_forest = p_forest,
+         prcnt_wetland = p_wetland) %>% 
+  mutate(max_elev_sqrd = max_elev^2,
+         mean_annual_temp_sqrd = mean_annual_temp^2) %>%
+  # as.data.frame() %>% 
+  # As we select the variables, we do it in the order of the coefficients we have in the vector above:
+  dplyr::select(GRTS_ID, # Also keeping the ID for the grid
+                annual_precip, max_elev, max_elev_sqrd, mean_annual_temp, mean_annual_temp_sqrd, prcnt_forest, prcnt_wetland,
+                physio_div) %>% 
+  mutate(across(.cols = c(annual_precip, max_elev, max_elev_sqrd, mean_annual_temp, mean_annual_temp_sqrd, prcnt_forest, prcnt_wetland,
+                physio_div), scale)) %>% 
+  mutate(max_elev_sqrd_post = max_elev^2,
+         mean_annual_temp_sqrd_post = mean_annual_temp^2) %>%
+  # I have no intercept here... not sure what that would mean.
+  mutate(logit_psi = annual_precip*betas[1] + max_elev*betas[2] + max_elev_sqrd*betas[3] +
+                mean_annual_temp*betas[4] + mean_annual_temp_sqrd*betas[5] + 
+                prcnt_forest*betas[6] + prcnt_wetland*betas[7] + physio_div*betas[8],
+         psi = exp(logit_psi)/(1+exp(logit_psi)),
+         occup = rbinom(n(), 1, psi),
+         occup.chr = as.character(occup)) -> pred_occu
+
+
+pred_occu %>% 
+  ggplot() +
+  geom_sf(aes(fill = psi, color = psi)) +
+  scale_fill_viridis_c(limits = c(0,1)) +
+  scale_color_viridis_c(limits = c(0,1)) +
+  # scale_fill_gradient(limits = c(0,1)) +
+  # scale_color_gradient(limits = c(0,1)) +
+  labs(title = "MYLU Pr of occupancy") +
+  coord_sf()
+```
+
+
+### Original NABat 
+
+```{r}
+# Read the csv files provided in the website for mylu occupancy
+mylu_occu <- read.csv("datafiles/nabat_covariates/MYLU_gridcell_occupancy.csv")
+
+# unique(mylu_occu$year)
+
+mylu_occu %>%
+  filter(., year == 2019) %>%
+  left_join(., grid_covariates, by = "grts") %>% 
+  filter(., admin1 == "Montana") %>% 
+  st_as_sf() -> mylu_occu_covariates
+
+mylu_occu_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = mean, color = mean)) +
+  scale_fill_viridis_c(limits = c(0,1)) +
+  scale_color_viridis_c(limits = c(0,1)) +
+  # scale_fill_gradient(limits = c(0,1)) +
+  # scale_color_gradient(limits = c(0,1)) +
+  labs(title = "Predicted MYLU occupancy probability for 2019") +
+  coord_sf()
+```
+
+### Discrepancies 
+-   To simulate our prediction we only used mean values for coefficients from the image, did not include the standard errors.
+-   Intercepts and winter-to-summer connectivity are not included because I couldn't find data.
+-   When we showed this to folks in Montana, they mentioned that predictions were made with data pre 2020
+    -     New data has not been submitted to NABat
+-   At this time, we have the call data for MT for years 2020-2021
+
+::: 
+
+:::{.incremental} 
+
+## What's next? {.smaller}
+
+-   Use Montana-specific data to parameterize our model
+-   Determine covariates to include in the model
+    - There are additional covariates necessary for management
+-   Link management strategies to covariates
+    -   Still sorting through strategies and how to include them
+-   Setting up model to incorporate change in *Pd* and WNS over time
+    - Dynamic Multistate Conditional model
+    - Also for treatment or management that is year-specific
+-   Link this model to monitoring data for yearly updates
+-   Build a dynamic table of treatments for user interaction
+    - filter through potential treatments according to objectives and location
+-   Create a self-guided SDM process that is available to any user
+    - outcomes are used for filtering table of treatments
+    - outcomes and selected treatments for use in a toy model
+    - guide management strategies
+:::
