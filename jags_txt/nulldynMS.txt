@@ -1,0 +1,84 @@
+
+model {
+  ### (1) Priors for parameters
+  # State process priors
+  # Priors for parameters in initial state vector (Omega)
+  psi ~ dunif(0, 1)
+  r ~ dunif(0, 1)
+  # Priors for parameters in state transition matrix (PhiMat)
+  for(s in 1:2){
+    phi[s] ~ dunif(0, 1)
+  }
+  lgamma ~ dunif(0,1)
+  G ~ dunif(0,1)
+  D ~ dunif(0,1)
+
+  # Priors for parameters in observation process (Theta)
+  p2 ~ dunif(0, 1)                 # Detection prob. when in state 2
+  for (s in 1:3) {                 # Detection prob. when in state 3
+    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
+    p3[s] <- beta[s] / sum(beta[])
+  }
+  ### (2) Define relationships between basic model structure and parameters
+  # Define initial state vector: Year 1
+  Omega[1] <- 1 - psi              # Prob. of non-occupation
+  Omega[2] <- psi * (1-r)          # Prob. of occ. by a few bats
+  Omega[3] <- psi * r              # Prob. of occ. by many bats
+  # Define state transition probability matrix (PhiMat): years 2:nyears
+  # Define probabilities of state S(t+1) given S(t)
+  # For now, constant over sites and years
+  # Note conditional Bernoulli parameterization of multinomial
+  # Order of indices: Departing state, arrival state
+  PhiMat[1,1] <- 1 - lgamma
+  PhiMat[1,2] <- lgamma
+  PhiMat[1,3] <- 0
+  PhiMat[2,1] <- 1 - phi[1]
+  PhiMat[2,2] <- phi[1] * (1 - G)
+  PhiMat[2,3] <- phi[1] * G
+  PhiMat[3,1] <- 1 - phi[2]
+  PhiMat[3,2] <- phi[2] * D
+  PhiMat[3,3] <- phi[2] * (1 - D)
+  # Define observation probability matrix (Theta)
+  # Order of indices: true state, observed state
+  Theta[1,1] <- 1
+  Theta[1,2] <- 0
+  Theta[1,3] <- 0
+  Theta[2,1] <- 1-p2
+  Theta[2,2] <- p2
+  Theta[2,3] <- 0
+  Theta[3,1] <- p3[1]
+  Theta[3,2] <- p3[2]
+  Theta[3,3] <- p3[3]
+  ### (3) Likelihood
+  # Initial state: year 1
+  for (i in 1:nsites){
+    z[i,1] ~ dcat(Omega[])
+  }
+  # State transitions from yearly interval 1:(nyears-1)
+  for (i in 1:nsites){
+    for(t in 1:(nyears-1)){
+      z[i,t+1] ~ dcat(PhiMat[z[i,t],])
+    }
+  }
+  # Observation equation
+  for (i in 1:nsites){
+    for (t in 1:nyears){
+      for (j in 1:nsurveys[i,t]){
+        y[i,j,t] ~ dcat(Theta[z[i, t], ])
+      }
+    }
+  }
+  ### (4) Derived quantities
+  # Number of sites in each state per year
+  for (t in 1:nyears){
+    for (i in 1:nsites){
+      state1[i,t] <- equals(z[i,t], 1)   # Indicator for site in state 1
+      state2[i,t] <- equals(z[i,t], 2)   # ... state 2
+      state3[i,t] <- equals(z[i,t], 3)   # ... state 3
+    }
+    n.occ[t,1] <- sum(state1[,t])        # Number of unoccupied sites
+    n.occ[t,2] <- sum(state2[,t])        # Number of sites with few bats
+    n.occ[t,3] <- sum(state3[,t])        # Number of sites with many bats
+    n.occ.total[t] <- n.occ[t,2] + n.occ[t, 3] # All occupied
+  }
+}
