@@ -9,6 +9,12 @@ website:
     left:
       - text: "Home"
         file: index.qmd
+      - text: "Presentations"
+        menu:
+          - talks.qmd
+          - about.qmd 
+      - text: "Predictions"
+        file: predictions.qmd
     right:
       - icon: github
         menu:
