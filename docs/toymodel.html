@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/tabby.min.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.2.269">
+
+  <meta name="author" content="javirudolph">
+  <title>montanaBats - Dynamic Multistate Conditional Model Simulation</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto.css" id="theme">
+  <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+
+  .callout {
+    margin-top: 1em;
+    margin-bottom: 1em;  
+    border-radius: .25rem;
+  }
+
+  .callout.callout-style-simple { 
+    padding: 0em 0.5em;
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+    display: flex;
+  }
+
+  .callout.callout-style-default {
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+  }
+
+  .callout .callout-body-container {
+    flex-grow: 1;
+  }
+
+  .callout.callout-style-simple .callout-body {
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-style-default .callout-body {
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-captioned.callout-style-simple .callout-body {
+    margin-top: 0.2em;
+  }
+
+  .callout:not(.callout-captioned) .callout-body {
+      display: flex;
+  }
+
+  .callout:not(.no-icon).callout-captioned.callout-style-simple .callout-content {
+    padding-left: 1.6em;
+  }
+
+  .callout.callout-captioned .callout-header {
+    padding-top: 0.2em;
+    margin-bottom: -0.2em;
+  }
+
+  .callout.callout-captioned .callout-caption  p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+    
+  .callout.callout-captioned.callout-style-simple .callout-content  p {
+    margin-top: 0;
+  }
+
+  .callout.callout-captioned.callout-style-default .callout-content  p {
+    margin-top: 0.7em;
+  }
+
+  .callout.callout-style-simple div.callout-caption {
+    border-bottom: none;
+    font-size: .9rem;
+    font-weight: 600;
+    opacity: 75%;
+  }
+
+  .callout.callout-style-default  div.callout-caption {
+    border-bottom: none;
+    font-weight: 600;
+    opacity: 85%;
+    font-size: 0.9rem;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-default div.callout-content {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-simple .callout-icon::before {
+    height: 1rem;
+    width: 1rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+  }
+
+  .callout.callout-style-default .callout-icon::before {
+    height: 0.9rem;
+    width: 0.9rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 0.9rem 0.9rem;
+  }
+
+  .callout-caption {
+    display: flex
+  }
+    
+  .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  .callout.no-icon::before {
+    display: none !important;
+  }
+
+  .callout.callout-captioned .callout-body > .callout-content > :last-child {
+    margin-bottom: 0.5rem;
+  }
+
+  .callout.callout-captioned .callout-icon::before {
+    margin-top: .5rem;
+    padding-right: .5rem;
+  }
+
+  .callout:not(.callout-captioned) .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  /* Callout Types */
+
+  div.callout-note {
+    border-left-color: #4582ec !important;
+  }
+
+  div.callout-note .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEU0lEQVRYCcVXTWhcVRQ+586kSUMMxkyaElstCto2SIhitS5Ek8xUKV2poatCcVHtUlFQk8mbaaziwpWgglJwVaquitBOfhQXFlqlzSJpFSpIYyXNjBNiTCck7x2/8/LeNDOZxDuEkgOXe++553zfefee+/OYLOXFk3+1LLrRdiO81yNqZ6K9cG0P3MeFaMIQjXssE8Z1JzLO9ls20MBZX7oG8w9GxB0goaPrW5aNMp1yOZIa7Wv6o2ykpLtmAPs/vrG14Z+6d4jpbSKuhdcSyq9wGMPXjonwmESXrriLzFGOdDBLB8Y6MNYBu0dRokSygMA/mrun8MGFN3behm6VVAwg4WR3i6FvYK1T7MHo9BK7ydH+1uurECoouk5MPRyVSBrBHMYwVobG2aOXM07sWrn5qgB60rc6mcwIDJtQrnrEr44kmy+UO9r0u9O5/YbkS9juQckLed3DyW2XV/qWBBB3ptvI8EUY3I9p/67OW+g967TNr3Sotn3IuVlfMLVnsBwH4fsnebJvyGm5GeIUA3jljERmrv49SizPYuq+z7c2H/jlGC+Ghhupn/hcapqmcudB9jwJ/3jvnvu6vu5lVzF1fXyZuZZ7U8nRmVzytvT+H3kilYvH09mLWrQdwFSsFEsxFVs5fK7A0g8gMZjbif4ACpKbjv7gNGaD8bUrlk8x+KRflttr22JEMRUbTUwwDQScyzPgedQHZT0xnx7ujw2jfVfExwYHwOsDTjLdJ2ebmeQIlJ7neo41s/DrsL3kl+W2lWvAga0tR3zueGr6GL78M3ifH0rGXrBC2aAR8uYcIA5gwV8zIE8onoh8u0Fca/ciF7j1uOzEnqcIm59sEXoGc0+z6+H45V1CvAvHcD7THztu669cnp+L0okAeIc6zjbM/24LgGM1gZk7jnRu1aQWoU9sfUOuhrmtaPIO3YY1KLLWZaEO5TKUbMY5zx8W9UJ6elpLwKXbsaZ4EFl7B4bMtDv0iRipKoDQT2sNQI9b1utXFdYisi+wzZ/ri/1m7QfDgEuvgUUEIJPq3DhX/5DWNqIXDOweC2wvIR90Oq3lDpdMIgD2r0dXvGdsEW5H6x6HLRJYU7C69VefO1x8Gde1ZFSJLfWS1jbCnhtOPxmpfv2LXOA2Xk2tvnwKKPFuZ/oRmwBwqRQDcKNeVQkYcOjtWVBuM/JuYw5b6isojIkYxyYAFn5K7ZBF10fea52y8QltAg6jnMqNHFBmGkQ1j+U43HMi2xMar1Nv0zGsf1s8nUsmUtPOOrbFIR8bHFDMB5zL13Gmr/kGlCkUzedTzzmzsaJXhYawnA3UmARpiYj5ooJZiUoxFRtK3X6pgNPv+IZVPcnwbOl6f+aBaO1CNvPW9n9LmCp01nuSaTRF2YxHqZ8DYQT6WsXT+RD6eUztwYLZ8rM+rcPxamv1VQzFUkzFXvkiVrySGQgJNvXHJAxiU3/NwiC03rSf05VBaPtu/Z7/B8Yn/w7eguloAAAAAElFTkSuQmCC');
+  }
+
+  div.callout-note.callout-style-default .callout-caption {
+    background-color: #dae6fb
+  }
+
+  div.callout-important {
+    border-left-color: #d9534f !important;
+  }
+
+  div.callout-important .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEKklEQVRYCcVXTWhcVRS+575MJym48A+hSRFr00ySRQhURRfd2HYjk2SSTokuBCkU2o0LoSKKraKIBTcuFCoidGFD08nkBzdREbpQ1EDNIv8qSGMFUboImMSZd4/f9zJv8ibJMC8xJQfO3HPPPef7zrvvvnvviIkpC9nsw0UttFunbUhpFzFtarSd6WJkStVMw5xyVqYTvkwfzuf/5FgtkVoB0729j1rjXwThS7Vio+Mo6DNnvLfahoZ+i/o32lULuJ3NNiz7q6+pyAUkJaFF6JwaM2lUJlV0MlnQn5aTRbEu0SEqHUa0A4AdiGuB1kFXRfVyg5d87+Dg4DL6m2TLAub60ilj7A1Ec4odSAc8X95sHh7+ZRPCFo6Fnp7HfU/fBng/hi10CjCnWnJjsxvDNxWw0NfV6Rv5GgP3I3jGWXumdTD/3cbEOP2ZbOZp69yniG3FQ9z1jD7bnBu9Fc2tKGC2q+uAJOQHBDRiZX1x36o7fWBs7J9ownbtO+n0/qWkvW7UPIfc37WgT6ZGR++EOJyeQDSb9UB+DZ1G6DdLDzyS+b/kBCYGsYgJbSQHuThGKRcw5xdeQf8YdNHsc6ePXrlSYMBuSIAFTGAtQo+VuALo4BX83N190NWZWbynBjhOHsmNfFWLeL6v+ynsA58zDvvAC8j5PkbOcXCMg2PZFk3q8MjI7WAG/Dp9AwP7jdGBOOQkAvlFUB+irtm16I1Zw9YBcpGTGXYmk3kQIC/Cds55l+iMI3jqhjAuaoe+am2Jw5GT3Nbz3CkE12NavmzN5+erJW7046n/CH1RO/RVa8lBLozXk9uqykkGAyRXLWlLv5jyp4RFsG5vGVzpDLnIjTWgnRy2Rr+tDKvRc7Y8AyZq10jj8DqXdnIRNtFZb+t/ZRtXcDiVnzpqx8mPcDWxgARUqx0W1QB9MeUZiNrV4qP+Ehc+BpNgATsTX8ozYKL2NtFYAHc84fG7ndxUPr+AR/iQSns7uSUufAymwDOb2+NjK27lEFocm/EE2WpyIy/Hi66MWuMKJn8RvxIcj87IM5Vh9663ziW36kR0HNenXuxmfaD8JC7tfKbrhFr7LiZCrMjrzTeGx+PmkosrkNzW94ObzwocJ7A1HokLolY+AvkTiD/q1H0cN48c5EL8Crkttsa/AXQVDmutfyku0E7jShx49XqV3MFK8IryDhYVbj7Sj2P2eBxwcXoe8T8idsKKPRcnZw1b+slFTubwUwhktrfnAt7J++jwQtLZcm3sr9LQrjRzz6cfMv9aLvgmnAGvpoaGLxM4mAEaLV7iAzQ3oU0IvD5x9ix3yF2RAAuYAOO2f7PEFWCXZ4C9Pb2UsgDeVnFSpbFK7/IWu7TPTvBqzbGdCHOJQSxiEjt6IyZmxQyEJHv6xyQsYk//moVFsN2zP6fRImjfq7/n/wFDguUQFNEwugAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-important.callout-style-default .callout-caption {
+    background-color: #f7dddc
+  }
+
+  div.callout-warning {
+    border-left-color: #f0ad4e !important;
+  }
+
+  div.callout-warning .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAETklEQVRYCeVWW2gcVRg+58yaTUnizqbipZeX4uWhBEniBaoUX1Ioze52t7sRq6APio9V9MEaoWlVsFasRq0gltaAPuxms8lu0gcviE/FFOstVbSIxgcv6SU7EZqmdc7v9+9mJtNks51NTUH84ed889/PP+cmxP+d5FIbMJmNbpREu4WUkiTtCicKny0l1pIKmBzovF2S+hIJHX8iEu3hZJ5lNZGqyRrGSIQpq15AzF28jgpeY6yk6GVdrfFqdrD6Iw+QlB8g0YS2g7dyQmXM/IDhBhT0UCiRf59lfqmmDvzRt6kByV/m4JjtzuaujMUM2c5Z2d6JdKrRb3K2q6mA+oYVz8JnDdKPmmNthzkAk/lN63sYPgevrguc72aZX/L9C6x09GYyxBgCX4NlvyGUHOKELlm5rXeR1kchuChJt4SSwyddZRXgvwMGvYo4QSlk3/zkHD8UHxwVJA6zjZZqP8v8kK8OWLnIZtLyCAJagYC4rTGW/9Pqj92N/c+LUaAj27movwbi19tk/whRCIE7Q9vyI6yvRpftAKVTdUjOW40X3h5OXsKCdmFcx0xlLJoSuQngnrJe7Kcjm4OMq9FlC7CMmScQANuNvjfP3PjGXDBaUQmbp296S5L4DrpbrHN1T87ZVEZVCzg1FF0Ft+dKrlLukI+/c9ENo+TvlTDbYFvuKPtQ9+l052rXrgKoWkDAFnvh0wTOmYn8R5f4k/jN/fZiCM1tQx9jQQ4ANhqG4hiL0qIFTGViG9DKB7GYzgubnpofgYRwO+DFjh0Zin2m4b/97EDkXkc+f6xYAPX0KK2I/7fUQuwzuwo/L3AkcjugPNixC8cHf0FyPjWlItmLxWw4Ou9YsQCr5fijMGoD/zpdRy95HRysyXA74MWOnscpO4j2y3HAVisw85hX5+AFBRSHt4ShfLFkIMXTqyKFc46xdzQM6XbAi702a7sy04J0+feReMFKp5q9esYLCqAZYw/k14E/xcLLsFElaornTuJB0svMuJINy8xkIYuL+xPAlWRceH6+HX7THJ0djLUom46zREu7tTkxwmf/FdOZ/sh6Q8qvEAiHpm4PJ4a/doJe0gH1t+aHRgCzOvBvJedEK5OFE5jpm4AGP2a8Dxe3gGJ/pAutug9Gp6he92CsSsWBaEcxGx0FHytmIpuqGkOpldqNYQK8cSoXvd+xLxXADw0kf6UkJNFtdo5MOgaLjiQOQHcn+A6h5NuL2s0qsC2LOM75PcF3yr5STuBSAcGG+meA14K/CI21HcS4LBT6tv0QAh8Dr5l93AhZzG5ZJ4VxAqdZUEl9z7WJ4aN+svMvwHHL21UKTd1mqvChH7/Za5xzXBBKrUcB0TQ+Ulgkfbi/H/YT5EptrGzsEK7tR1B7ln9BBwckYfMiuSqklSznIuoIIOM42MQO+QnduCoFCI0bpkzjCjddHPN/F+2Yu+sd9bKNpVwHhbS3LluK/0zgfwD0xYI5dXuzlQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-warning.callout-style-default .callout-caption {
+    background-color: #fcefdc
+  }
+
+  div.callout-tip {
+    border-left-color: #02b875 !important;
+  }
+
+  div.callout-tip .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAADr0lEQVRYCe1XTWgTQRj9ZjZV8a9SPIkKgj8I1bMHsUWrqYLVg4Ue6v9BwZOxSYsIerFao7UiUryIqJcqgtpimhbBXoSCVxUFe9CTiogUrUp2Pt+3aUI2u5vdNh4dmMzOzHvvezuz8xNFM0mjnbXaNu1MvFWRXkXEyE6aYOYJpdW4IXuA4r0fo8qqSMDBU0v1HJUgVieAXxzCsdE/YJTdFcVIZQNMyhruOMJKXYFoLfIfIvVIMWdsrd+Rpd86ZmyzzjJmLStqRn0v8lzkb4rVIXvnpScOJuAn2ACC65FkPzEdEy4TPWRLJ2h7z4cArXzzaOdKlbOvKKX25Wl00jSnrwVxAg3o4dRxhO13RBSdNvH0xSARv3adTXbBdTf64IWO2vH0LT+cv4GR1DJt+DUItaQogeBX/chhbTBxEiZ6gftlDNXTrvT7co4ub5A6gp9HIcHvzTa46OS5fBeP87Qm0fQkr4FsYgVQ7Qg+ZayaDg9jhg1GkWj8RG6lkeSacrrHgDaxdoBiZPg+NXV/KifMuB6//JmYH4CntVEHy/keA6x4h4CU5oFy8GzrBS18cLJMXcljAKB6INjWsRcuZBWVaS3GDrqB7rdapVIeA+isQ57Eev9eCqzqOa81CY05VLd6SamW2wA2H3SiTbnbSxmzfp7WtKZkqy4mdyAlGx7ennghYf8voqp9cLSgKdqNfa6RdRsAAkPwRuJZNbpByn+RrJi1RXTwdi8RQF6ymDwGMAtZ6TVE+4uoKh+MYkcLsT0Hk8eAienbiGdjJHZTpmNjlbFJNKDVAp2fJlYju6IreQxQ08UJDNYdoLSl6AadO+fFuCQqVMB1NJwPm69T04Wv5WhfcWyfXQB+wXRs1pt+nCknRa0LVzSA/2B+a9+zQJadb7IyyV24YAxKp2Jqs3emZTuNnKxsah+uabKbMk7CbTgJx/zIgQYErIeTKRQ9yD9wxVof5YolPHqaWo7TD6tJlh7jQnK5z2n3+fGdggIOx2kaa2YI9QWarc5Ce1ipNWMKeSG4DysFF52KBmTNMmn5HqCFkwy34rDg05gDwgH3bBi+sgFhN/e8QvRn8kbamCOhgrZ9GJhFDgfcMHzFb6BAtjKpFhzTjwv1KCVuxHvCbsSiEz4CANnj84cwHdFXAbAOJ4LTSAawGWFn5tDhLMYz6nWeU2wJfIhmIJBefcd/A5FWQWGgrWzyORZ3Q6HuV+Jf0Bj+BTX69fm1zWgK7By1YTXchFDORywnfQ7GpzOo6S+qECrsx2ifVQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-tip.callout-style-default .callout-caption {
+    background-color: #ccf1e3
+  }
+
+  div.callout-caution {
+    border-left-color: #fd7e14 !important;
+  }
+
+  div.callout-caution .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAACV0lEQVRYCdVWzWoUQRCuqp2ICBLJXgITZL1EfQDBW/bkzUMUD7klD+ATSHBEfAIfQO+iXsWDxJsHL96EHAwhgzlkg8nBg25XWb0zIb0zs9muYYWkoKeru+vn664fBqElyZNuyh167NXJ8Ut8McjbmEraKHkd7uAnAFku+VWdb3reSmRV8PKSLfZ0Gjn3a6Xlcq9YGb6tADjn+lUfTXtVmaZ1KwBIvFI11rRXlWlatwIAAv2asaa9mlB9wwygiDX26qaw1yYPzFXg2N1GgG0FMF8Oj+VIx7E/03lHx8UhvYyNZLN7BwSPgekXXLribw7w5/c8EF+DBK5idvDVYtEEwMeYefjjLAdEyQ3M9nfOkgnPTEkYU+sxMq0BxNR6jExrAI31H1rzvLEfRIdgcv1XEdj6QTQAS2wtstEALLG1yEZ3QhH6oDX7ExBSFEkFINXH98NTrme5IOaaA7kIfiu2L8A3qhH9zRbukdCqdsA98TdElyeMe5BI8Rs2xHRIsoTSSVFfCFCWGPn9XHb4cdobRIWABNf0add9jakDjQJpJ1bTXOJXnnRXHRf+dNL1ZV1MBRCXhMbaHqGI1JkKIL7+i8uffuP6wVQAzO7+qVEbF6NbS0LJureYcWXUUhH66nLR5rYmva+2tjRFtojkM2aD76HEGAD3tPtKM309FJg5j/K682ywcWJ3PASCcycH/22u+Bh7Aa0ehM2Fu4z0SAE81HF9RkB21c5bEn4Dzw+/qNOyXr3DCTQDMBOdhi4nAgiFDGCinIa2owCEChUwD8qzd03PG+qdW/4fDzjUMcE1ZpIAAAAASUVORK5CYII=');
+  }
+
+  div.callout-caution.callout-style-default .callout-caption {
+    background-color: #ffe5d0
+  }
+
+  </style>
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Dynamic Multistate Conditional Model Simulation</h1>
+  <p class="subtitle">Montana bats and White Nose Syndrome</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+javirudolph 
+</div>
+</div>
+</div>
+
+</section>
+<section id="where-we-are" class="slide level2 smaller incremental">
+<h2>Where we are:</h2>
+<ul>
+<li>The current approach for NABat data has been focused on species-specific occupancy models
+<ul>
+<li>Our focus is not only on occupancy, but also levels of activity</li>
+<li>Incorporating <em>Pd</em> effects</li>
+<li>Including environmental change over time</li>
+</ul></li>
+<li>Considering <em>Pd</em> susceptible species to work with levels of activity and not just occupancy
+<ul>
+<li>workaround for species identifiability issues</li>
+</ul></li>
+<li>Building a predictive model that incorporates bat and <em>Pd</em> dynamics over time
+<ul>
+<li>The effects of WNS/<em>Pd</em> can show up in decreases of bat activity</li>
+<li>Building a multistate model based on activity levels</li>
+</ul></li>
+<li>This model will help us understand how potential management actions will have an effect on bat populations</li>
+<li>As we evaluate objectives and tradeoffs for different management actions, we want to account for <em>Pd</em> spread over time
+<ul>
+<li>A dynamic model is important when the environment and disease transmission are changing</li>
+</ul></li>
+</ul>
+</section>
+<section>
+<section id="model-description" class="title-slide slide level1 smaller center">
+<h1>Model description</h1>
+<p>We are working on a dynamic multistate model. This means it changes in time, is site-specific, and has two different levels of occupancy for bats: few bats and many bats.</p>
+<div class="cell">
+
+</div>
+</section>
+<section id="model-description-cont." class="slide level2 smaller">
+<h2>Model description cont.</h2>
+<p>We consider a simple dynamic model with potential occupancy states for each site <span class="math inline">\(i\)</span>: <em>unoccupied</em>, <em>few bats</em>, <em>many bats</em>. The probability of each site <span class="math inline">\(i\)</span> being in one of those occupancy states at time <span class="math inline">\(t\)</span> is given by a combination of the state of the site in the last year <span class="math inline">\(t-1\)</span> and some environmental covariates.</p>
+<p>With <span class="math inline">\(z_i,t\)</span> being the state of site <span class="math inline">\(i\)</span> at time <span class="math inline">\(t\)</span>, drawn from a multinomial distribution with a vector of probabilities for each state. Given the dependency on the state of the previous year, we define the state of sites in the first year separately as:</p>
+<p><span class="math display">\[
+z_{i,1} \sim \text{Categorical}(\Omega_i)
+\]</span> The initial state vector (<span class="math inline">\(\Omega_i\)</span>) gives the probability of a site <span class="math inline">\(i\)</span> being in one of the three states: <em>unoccupied</em> (coded as 1), <em>few bats</em> (coded as 2), <em>many bats</em> (coded at 3), and is a combination of the probability of a site being occupied (<span class="math inline">\(\psi\)</span>) and the probability that an occupied site is occupied by <em>many bats</em> (<span class="math inline">\(r\)</span>).</p>
+<p><span class="math display">\[
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+\]</span> For us to relate these two probabilities (<span class="math inline">\(\psi\)</span> and <span class="math inline">\(r\)</span>) to covariates, we use a logit link as follows:</p>
+<p><span class="math display">\[
+\text{logit}(\psi) = \beta_0 + \beta_1 ForestCover
+\\
+\text{logit}(r) = \alpha_0 + \alpha_1 CaveDensity
+\]</span></p>
+<p>In this simple example, we have only added one covariate to each probability. Therefore, we establish that the probability of a site being occupied by bats in the first year is a function of percent forest cover, and the probability that those occupied sites are occupied by many bats is a function of cave density.</p>
+<p>The state of each site <span class="math inline">\(i\)</span> in the following years (<span class="math inline">\(t = 2 \dots T\)</span>) is given by:</p>
+<p><span class="math display">\[
+z_{i,t}|z_{i,t-1} \sim Categorical(\Phi_{z{(t-1)}, z{(t)}, i, t})
+\]</span> where the transition matrix (<span class="math inline">\(\Phi\)</span>) determines the probabilities of a site going from one state to another, or remaining in the same state, depending on covariates and the state at time <span class="math inline">\(t-1\)</span>. We have parameterized the transition matrix in terms of colonization, persistence, growth, and decline:</p>
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}, i,t} =  \begin{bmatrix}
+                                1-\gamma &amp; \gamma &amp; 0 \\
+                                1-\phi_1 &amp; \phi_1(1-G) &amp;  \phi_1G\\
+                                1-\phi_2 &amp; \phi_2D &amp; \phi_2(1 - D)
+                                \end{bmatrix}_{i,t}
+\]</span> Where <span class="math inline">\(\gamma\)</span> parameters are state specific. This means <span class="math inline">\(\gamma\)</span> is the probability of an empty site at time <span class="math inline">\(t-1\)</span> being colonized by <em>few bats</em> at time <span class="math inline">\(t\)</span>. We assume empty sites cannot be colonized by many bats in one time step. Persistence (<span class="math inline">\(\phi\)</span>) describes the probability of a site staying in the same state from one year to another. Growth and decline probabilities are shown by <span class="math inline">\(G\)</span> and <span class="math inline">\(D\)</span>.</p>
+<p>For us to relate the rates in the transition matrix to covariates and management actions, we use a logit-link.</p>
+</section>
+<section id="colonization-persistence-growth-and-decline" class="slide level2 smaller">
+<h2>Colonization, persistence, growth, and decline</h2>
+<h3 id="colonization">Colonization</h3>
+<p>We define colonization as the process of going from no bats (<em>unoccupied</em> site) to having <em>few bats</em> (<span class="math inline">\(\gamma\)</span>) in the next year. For simplicity, in this simulation we assume that the only factor influencing colonization is forest cover.</p>
+<p><span class="math display">\[
+\text{logit}(\gamma) = b_0 + b_1Forest
+\]</span></p>
+<h3 id="persistence">Persistence</h3>
+<p>Persistence is the probability that an occupied site continues to be occupied the following year. In our model, the probability that a site occupied with <em>few bats</em> continues to be occupied the next year is given by <span class="math inline">\(\phi_1\)</span>. And the probability that such a site continues to be occupied, but also sees a growth (<span class="math inline">\(G\)</span>) in the bat population is given by <span class="math inline">\(\phi_1 G\)</span>.</p>
+<p>Persistence will be influenced by presence of <em>Pd</em> or WNS, but also by maintenance of forest cover and other environmental variables. For simplicity we only include forest cover and Pd.</p>
+<p><span class="math display">\[
+\text{logit}(\phi) = a_0 + a_1Forest - a_2Pd
+\]</span> #### Growth and decline</p>
+<p>We think of variables directly affecting population growth as those related to improved winter survival and recruitment, such as access to water and supplemental feeding.</p>
+<p><span class="math display">\[
+\text{logit}(G) = m_0 + m_1Water + m_2Feeding
+\]</span> In the case of declines, we can associate these to disturbances and disease:</p>
+<p><span class="math display">\[
+\text{logit}(D) = n_0 + n_1Disturb + n_2Pd
+\]</span></p>
+<h4 id="transition-matrix">Transition matrix</h4>
+<p>Just as a reminder:</p>
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}, i,t} =  \begin{bmatrix}
+                                1-\gamma &amp; \gamma &amp; 0 \\
+                                1-\phi_1 &amp; \phi_1(1-G) &amp;  \phi_1G\\
+                                1-\phi_2 &amp; \phi_2D &amp; \phi_2(1 - D)
+                                \end{bmatrix}_{i,t}
+\]</span></p>
+</section></section>
+<section>
+<section id="toy-model" class="title-slide slide level1 center">
+<h1>Toy model</h1>
+<p>To illustrate our model and how predictions will work, we developed a simple toy model. Keep in mind that all values asigned to parameters here are theoretical and have little to no biological basis associated to them.</p>
+</section>
+<section id="setting-up-simulation" class="slide level2 smaller">
+<h2>Setting up simulation</h2>
+<p>We start by generating a grid of 100 sites, and simulating covariates for each of the grids.</p>
+<div class="panel-tabset">
+<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Forest + Caves</a></li><li><a href="#tabset-1-2">Pd + Disturb</a></li><li><a href="#tabset-1-3">Others</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="smaller">
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-5-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="smaller">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-6-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-3" class="smaller">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-7-1.png" width="960"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="initial-state-t1" class="slide level2 smaller">
+<h2>Initial state (<span class="math inline">\(t=1\)</span>)</h2>
+<p>We estimate first year occupancy as a function of forest cover and cave density:</p>
+<div class="panel-tabset">
+<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1"><span class="math inline">\(t=1\)</span> occupancy</a></li><li><a href="#tabset-2-2">Equations</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="smaller">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-8-1.png" width="960"></p>
+</div>
+</div>
+<p>This draw shows that 35 sites are unoccupied, 15 have a few bats, and 50 have many bats in the first year (<span class="math inline">\(t=1\)</span>).</p>
+</div>
+<div id="tabset-2-2">
+<p>Initial state for each site given by the probability of a site being occupied, and if occupied having many bats: <span class="math display">\[
+z_{i,1} \sim \text{Categorical}(\Omega_i)
+\\
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+\]</span></p>
+<p>These probabilities related to the forest cover and cave covariates</p>
+<p><span class="math display">\[
+\text{logit}(\psi) = \beta_0 + \beta_1 ForestCover
+\\
+\text{logit}(r) = \alpha_0 + \alpha_1 CaveDensity
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="years-t2dots-t" class="slide level2 smaller">
+<h2>Years <span class="math inline">\(t=2\dots T\)</span></h2>
+<p>Generating transition probabilities</p>
+<div class="panel-tabset">
+<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Matrix</a></li><li><a href="#tabset-3-2">Colonization</a></li><li><a href="#tabset-3-3">Persistence</a></li><li><a href="#tabset-3-4">Growth</a></li><li><a href="#tabset-3-5">Decline</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1">
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}, i} =  \begin{bmatrix}
+                                1-\gamma &amp; \gamma &amp; 0 \\
+                                1-\phi_1 &amp; \phi_1(1-G) &amp;  \phi_1G\\
+                                1-\phi_2 &amp; \phi_2D &amp; \phi_2(1 - D)
+                                \end{bmatrix}_{i}
+\]</span></p>
+</div>
+<div id="tabset-3-2">
+<div class="cell">
+
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># Get gamma</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a></span>
+<span id="cb1-3"><a href="#cb1-3"></a>bset <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">b0 =</span> <span class="fl">0.2</span>, <span class="co"># intercept</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>          <span class="at">b1 =</span> <span class="fl">1.2</span> <span class="co"># effect of forest</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a>          )</span>
+<span id="cb1-6"><a href="#cb1-6"></a></span>
+<span id="cb1-7"><a href="#cb1-7"></a>logitgamma <span class="ot">&lt;-</span> bset[<span class="dv">1</span>] <span class="sc">+</span> bset[<span class="dv">2</span>]<span class="sc">*</span>simdf<span class="sc">$</span>forest</span>
+<span id="cb1-8"><a href="#cb1-8"></a></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="co"># Gamma as the probability of an unoccupied site to become occupied</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a>gammaparam <span class="ot">&lt;-</span> <span class="fu">inv_logit</span>(logitgamma)</span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="fu">hist</span>(gammaparam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-10-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-3">
+<p>For simplicity in this toy model, we are setting persistence for few bats and many bats the same.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># Going to persistence </span></span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="co"># set coefficients</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="co"># For now and simplicity, we make persistence the same for few bats and many bats.</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a>aset1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">a0 =</span> <span class="fl">0.1</span>, <span class="co"># intercept</span></span>
+<span id="cb2-5"><a href="#cb2-5"></a>           <span class="at">a1 =</span> <span class="fl">0.8</span>, <span class="co"># forest</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a>           <span class="at">a2 =</span> <span class="sc">-</span><span class="fl">0.5</span> <span class="co"># Pd</span></span>
+<span id="cb2-7"><a href="#cb2-7"></a>           )</span>
+<span id="cb2-8"><a href="#cb2-8"></a></span>
+<span id="cb2-9"><a href="#cb2-9"></a>aset2 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">a0 =</span> <span class="fl">0.1</span>, <span class="co"># intercept</span></span>
+<span id="cb2-10"><a href="#cb2-10"></a>           <span class="at">a1 =</span> <span class="fl">0.8</span>, <span class="co"># forest</span></span>
+<span id="cb2-11"><a href="#cb2-11"></a>           <span class="at">a2 =</span> <span class="sc">-</span><span class="fl">0.5</span> <span class="co"># Pd</span></span>
+<span id="cb2-12"><a href="#cb2-12"></a>           )</span>
+<span id="cb2-13"><a href="#cb2-13"></a></span>
+<span id="cb2-14"><a href="#cb2-14"></a>logitphi <span class="ot">&lt;-</span> <span class="cf">function</span>(aset, forest, pd){</span>
+<span id="cb2-15"><a href="#cb2-15"></a>  logitfi <span class="ot">&lt;-</span> aset[<span class="dv">1</span>] <span class="sc">+</span> aset[<span class="dv">2</span>]<span class="sc">*</span>forest <span class="sc">+</span> aset[<span class="dv">3</span>]<span class="sc">*</span>pd</span>
+<span id="cb2-16"><a href="#cb2-16"></a>  phi <span class="ot">&lt;-</span> <span class="fu">inv_logit</span>(logitfi)</span>
+<span id="cb2-17"><a href="#cb2-17"></a>  <span class="fu">return</span>(phi)</span>
+<span id="cb2-18"><a href="#cb2-18"></a>}</span>
+<span id="cb2-19"><a href="#cb2-19"></a></span>
+<span id="cb2-20"><a href="#cb2-20"></a>phi1 <span class="ot">&lt;-</span> <span class="fu">logitphi</span>(aset1, simdf<span class="sc">$</span>forest, simdf<span class="sc">$</span>Pd)</span>
+<span id="cb2-21"><a href="#cb2-21"></a>phi2 <span class="ot">&lt;-</span> <span class="fu">logitphi</span>(aset2, simdf<span class="sc">$</span>forest, simdf<span class="sc">$</span>Pd)</span>
+<span id="cb2-22"><a href="#cb2-22"></a></span>
+<span id="cb2-23"><a href="#cb2-23"></a></span>
+<span id="cb2-24"><a href="#cb2-24"></a><span class="fu">hist</span>(phi1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-11-1.png" width="960"></p>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">hist</span>(phi2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-11-2.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-4">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># Growth </span></span>
+<span id="cb4-2"><a href="#cb4-2"></a>mset <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">m0 =</span> <span class="fl">0.1</span>, <span class="co"># intercept</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a>           <span class="at">m1 =</span> <span class="fl">0.2</span>, <span class="co"># water</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a>           <span class="at">m2 =</span> <span class="fl">0.3</span> <span class="co"># feeding associated to insect lures</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>           )</span>
+<span id="cb4-6"><a href="#cb4-6"></a></span>
+<span id="cb4-7"><a href="#cb4-7"></a></span>
+<span id="cb4-8"><a href="#cb4-8"></a>logitgrowth <span class="ot">&lt;-</span> mset[<span class="dv">1</span>] <span class="sc">+</span> mset[<span class="dv">2</span>]<span class="sc">*</span>simdf<span class="sc">$</span>water <span class="sc">+</span> mset[<span class="dv">3</span>]<span class="sc">*</span>simdf<span class="sc">$</span>feeding</span>
+<span id="cb4-9"><a href="#cb4-9"></a>G <span class="ot">&lt;-</span> <span class="fu">inv_logit</span>(logitgrowth)</span>
+<span id="cb4-10"><a href="#cb4-10"></a><span class="fu">hist</span>(G)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-12-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-5">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># Decline</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>nset <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">n0 =</span> <span class="fl">0.1</span>, <span class="co"># intercept</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a>           <span class="at">n1 =</span> <span class="fl">0.4</span>, <span class="co"># Disturbance</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a>           <span class="at">n2 =</span> <span class="fl">0.3</span> <span class="co"># Pd</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a>           )</span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a>logitdecline <span class="ot">&lt;-</span> nset[<span class="dv">1</span>] <span class="sc">+</span> nset[<span class="dv">2</span>]<span class="sc">*</span>simdf<span class="sc">$</span>disturb <span class="sc">+</span> nset[<span class="dv">3</span>]<span class="sc">*</span>simdf<span class="sc">$</span>Pd</span>
+<span id="cb5-8"><a href="#cb5-8"></a>D <span class="ot">&lt;-</span> <span class="fu">inv_logit</span>(logitdecline)</span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="fu">hist</span>(D)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-13-1.png" width="960"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="years-t2dots-t-cont." class="slide level2">
+<h2>Years <span class="math inline">\(t=2\dots T\)</span> cont.</h2>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+
+<img data-src="toymodel_files/figure-revealjs/unnamed-chunk-16-1.png" width="960" class="r-stretch"></section>
+<section id="trend" class="slide level2">
+<h2>Trend</h2>
+
+<img data-src="toymodel_files/figure-revealjs/unnamed-chunk-17-1.png" width="960" class="r-stretch"></section>
+<section id="dynamic-pd" class="slide level2 smaller">
+<h2>Dynamic <em>Pd</em></h2>
+<div class="columns">
+<div class="column" style="width:40%;">
+<p>Transition matrix is the same across years, but different for each site:</p>
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}, i} =  \begin{bmatrix}
+                                1-\gamma &amp; \gamma &amp; 0 \\
+                                1-\phi_1 &amp; \phi_1(1-G) &amp;  \phi_1G\\
+                                1-\phi_2 &amp; \phi_2D &amp; \phi_2(1 - D)
+                                \end{bmatrix}_{i}
+\]</span></p>
+</div><div class="column" style="width:60%;">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-18-1.png" width="960"></p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="dynamic-pd-cont." class="slide level2 smaller">
+<h2>Dynamic <em>Pd</em> cont.</h2>
+<div class="panel-tabset">
+<ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Pd Spread</a></li><li><a href="#tabset-4-2">Phi &amp; D</a></li><li><a href="#tabset-4-3">Static Phi &amp; D</a></li><li><a href="#tabset-4-4">Bats Occ</a></li><li><a href="#tabset-4-5">Static Pd</a></li></ul>
+<div class="tab-content">
+<div id="tabset-4-1">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-19-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-4-2">
+<div class="cell">
+
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-21-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-4-3">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-22-1.png" width="960"></p>
+</div>
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-22-2.png" width="960"></p>
+</div>
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-22-3.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-4-4">
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-25-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-4-5">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-26-1.png" width="960"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="trend-comparison" class="slide level2">
+<h2>Trend Comparison</h2>
+<div class="panel-tabset">
+<ul id="tabset-5" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-5-1">Static Pd</a></li><li><a href="#tabset-5-2">Dynamic Pd</a></li></ul>
+<div class="tab-content">
+<div id="tabset-5-1">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-27-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-5-2">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-28-1.png" width="960"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="using-nabat-predictions" class="title-slide slide level1 center">
+<h1>Using NABat predictions</h1>
+
+</section>
+<section id="nabat-model" class="slide level2 smaller">
+<h2>NABat model</h2>
+<div class="panel-tabset">
+<ul id="tabset-6" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-6-1">Info</a></li><li><a href="#tabset-6-2">Model</a></li><li><a href="#tabset-6-3">Caveats</a></li></ul>
+<div class="tab-content">
+<div id="tabset-6-1">
+<ul>
+<li>We are using the covariates and <a href="https://www.sciencebase.gov/catalog/item/620e6f3bd34e6c7e83baa603">occupancy predictions and trends</a> developed by NABat.</li>
+<li>With the associated report <a href="https://ecos.fws.gov/ServCat/DownloadFile/216681">here</a>.
+<ul>
+<li>We used the ecological model described in the NABat report to calculate grid-cell level occupancy following the ecological model used for MYLU (pg 100 of the report), and coefficients estimated from Figure C1 (pg 195).</li>
+</ul></li>
+</ul>
+</div>
+<div id="tabset-6-2">
+<p>The occupancy of a grid <span class="math inline">\(i\)</span> is given by</p>
+<p><span class="math display">\[
+z_i \sim \text{Bernoulli}(\psi_i)
+\]</span></p>
+<p>where the probability of MYLU occurring at site <span class="math inline">\(i\)</span> (<span class="math inline">\(\psi_i\)</span>) is modeled as a function of the specific grid-cell covariates using a logit link:</p>
+<p><span class="math display">\[
+logit(\psi_i) = \beta_0 + \beta_1(elevation) + \beta_2({elevation}^2) + \beta_3(temp) + \beta_4({temp}^2) + \beta_5(physio\_div) + \beta_6(precip) + \beta_7(p\_forest) + \beta_8(p\_wetlands)
+\]</span></p>
+</div>
+<div id="tabset-6-3">
+<ul>
+<li>There are two more covariates: ‘karst’ and ‘distance to mines’, but the appendix says these are only for the east, so I didn’t include here.</li>
+<li>The intercept should include ecoregion data, which is not included here.</li>
+<li>I couldn’t find information on winter-to-summer connectivity, thus did not include here.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="coefficients" class="slide level2 smaller">
+<h2>Coefficients</h2>
+<div class="panel-tabset">
+<ul id="tabset-7" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-7-1">Original</a></li><li><a href="#tabset-7-2">Estimate from image</a></li></ul>
+<div class="tab-content">
+<div id="tabset-7-1" class="smaller">
+<p><img data-src="images/covariatesplot_fromNABat_report.png"></p>
+</div>
+<div id="tabset-7-2" class="smaller">
+<div class="cell">
+
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-30-1.png" width="960"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="quick-predictions" class="slide level2">
+<h2>Quick Predictions</h2>
+<div class="panel-tabset">
+<ul id="tabset-8" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-8-1">Simulation</a></li><li><a href="#tabset-8-2">Original NABat</a></li><li><a href="#tabset-8-3">Discrepancies</a></li></ul>
+<div class="tab-content">
+<div id="tabset-8-1">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-31-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-8-2">
+<div class="cell">
+<div class="cell-output-display">
+<p><img data-src="toymodel_files/figure-revealjs/unnamed-chunk-32-1.png" width="960"></p>
+</div>
+</div>
+</div>
+<div id="tabset-8-3">
+<ul>
+<li>To simulate our prediction we only used mean values for coefficients from the image, did not include the standard errors.</li>
+<li>Intercepts and winter-to-summer connectivity are not included because I couldn’t find data.</li>
+<li>When we showed this to folks in Montana, they mentioned that predictions were made with data pre 2020
+<ul>
+<li><pre><code>New data has not been submitted to NABat</code></pre></li>
+</ul></li>
+<li>At this time, we have the call data for MT for years 2020-2021</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="whats-next" class="slide level2 smaller incremental">
+<h2>What’s next?</h2>
+<ul>
+<li>Use Montana-specific data to parameterize our model</li>
+<li>Determine covariates to include in the model
+<ul>
+<li>There are additional covariates necessary for management</li>
+</ul></li>
+<li>Link management strategies to covariates
+<ul>
+<li>Still sorting through strategies and how to include them</li>
+</ul></li>
+<li>Setting up model to incorporate change in <em>Pd</em> and WNS over time
+<ul>
+<li>Dynamic Multistate Conditional model</li>
+<li>Also for treatment or management that is year-specific</li>
+</ul></li>
+<li>Link this model to monitoring data for yearly updates</li>
+<li>Build a dynamic table of treatments for user interaction
+<ul>
+<li>filter through potential treatments according to objectives and location</li>
+</ul></li>
+<li>Create a self-guided SDM process that is available to any user
+<ul>
+<li>outcomes are used for filtering table of treatments</li>
+<li>outcomes and selected treatments for use in a toy model</li>
+<li>guide management strategies</li>
+</ul></li>
+</ul>
+</section>
+
+<div class="footer footer-default">
+
+</div></section>
+    </div>
+  </div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'smaller': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
+    <script id="quarto-html-after-body" type="application/javascript">
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+      const toggleBodyColorMode = (bsSheetEl) => {
+        const mode = bsSheetEl.getAttribute("data-mode");
+        const bodyEl = window.document.querySelector("body");
+        if (mode === "dark") {
+          bodyEl.classList.add("quarto-dark");
+          bodyEl.classList.remove("quarto-light");
+        } else {
+          bodyEl.classList.add("quarto-light");
+          bodyEl.classList.remove("quarto-dark");
+        }
+      }
+      const toggleBodyColorPrimary = () => {
+        const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+        if (bsSheetEl) {
+          toggleBodyColorMode(bsSheetEl);
+        }
+      }
+      toggleBodyColorPrimary();  
+      const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+      tabsets.forEach(function(tabset) {
+        const tabby = new Tabby('#' + tabset.id);
+      });
+      const clipboard = new window.ClipboardJS('.code-copy-button', {
+        target: function(trigger) {
+          return trigger.previousElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        // button target
+        const button = e.trigger;
+        // don't keep focus
+        button.blur();
+        // flash "checked"
+        button.classList.add('code-copy-button-checked');
+        var currentTitle = button.getAttribute("title");
+        button.setAttribute("title", "Copied!");
+        let tooltip;
+        if (window.bootstrap) {
+          button.setAttribute("data-bs-toggle", "tooltip");
+          button.setAttribute("data-bs-placement", "left");
+          button.setAttribute("data-bs-title", "Copied!");
+          tooltip = new bootstrap.Tooltip(button, 
+            { trigger: "manual", 
+              customClass: "code-copy-button-tooltip",
+              offset: [0, -8]});
+          tooltip.show();    
+        }
+        setTimeout(function() {
+          if (tooltip) {
+            tooltip.hide();
+            button.removeAttribute("data-bs-title");
+            button.removeAttribute("data-bs-toggle");
+            button.removeAttribute("data-bs-placement");
+          }
+          button.setAttribute("title", currentTitle);
+          button.classList.remove('code-copy-button-checked');
+        }, 1000);
+        // clear code selection
+        e.clearSelection();
+      });
+      function tippyHover(el, contentFn) {
+        const config = {
+          allowHTML: true,
+          content: contentFn,
+          maxWidth: 500,
+          delay: 100,
+          arrow: false,
+          appendTo: function(el) {
+              return el.closest('section.slide') || el.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'quarto-reveal',
+          placement: 'bottom-start'
+        };
+          config['offset'] = [0,0];
+          config['maxWidth'] = 700;
+        window.tippy(el, config); 
+      }
+      const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+      for (var i=0; i<noterefs.length; i++) {
+        const ref = noterefs[i];
+        tippyHover(ref, function() {
+          // use id or data attribute instead here
+          let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+          try { href = new URL(href).hash; } catch {}
+          const id = href.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          return note.innerHTML;
+        });
+      }
+      const findCites = (el) => {
+        const parentEl = el.parentElement;
+        if (parentEl) {
+          const cites = parentEl.dataset.cites;
+          if (cites) {
+            return {
+              el,
+              cites: cites.split(' ')
+            };
+          } else {
+            return findCites(el.parentElement)
+          }
+        } else {
+          return undefined;
+        }
+      };
+      var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+      for (var i=0; i<bibliorefs.length; i++) {
+        const ref = bibliorefs[i];
+        const citeInfo = findCites(ref);
+        if (citeInfo) {
+          tippyHover(citeInfo.el, function() {
+            var popup = window.document.createElement('div');
+            citeInfo.cites.forEach(function(cite) {
+              var citeDiv = window.document.createElement('div');
+              citeDiv.classList.add('hanging-indent');
+              citeDiv.classList.add('csl-entry');
+              var biblioDiv = window.document.getElementById('ref-' + cite);
+              if (biblioDiv) {
+                citeDiv.innerHTML = biblioDiv.innerHTML;
+              }
+              popup.appendChild(citeDiv);
+            });
+            return popup.innerHTML;
+          });
+        }
+      }
+    });
+    </script>
+    
+
+</body></html>

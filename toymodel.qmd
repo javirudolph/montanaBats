@@ -6,7 +6,6 @@ format:
   revealjs:
     scrollable: true
     theme: simple
-    self-contained: true
 slide-number: c/t
 execute: 
   echo: false
