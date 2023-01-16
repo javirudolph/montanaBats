@@ -7,9 +7,8 @@ website:
   navbar:
     search: true
     left:
-      - href: index.qmd
-        text: Home
-      - about.qmd
+      - text: "Home"
+        file: index.qmd
     right:
       - icon: github
         menu:
@@ -17,7 +16,12 @@ website:
             url:  https://github.com/javirudolph/montanaBats
           - text: Report a Bug
             url:  https://github.com/javirudolph/montanaBats/issues
-
+  page-footer: 
+    left: "Copyright 2022, F. Javiera Rudolph" 
+    right: 
+      - icon: github
+        href: https://github.com/javirudolph
+        
 format:
   html:
     theme:

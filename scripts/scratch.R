@@ -33,18 +33,24 @@
 # sd.logit.p: SD of logit(p)
 
 nunits = 50; nsubunits = 4; nreps = 3
+nstates = 3
 
+# grid cell level
 mean.psi = 0.8; beta.Xpsi = 0; sd.logit.psi = 0
+mean.r = 0.3; beta.Xr = 0; sd.logit.r = 0
 
-mean.theta = 0.6; theta.time.range = c(0,0); beta.Xtheta = 0
+# site level
+mean.theta = 0.6; theta.time.range = c(0,0); beta.Xtheta = 0; sd.logit.theta = 0; 
 
-sd.logit.theta = 0; mean.p = 0.4; p.time.range = c(0,0); beta.Xp = 0; sd.logit.p = 0;
+# Observation
+mean.p = 0.4; p.time.range = c(0,0); beta.Xp = 0; sd.logit.p = 0;
 
 show.plot = TRUE; verbose = TRUE
 
 
 # Create data structures
-z <- psi <- array(NA, dim = nunits)  # Unit occurrence
+z <- array(NA, dim = nunits)  # Unit occurrence
+omega <- array(NA, dim = c(nunits, nstates))
 a <- theta <- array(NA, dim = c(nunits, nsubunits)) # Subunit
 y <- p <- array(NA, dim=c(nunits, nsubunits, nreps) ) # Rep
 
@@ -57,9 +63,10 @@ covC <- array(runif(nunits*nsubunits*nreps, -2, 2),
 
 # Simulate psi, theta and p and plot all
 psi <- plogis(qlogis(mean.psi) + beta.Xpsi * covA + rnorm(nunits, 0, sd.logit.psi))
-# qlogis transforms a probability into a logit
-# plogis will give you the probability for a given log-odds value
-
+r <- plogis(qlogis(mean.r) + beta.Xr * covA + rnorm(nunits, 0, sd.logit.r))
+omega[,1] <- 1-psi
+omega[,2] <- psi*(1-r)
+omega[,3] <- psi * r
 
 theta.time.effect <- runif(nsubunits, theta.time.range[1], theta.time.range[2])
 p.time.effect <- runif(nreps, p.time.range[1], p.time.range[2])
@@ -94,7 +101,8 @@ if(show.plot) {
 # Sample three nested Bernoulli distributions
 # with probabilities psi, z*theta and a * p
 for (i in 1:nunits) {
-  z[i] <- rbinom(n = 1, size = 1, prob = psi[i])
+  draw1 <- rmultinom(n = 1, size = 1, prob = omega[i,])
+  z[i] <- which(draw1 == 1)
   for (j in 1:nsubunits) {
     a[i, j] <- rbinom(n = 1, size = 1, prob = z[i] * theta[i,j])
     for (k in 1:nreps) {
@@ -125,6 +133,7 @@ cat("
 model {
   # Priors and model for params
   int.psi ~ dunif(0,1)         # Intercept of occupancy probability
+  int.r ~ dunif(0,1)
   for(t in 1:n.sites){
     int.theta[t] ~ dunif(0,1) # Intercepts availability probability
   }
@@ -137,8 +146,12 @@ model {
   # 'Likelihood' (or basic model structure)
   for (i in 1:n.cell){
     # Occurrence in pond i
-    z[i] ~ dbern(psi[i])
+    z[i] ~ dcat(omega[i,])
     logit(psi[i]) <- logit(int.psi) + beta.lpsi * covA[i]
+    logit(r[i]) <- logit(int.r) + beta.lr * covA[i]
+    omega[i,1] <- 1-psi[i]
+    omega[i,2] <- psi[i] * (1-r[i])
+    omega[i,3] <- psi[i] * r[i]
     for (j in 1:n.sites){
       # Occurrence in sample j
       a[i,j] ~ dbern(mu.a[i,j])
@@ -166,7 +179,7 @@ ast <- apply(y, c(1,2), max)   # inits for availability (a)
 inits <- function() list(z = zst, a = ast, int.psi = 0.5, beta.lpsi = 0)
 
 # Parameters monitored
-params <- c("int.psi", "int.theta", "int.p", "beta.lpsi", "beta.ltheta",
+params <- c("int.psi", "int.r", "int.theta", "int.p", "beta.lpsi", "beta.lr", "beta.ltheta",
             "beta.lp", "sum.z", "sum.a")
 
 # MCMC setting
