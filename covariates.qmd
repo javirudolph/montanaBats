@@ -1,5 +1,7 @@
 ---
 title: "Covariates"
+execute:
+  echo: false
 ---
 
 # Overview 
