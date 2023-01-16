@@ -4,36 +4,154 @@ format:
   html:
     code-fold: true
     code-summary: "Show the code"
+execute: 
+  echo: false
 ---
+
+# Overview 
+
+We are generating predictions at the grid cell scale (10x10km) using a set of covariates from the latest NABat report. We are focusing on the state of Montana, and incorporating different jurisdictions that may or may not implement all management actions. 
+
+## Data sources 
+Covariate data and grids are coming from NABat 
 
 ```{r libs}
 #| message: false
-#| echo: false
 
 # Libraries
 library(tidyverse)
 library(sf)
 library(jagsUI)
+library(scales)
 
 ```
 
 ```{r load_data}
 
-
-# SIMULATION ----------
-
 ## COVARIATES --------
-mt_covariates <- readRDS("datafiles/mt_covariates.RDS")
+mt_covariates <- readRDS("datafiles/mt_covariates.RDS") %>% 
+  # Abbreviate jurisdiction names
+    mutate(jurisd_abbr = case_when(
+    jurisdiction == "Montana Fish, Wildlife, and Parks" ~ "MFWP",
+    jurisdiction == "US Bureau of Land Management" ~ "BLM",
+    jurisdiction == "US Forest Service" ~ "USFS",
+    jurisdiction == "Reservations" ~ "Res",
+    jurisdiction == "US Fish and Wildlife Service" ~ "USFWS",
+    jurisdiction == "National Park Service" ~ "NPS",
+    jurisdiction == "Montana Department of Natural Resources and Conservation" ~ "DNRC"
+    ))
 
 grid_geometry <- mt_covariates %>% 
   select(GRTS_ID)
-
-ggplot(data = grid_geometry) + geom_sf()
-
-
-# what are we trying to do here?
-# Create a prediction for occupancy state given a set of covariates
 ```
+
+# Covariates 
+All the information from the report regarding the different covariates they used for their analysis.
+
+```{r}
+# ecoregions
+
+ggplot(data = mt_covariates) + geom_sf(aes(fill = eco1_name))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = eco2_name))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = eco3_name))
+
+# environmental variables
+ggplot(data = mt_covariates) + geom_sf(aes(fill = as.factor(karst)))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = p_forest))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = p_wetland))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = mean_temp))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = precip))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = DEM_max))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = physio_div))
+ggplot(data = mt_covariates) + geom_sf(aes(fill = dist_mines))
+```
+
+
+# Jurisdictions
+We overlayed a jurisdiction map from the Montana state library and saw which jurisdictions overlapped with different grid cells. Below you can see the different jurisdictions we have considered. 
+
+```{r jurisd_plots}
+
+# List of jurisdictions for color matching
+jurisd_list <- unique(mt_covariates$jurisdiction[!is.na(mt_covariates$jurisdiction)])
+jurisd_list_abbr <- unique(mt_covariates$jurisd_abbr[!is.na(mt_covariates$jurisd_abbr)])
+n_jurisd <- length(jurisd_list)
+
+# get colors
+jurisd_cols <- brewer_pal(palette = "Dark2")(n_jurisd)
+names(jurisd_cols) <- jurisd_list_abbr
+
+# all jurisdictions
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(color = "black", aes(fill = jurisd_abbr)) +
+  labs(fill = "Jurisdiction") +
+  scale_fill_manual(values = jurisd_cols) -> all_jurisd_plot
+
+# vis independently
+jurisd_plot_list <- list()
+for(i in 1:length(jurisd_cols)){
+  jurisd_plot_list[[i]] <- mt_covariates %>% 
+    filter(jurisdiction == jurisd_list[i]) %>% 
+    ggplot() +
+      geom_sf(data = grid_geometry) + 
+      geom_sf(color = "black", fill = jurisd_cols[i]) +
+      labs(title = jurisd_list[i], fill = "Jurisdiction")
+}
+
+
+```
+
+```{css, echo=FALSE}
+.panel-tabset .nav-item {
+  font-size: 15px;
+}
+```
+
+::: {.panel-tabset}
+
+## ALL
+```{r}
+all_jurisd_plot
+```
+
+## MFWP
+```{r}
+jurisd_plot_list[[1]]
+```
+
+## BLM
+```{r}
+jurisd_plot_list[[2]]
+```
+
+## USFS
+```{r}
+jurisd_plot_list[[3]]
+```
+
+## Res
+```{r}
+jurisd_plot_list[[4]]
+```
+
+## USFWS
+```{r}
+jurisd_plot_list[[5]]
+```
+
+## NPS
+```{r}
+jurisd_plot_list[[6]]
+```
+
+## DNRC
+```{r}
+jurisd_plot_list[[7]]
+```
+:::
+
+
 
 ```{r set_params}
 
@@ -46,6 +164,12 @@ alpha.lr <- c(0, 0.115, -0.409, 0.321, 0.871, -0.465, 0.855)
 # Coefficients
 beta.lpsi <- c(0.64, 5.3, 1.2, 4.6, 0.15, 1.054, 0.051, -0.029)
 beta.lr <- c(0.566, -0.43, 0.346)
+
+
+
+beta <- c(1,2,3)
+covsA <- matrix(c(rep(0, 10), rep(1, 10), rep(2,10)), nrow = 10)
+beta*covsA
 
 
 # build the parameters psi and r based on covariates
