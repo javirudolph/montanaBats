@@ -23,6 +23,28 @@ NABat_covariates <- read_sf("datafiles/nabat_covariates/NABat_grid_covariates/NA
   select(GRTS_ID, karst, p_forest, p_wetland, mean_temp,
          precip, DEM_max, physio_div, dist_mines, starts_with("eco"))
 
+# Descriptions for these covariates and how they were aggregated at the NABat 10x10 cell level are in the report
+# https://ecos.fws.gov/ServCat/Reference/Profile/144755
+# downloaded report in the data folder for this RProj
+
+# Physiographic diversity on page 8 of the report - it's a measure of landscape complexity: ruggedness
+# source: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0143619
+
+# Ecoregions could be very useful as they describe habitat features 
+# descriptions for ecoregions are here: https://www.epa.gov/eco-research/level-iii-and-iv-ecoregions-continental-united-states 
+# and the paper: https://link.springer.com/article/10.1007/s00267-014-0364-1
+# in the report they mention these can be used to account for spatial autocorrelation
+# seems like in their model they use these as the intercept
+
+# karst - grid cells that intersect karst polygons get a 1, https://link.springer.com/article/10.1007/s10040-016-1519-3
+# karst indicator was included to capture the effect of caves
+
+# riverlake variable is a 1 if the grid intersects rivers or shorelines
+
+# For detection-level covariates they extracted the data from https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1852
+# These depend on the specific night
+
+
 # change crs to match the jurisdiction data
 mt_covs_NAD83 <- st_transform(NABat_covariates, st_crs(mt_jurisdictions))
 
