@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>montanaBats - montanaBats: decision analysis project</title>
+<title>montanaBats - Model</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -61,6 +61,7 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -82,7 +83,7 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page">
+    <a class="nav-link" href="./index.html">
  <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -160,14 +161,24 @@ ul.task-list li input[type="checkbox"] {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#model-description" id="toc-model-description" class="nav-link active" data-scroll-target="#model-description">Model Description</a>
+  <ul class="collapse">
+  <li><a href="#basic-model-structure" id="toc-basic-model-structure" class="nav-link" data-scroll-target="#basic-model-structure">Basic model structure</a></li>
+  <li><a href="#including-covariates" id="toc-including-covariates" class="nav-link" data-scroll-target="#including-covariates">Including covariates</a></li>
+  </ul></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">montanaBats: decision analysis project</h1>
+<h1 class="title">Model</h1>
 </div>
 
 
@@ -182,11 +193,82 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>This site has been developed to organize information regarding the management of bats in the state of Montana as a response to the effects of White Nose Syndrome.</p>
-<hr>
-<p>Any questions about this site or code please contact Javi Rudolph: frudolph at usgs dot gov</p>
+<section id="model-description" class="level1">
+<h1>Model Description</h1>
+<section id="basic-model-structure" class="level2">
+<h2 class="anchored" data-anchor-id="basic-model-structure">Basic model structure</h2>
+<p>We consider a basic dynamic model with a Markovian structure, in which the state of each year is dependent on the state of the previous year. Transition probabilities (the probability of a site going from one state to another, or remaining in the same state the following year) are determined as functions of colonization and survival rates.</p>
+<p>We start by determining the initial state for each site <span class="math inline">\(i\)</span>, which follows a multinomial distribution:</p>
+<p><span class="math display">\[
+z_{i,1} \sim Categorical(\Omega_i)
+\]</span></p>
+<p>where <span class="math inline">\(\Omega_i\)</span> is the state vector, with the probabilities of each site <span class="math inline">\(i\)</span> being in one of the states (<span class="math inline">\(1,2,3\)</span>) on the first year (<span class="math inline">\(t=1\)</span>), given by:</p>
+<p><span class="math display">\[
+\Omega_i = [\phi_1 \quad \phi_2 \quad \phi_3]
+\]</span> The probability of a site being empty or unoccupied (state <span class="math inline">\(1\)</span>) the first year is given by <span class="math inline">\(\phi_1\)</span>, the probability of site <span class="math inline">\(i\)</span> having a few bats or many bats the first year is given by <span class="math inline">\(\phi_2\)</span> and <span class="math inline">\(\phi_3\)</span> respectively, where the subscript indicates the state. Since the probabilities have to add up to 1, we can write the state vector probabilities in terms of one another, we reparameterize to:</p>
+<p><span class="math display">\[
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+\]</span> where <span class="math inline">\(\psi\)</span> is the probability of a site being occupied and <span class="math inline">\(r\)</span> is the probability of an occupied site having <em>many bats</em>, thus the probability that a site is occupied with a <em>few bats</em> (<span class="math inline">\(\psi(1-r)\)</span>) is equivalent to the probability that a sites is occupied (<span class="math inline">\(\psi\)</span>) AND it is <strong>not</strong> occupied by many bats (<span class="math inline">\(1-r\)</span>).</p>
+<p>The state of each site <span class="math inline">\(i\)</span> in the following years (<span class="math inline">\(t = 2 \dots T\)</span>) is given by:</p>
+<p><span class="math display">\[
+z_{i,t}|z_{i,t-1} \sim Categorical(\Phi_{z{(t-1)}, z{(t)}, i, t})
+\]</span> where the transition matrix determines the probabilities of a site going from one state to another, or remaining in the same state, depending on the state it was in on the previous year:</p>
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}, i,t} =  \begin{bmatrix}
+                                \pi_{11} &amp; \pi_{12} &amp; \pi_{13} \\
+                                \pi_{21} &amp; \pi_{22} &amp; \pi_{23} \\
+                                \pi_{31} &amp; \pi_{32} &amp; \pi_{33}
+                                \end{bmatrix}_{i,t}
+\]</span> we can read <span class="math inline">\(\pi_{n,m,i,t}\)</span> as the probability that site <span class="math inline">\(i\)</span> transitions from state <span class="math inline">\(n\)</span> in year <span class="math inline">\(t-1\)</span> to state <span class="math inline">\(m\)</span> in year <span class="math inline">\(t\)</span>. We reparameterize this transition matrix in terms of colonization (<span class="math inline">\(\gamma\)</span>) and persistence (<span class="math inline">\(\phi\)</span>), plus growth <span class="math inline">\(G\)</span> or decline <span class="math inline">\(D\)</span> when moving between the states of <em>few</em> and <em>many bats</em>.</p>
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}} =  \begin{bmatrix}
+                                1-\gamma &amp; \gamma &amp; 0 \\
+                                1-\phi_1 &amp; \phi_1(1-G) &amp;  \phi_1G\\
+                                1-\phi_2 &amp; \phi_2D &amp; \phi_2(1 - D)
+                                \end{bmatrix}
+\]</span></p>
+<p>Both the initial state vector <span class="math inline">\(\Omega_i\)</span> and the transition matrix <span class="math inline">\(\Phi\)</span> can be reparameterized in order to have these probabilities in terms of environmental covariates, which can then be modified by different management actions.</p>
+</section>
+<section id="including-covariates" class="level2">
+<h2 class="anchored" data-anchor-id="including-covariates">Including covariates</h2>
+<p>Initially, I am only using covariates that NABAt used for their report, where the data release is found <a href="https://www.sciencebase.gov/catalog/item/620e6f3bd34e6c7e83baa603">here</a>, and the report <a href="https://ecos.fws.gov/ServCat/Reference/Profile/144755">here</a>. Descriptions on how these covariates were obtained and aggregated at the cell level are found in the report. Briefly,</p>
+<ul>
+<li><p>Physiographic diversity on page 8 of the report - it’s a measure of landscape complexity: ruggedness <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0143619">source</a></p></li>
+<li><p>Ecoregions could be very useful as they describe habitat features descriptions for ecoregions are <a href="https://www.epa.gov/eco-research/level-iii-and-iv-ecoregions-continental-united-states">here</a> and the <a href="https://link.springer.com/article/10.1007/s00267-014-0364-1">paper</a></p>
+<ul>
+<li>in the report they mention these can be used to account for spatial autocorrelation seems like in their model they use these as the intercept</li>
+</ul></li>
+<li><p>karst - grid cells that intersect karst polygons get a 1, source is this <a href="https://link.springer.com/article/10.1007/s10040-016-1519-3">paper</a> karst indicator was included to capture the effect of caves</p></li>
+<li><p>riverlake variable is a 1 if the grid intersects rivers or shorelines</p></li>
+<li><p>For detection-level covariates they extracted the data from <a href="https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1852">here</a></p>
+<ul>
+<li>These depend on the specific night and where not provided in the data release</li>
+</ul></li>
+</ul>
+<p>Based on the MYLU ecological model presented in the report, I included the following covariates as predictors for the initial state occupancy:</p>
+<p>With state vector,</p>
+<p><span class="math display">\[
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+\]</span></p>
+<p>the probability of occupancy for site <span class="math inline">\(i\)</span>, <span class="math inline">\(\psi_i\)</span> is set as:</p>
+<p><span class="math display">\[
+\begin{align*}
+logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{Elevation}^2 +
+\beta_3 \cdot \text{Temp} + \beta_4 \cdot \text{Temp}^2 + \\
+\beta_5 \cdot \text{Physiographic diversity} +
+\beta_6 \cdot \text{Precipitation} + \\
+\beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
+\end{align*}
+\]</span></p>
+<p>What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)</p>
+<p><span class="math display">\[
+logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} +
+                \beta_3 \cdot \text{Physiographic diversity}
+\]</span> For both parameters, I included the ecoregion with the intercept, so we have region-specific intercepts</p>
 
 
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
