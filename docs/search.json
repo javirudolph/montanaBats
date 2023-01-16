@@ -11,20 +11,41 @@
     "href": "predictions.html",
     "title": "Multistate occupancy predictions",
     "section": "",
-    "text": "ALLMFWPBLMUSFSResUSFWSNPSDNRC\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n      [,1] [,2] [,3]\n [1,]    0    2    6\n [2,]    0    3    2\n [3,]    0    1    4\n [4,]    0    2    6\n [5,]    0    3    2\n [6,]    0    1    4\n [7,]    0    2    6\n [8,]    0    3    2\n [9,]    0    1    4\n[10,]    0    2    6"
+    "text": "We are generating predictions at the grid cell scale (10x10km) using a set of covariates from the latest NABat report. We are focusing on the state of Montana, and incorporating different jurisdictions that may or may not implement all management actions.\n\n\nCovariate data and grids are coming from NABat"
   },
   {
-    "objectID": "predictions.html#year-1",
-    "href": "predictions.html#year-1",
-    "title": "Predictions",
-    "section": "Year 1",
-    "text": "Year 1"
+    "objectID": "predictions.html#basic-model-structure",
+    "href": "predictions.html#basic-model-structure",
+    "title": "Multistate occupancy predictions",
+    "section": "Basic model structure",
+    "text": "Basic model structure\nWe consider a basic dynamic model with a Markovian structure, in which the state of each year is dependent on the state of the previous year. Transition probabilities (the probability of a site going from one state to another, or remaining in the same state the following year) are determined as functions of colonization and survival rates.\nWe start by determining the initial state for each site \\(i\\), which follows a multinomial distribution:\n\\[\nz_{i,1} \\sim Categorical(\\Omega_i)\n\\]\nwhere \\(\\Omega_i\\) is the state vector, with the probabilities of each site \\(i\\) being in one of the states (\\(1,2,3\\)) on the first year (\\(t=1\\)), given by:\n\\[\n\\Omega_i = [\\phi_1 \\quad \\phi_2 \\quad \\phi_3]\n\\] The probability of a site being empty or unoccupied (state \\(1\\)) the first year is given by \\(\\phi_1\\), the probability of site \\(i\\) having a few bats or many bats the first year is given by \\(\\phi_2\\) and \\(\\phi_3\\) respectively, where the subscript indicates the state. Since the probabilities have to add up to 1, we can write the state vector probabilities in terms of one another, we reparameterize to:\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\] where \\(\\psi\\) is the probability of a site being occupied and \\(r\\) is the probability of an occupied site having many bats, thus the probability that a site is occupied with a few bats (\\(\\psi(1-r)\\)) is equivalent to the probability that a sites is occupied (\\(\\psi\\)) AND it is not occupied by many bats (\\(1-r\\)).\nThe state of each site \\(i\\) in the following years (\\(t = 2 \\dots T\\)) is given by:\n\\[\nz_{i,t}|z_{i,t-1} \\sim Categorical(\\Phi_{z{(t-1)}, z{(t)}, i, t})\n\\] where the transition matrix determines the probabilities of a site going from one state to another, or remaining in the same state, depending on the state it was in on the previous year:\n\\[\n\\Phi_{z{(t-1)}, z{(t)}, i,t} =  \\begin{bmatrix}\n                                \\pi_{11} & \\pi_{12} & \\pi_{13} \\\\\n                                \\pi_{21} & \\pi_{22} & \\pi_{23} \\\\\n                                \\pi_{31} & \\pi_{32} & \\pi_{33}\n                                \\end{bmatrix}_{i,t}\n\\] we can read \\(\\pi_{n,m,i,t}\\) as the probability that site \\(i\\) transitions from state \\(n\\) in year \\(t-1\\) to state \\(m\\) in year \\(t\\). We reparameterize this transition matrix in terms of colonization (\\(\\gamma\\)) and persistence (\\(\\phi\\)), plus growth \\(G\\) or decline \\(D\\) when moving between the states of few and many bats.\n\\[\n\\Phi_{z{(t-1)}, z{(t)}} =  \\begin{bmatrix}\n                                1-\\gamma & \\gamma & 0 \\\\\n                                1-\\phi_1 & \\phi_1(1-G) &  \\phi_1G\\\\\n                                1-\\phi_2 & \\phi_2D & \\phi_2(1 - D)\n                                \\end{bmatrix}\n\\]\nBoth the initial state vector \\(\\Omega_i\\) and the transition matrix \\(\\Phi\\) can be reparameterized in order to have these probabilities in terms of environmental covariates, which can then be modified by different management actions."
   },
   {
-    "objectID": "predictions.html#year-10",
-    "href": "predictions.html#year-10",
-    "title": "Predictions",
-    "section": "Year 10",
-    "text": "Year 10"
+    "objectID": "predictions.html#including-covariates",
+    "href": "predictions.html#including-covariates",
+    "title": "Multistate occupancy predictions",
+    "section": "Including covariates",
+    "text": "Including covariates\nInitially, I am only using covariates that NABAt used for their report, where the data release is found here, and the report here. Descriptions on how these covariates were obtained and aggregated at the cell level are found in the report. Briefly,\n\nPhysiographic diversity on page 8 of the report - it’s a measure of landscape complexity: ruggedness source\nEcoregions could be very useful as they describe habitat features descriptions for ecoregions are here and the paper\n\nin the report they mention these can be used to account for spatial autocorrelation seems like in their model they use these as the intercept\n\nkarst - grid cells that intersect karst polygons get a 1, source is this paper karst indicator was included to capture the effect of caves\nriverlake variable is a 1 if the grid intersects rivers or shorelines\nFor detection-level covariates they extracted the data from here\n\nThese depend on the specific night and where not provided in the data release\n\n\nBased on the MYLU ecological model presented in the report, I included the following covariates as predictors for the initial state occupancy:\nWith state vector,\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\]\nthe probability of occupancy for site \\(i\\), \\(\\psi_i\\) is set as:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nWhat we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)\n\\[\nlogit(r_i) = \\beta_0 + \\beta_1 \\cdot \\text{karst} + \\beta_2 \\cdot \\text{Percent Forest} +\n                \\beta_3 \\cdot \\text{Physiographic diversity}\n\\] For both parameters, I included the ecoregion with the intercept, so we have region-specific intercepts"
+  },
+  {
+    "objectID": "predictions.html#setting-parameters",
+    "href": "predictions.html#setting-parameters",
+    "title": "Multistate occupancy predictions",
+    "section": "Setting parameters",
+    "text": "Setting parameters\nWhich would describe the parameters I made"
+  },
+  {
+    "objectID": "predictions.html#ecoregions",
+    "href": "predictions.html#ecoregions",
+    "title": "Multistate occupancy predictions",
+    "section": "Ecoregions",
+    "text": "Ecoregions\n\nEco1Eco2Eco3"
+  },
+  {
+    "objectID": "predictions.html#covariates-1",
+    "href": "predictions.html#covariates-1",
+    "title": "Multistate occupancy predictions",
+    "section": "Covariates",
+    "text": "Covariates\n\nElevTempPhysdivPrecipForestWetland"
   }
 ]

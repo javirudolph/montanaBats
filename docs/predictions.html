@@ -61,6 +61,7 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -131,7 +132,29 @@ ul.task-list li input[type="checkbox"] {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a>
+  <ul class="collapse">
+  <li><a href="#data-sources" id="toc-data-sources" class="nav-link" data-scroll-target="#data-sources">Data sources</a></li>
+  </ul></li>
+  <li><a href="#model-description" id="toc-model-description" class="nav-link" data-scroll-target="#model-description">Model Description</a>
+  <ul class="collapse">
+  <li><a href="#basic-model-structure" id="toc-basic-model-structure" class="nav-link" data-scroll-target="#basic-model-structure">Basic model structure</a></li>
+  <li><a href="#including-covariates" id="toc-including-covariates" class="nav-link" data-scroll-target="#including-covariates">Including covariates</a></li>
+  <li><a href="#setting-parameters" id="toc-setting-parameters" class="nav-link" data-scroll-target="#setting-parameters">Setting parameters</a></li>
+  </ul></li>
+  <li><a href="#covariates" id="toc-covariates" class="nav-link" data-scroll-target="#covariates">Covariates</a>
+  <ul class="collapse">
+  <li><a href="#ecoregions" id="toc-ecoregions" class="nav-link" data-scroll-target="#ecoregions">Ecoregions</a></li>
+  <li><a href="#covariates-1" id="toc-covariates-1" class="nav-link" data-scroll-target="#covariates-1">Covariates</a></li>
+  </ul></li>
+  <li><a href="#jurisdictions" id="toc-jurisdictions" class="nav-link" data-scroll-target="#jurisdictions">Jurisdictions</a></li>
+  <li><a href="#more" id="toc-more" class="nav-link" data-scroll-target="#more">MORE</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -153,9 +176,12 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<div class="cell">
-
-</div>
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>We are generating predictions at the grid cell scale (10x10km) using a set of covariates from the latest NABat report. We are focusing on the state of Montana, and incorporating different jurisdictions that may or may not implement all management actions.</p>
+<section id="data-sources" class="level2">
+<h2 class="anchored" data-anchor-id="data-sources">Data sources</h2>
+<p>Covariate data and grids are coming from NABat</p>
 <div class="cell">
 
 </div>
@@ -165,12 +191,97 @@ ul.task-list li input[type="checkbox"] {
 <div class="cell">
 <style type="text/css">
 .panel-tabset .nav-item {
-  font-size: 10px;
+  font-size: 12px;
 }
 </style>
 </div>
+</section>
+</section>
+<section id="model-description" class="level1">
+<h1>Model Description</h1>
+<section id="basic-model-structure" class="level2">
+<h2 class="anchored" data-anchor-id="basic-model-structure">Basic model structure</h2>
+<p>We consider a basic dynamic model with a Markovian structure, in which the state of each year is dependent on the state of the previous year. Transition probabilities (the probability of a site going from one state to another, or remaining in the same state the following year) are determined as functions of colonization and survival rates.</p>
+<p>We start by determining the initial state for each site <span class="math inline">\(i\)</span>, which follows a multinomial distribution:</p>
+<p><span class="math display">\[
+z_{i,1} \sim Categorical(\Omega_i)
+\]</span></p>
+<p>where <span class="math inline">\(\Omega_i\)</span> is the state vector, with the probabilities of each site <span class="math inline">\(i\)</span> being in one of the states (<span class="math inline">\(1,2,3\)</span>) on the first year (<span class="math inline">\(t=1\)</span>), given by:</p>
+<p><span class="math display">\[
+\Omega_i = [\phi_1 \quad \phi_2 \quad \phi_3]
+\]</span> The probability of a site being empty or unoccupied (state <span class="math inline">\(1\)</span>) the first year is given by <span class="math inline">\(\phi_1\)</span>, the probability of site <span class="math inline">\(i\)</span> having a few bats or many bats the first year is given by <span class="math inline">\(\phi_2\)</span> and <span class="math inline">\(\phi_3\)</span> respectively, where the subscript indicates the state. Since the probabilities have to add up to 1, we can write the state vector probabilities in terms of one another, we reparameterize to:</p>
+<p><span class="math display">\[
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+\]</span> where <span class="math inline">\(\psi\)</span> is the probability of a site being occupied and <span class="math inline">\(r\)</span> is the probability of an occupied site having <em>many bats</em>, thus the probability that a site is occupied with a <em>few bats</em> (<span class="math inline">\(\psi(1-r)\)</span>) is equivalent to the probability that a sites is occupied (<span class="math inline">\(\psi\)</span>) AND it is <strong>not</strong> occupied by many bats (<span class="math inline">\(1-r\)</span>).</p>
+<p>The state of each site <span class="math inline">\(i\)</span> in the following years (<span class="math inline">\(t = 2 \dots T\)</span>) is given by:</p>
+<p><span class="math display">\[
+z_{i,t}|z_{i,t-1} \sim Categorical(\Phi_{z{(t-1)}, z{(t)}, i, t})
+\]</span> where the transition matrix determines the probabilities of a site going from one state to another, or remaining in the same state, depending on the state it was in on the previous year:</p>
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}, i,t} =  \begin{bmatrix}
+                                \pi_{11} &amp; \pi_{12} &amp; \pi_{13} \\
+                                \pi_{21} &amp; \pi_{22} &amp; \pi_{23} \\
+                                \pi_{31} &amp; \pi_{32} &amp; \pi_{33}
+                                \end{bmatrix}_{i,t}
+\]</span> we can read <span class="math inline">\(\pi_{n,m,i,t}\)</span> as the probability that site <span class="math inline">\(i\)</span> transitions from state <span class="math inline">\(n\)</span> in year <span class="math inline">\(t-1\)</span> to state <span class="math inline">\(m\)</span> in year <span class="math inline">\(t\)</span>. We reparameterize this transition matrix in terms of colonization (<span class="math inline">\(\gamma\)</span>) and persistence (<span class="math inline">\(\phi\)</span>), plus growth <span class="math inline">\(G\)</span> or decline <span class="math inline">\(D\)</span> when moving between the states of <em>few</em> and <em>many bats</em>.</p>
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}} =  \begin{bmatrix}
+                                1-\gamma &amp; \gamma &amp; 0 \\
+                                1-\phi_1 &amp; \phi_1(1-G) &amp;  \phi_1G\\
+                                1-\phi_2 &amp; \phi_2D &amp; \phi_2(1 - D)
+                                \end{bmatrix}
+\]</span></p>
+<p>Both the initial state vector <span class="math inline">\(\Omega_i\)</span> and the transition matrix <span class="math inline">\(\Phi\)</span> can be reparameterized in order to have these probabilities in terms of environmental covariates, which can then be modified by different management actions.</p>
+</section>
+<section id="including-covariates" class="level2">
+<h2 class="anchored" data-anchor-id="including-covariates">Including covariates</h2>
+<p>Initially, I am only using covariates that NABAt used for their report, where the data release is found <a href="https://www.sciencebase.gov/catalog/item/620e6f3bd34e6c7e83baa603">here</a>, and the report <a href="https://ecos.fws.gov/ServCat/Reference/Profile/144755">here</a>. Descriptions on how these covariates were obtained and aggregated at the cell level are found in the report. Briefly,</p>
+<ul>
+<li><p>Physiographic diversity on page 8 of the report - it’s a measure of landscape complexity: ruggedness <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0143619">source</a></p></li>
+<li><p>Ecoregions could be very useful as they describe habitat features descriptions for ecoregions are <a href="https://www.epa.gov/eco-research/level-iii-and-iv-ecoregions-continental-united-states">here</a> and the <a href="https://link.springer.com/article/10.1007/s00267-014-0364-1">paper</a></p>
+<ul>
+<li>in the report they mention these can be used to account for spatial autocorrelation seems like in their model they use these as the intercept</li>
+</ul></li>
+<li><p>karst - grid cells that intersect karst polygons get a 1, source is this <a href="https://link.springer.com/article/10.1007/s10040-016-1519-3">paper</a> karst indicator was included to capture the effect of caves</p></li>
+<li><p>riverlake variable is a 1 if the grid intersects rivers or shorelines</p></li>
+<li><p>For detection-level covariates they extracted the data from <a href="https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1852">here</a></p>
+<ul>
+<li>These depend on the specific night and where not provided in the data release</li>
+</ul></li>
+</ul>
+<p>Based on the MYLU ecological model presented in the report, I included the following covariates as predictors for the initial state occupancy:</p>
+<p>With state vector,</p>
+<p><span class="math display">\[
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+\]</span></p>
+<p>the probability of occupancy for site <span class="math inline">\(i\)</span>, <span class="math inline">\(\psi_i\)</span> is set as:</p>
+<p><span class="math display">\[
+\begin{align*}
+logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{Elevation}^2 +
+\beta_3 \cdot \text{Temp} + \beta_4 \cdot \text{Temp}^2 + \\
+\beta_5 \cdot \text{Physiographic diversity} +
+\beta_6 \cdot \text{Precipitation} + \\
+\beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
+\end{align*}
+\]</span></p>
+<p>What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)</p>
+<p><span class="math display">\[
+logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} +
+                \beta_3 \cdot \text{Physiographic diversity}
+\]</span> For both parameters, I included the ecoregion with the intercept, so we have region-specific intercepts</p>
+</section>
+<section id="setting-parameters" class="level2">
+<h2 class="anchored" data-anchor-id="setting-parameters">Setting parameters</h2>
+<p>Which would describe the parameters I made</p>
+</section>
+</section>
+<section id="covariates" class="level1">
+<h1>Covariates</h1>
+<p>All the information from the report regarding the different covariates they used for their analysis.</p>
+<section id="ecoregions" class="level2">
+<h2 class="anchored" data-anchor-id="ecoregions">Ecoregions</h2>
 <div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">ALL</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">MFWP</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">BLM</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">USFS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-5" role="tab" aria-controls="tabset-1-5" aria-selected="false">Res</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-6" role="tab" aria-controls="tabset-1-6" aria-selected="false">USFWS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-7-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-7" role="tab" aria-controls="tabset-1-7" aria-selected="false">NPS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-8-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-8" role="tab" aria-controls="tabset-1-8" aria-selected="false">DNRC</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Eco1</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Eco2</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Eco3</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="cell">
@@ -193,57 +304,131 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
+</div>
+</div>
+</section>
+<section id="covariates-1" class="level2">
+<h2 class="anchored" data-anchor-id="covariates-1">Covariates</h2>
+<div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Elev</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">Temp</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Physdiv</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-4" role="tab" aria-controls="tabset-2-4" aria-selected="false">Precip</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-5" role="tab" aria-controls="tabset-2-5" aria-selected="false">Forest</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-6" role="tab" aria-controls="tabset-2-6" aria-selected="false">Wetland</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <p><img src="predictions_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
-<div id="tabset-1-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-5-tab">
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
 <div class="cell">
 <div class="cell-output-display">
 <p><img src="predictions_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
-<div id="tabset-1-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-6-tab">
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
 <div class="cell">
 <div class="cell-output-display">
 <p><img src="predictions_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
-<div id="tabset-1-7" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-7-tab">
+<div id="tabset-2-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-4-tab">
 <div class="cell">
 <div class="cell-output-display">
 <p><img src="predictions_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
-<div id="tabset-1-8" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-8-tab">
+<div id="tabset-2-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-5-tab">
 <div class="cell">
 <div class="cell-output-display">
 <p><img src="predictions_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
-</div>
-</div>
+<div id="tabset-2-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-6-tab">
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>      [,1] [,2] [,3]
- [1,]    0    2    6
- [2,]    0    3    2
- [3,]    0    1    4
- [4,]    0    2    6
- [5,]    0    3    2
- [6,]    0    1    4
- [7,]    0    2    6
- [8,]    0    3    2
- [9,]    0    1    4
-[10,]    0    2    6</code></pre>
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
 </div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="jurisdictions" class="level1">
+<h1>Jurisdictions</h1>
+<p>We overlayed a jurisdiction map from the Montana state library and saw which jurisdictions overlapped with different grid cells. Below you can see the different jurisdictions we have considered.</p>
+<div class="cell">
+
+</div>
+<div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">ALL</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">MFWP</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">BLM</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-4" role="tab" aria-controls="tabset-3-4" aria-selected="false">USFS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-5" role="tab" aria-controls="tabset-3-5" aria-selected="false">Res</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-6" role="tab" aria-controls="tabset-3-6" aria-selected="false">USFWS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-7-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-7" role="tab" aria-controls="tabset-3-7" aria-selected="false">NPS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-8-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-8" role="tab" aria-controls="tabset-3-8" aria-selected="false">DNRC</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-4-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-5-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-6-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-7" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-7-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-3-8" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-8-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="predictions_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="more" class="level1">
+<h1>MORE</h1>
+<div class="cell">
 <div class="cell-output-display">
 <p><img src="predictions_files/figure-html/set_params-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -253,6 +438,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
