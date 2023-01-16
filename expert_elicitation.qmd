@@ -1,0 +1,745 @@
+---
+title: "Expert Elicitation"
+execute:
+  echo: false
+---
+
+Date: May 9th 2022
+
+
+```{r}
+#| message: false
+#| 
+# Load required libraries
+library(dplyr)
+library(tidyr)
+
+
+# For getting the color scheme
+library(RColorBrewer)
+library(ggprism) # to add minor tick lines to plots
+
+## Other packages needed
+library(fitdistrplus)
+library(ggplot2)
+library(logitnorm)
+library(stats) # not sure this is used
+library(rmutil) # not sure this is used
+```
+
+
+```{r}
+dat1.summary <- read.csv("datafiles/expert_elicitation/compiled_dataset.csv") 
+
+dat1.summary %>% 
+  mutate(CID = CI/100) %>% # turn CI into probability
+  filter(!mean=="#N/A") %>%  # deals will any missing responses
+  group_by(Name) %>%
+  mutate(expertID = cur_group_id()) -> dat.summary
+```
+
+```{r}
+# define number of experts in group that responded (needed later in for loops)
+n.experts <- dat.summary %>% 
+  count(expertID) %>%
+  nrow()
+
+# making sure the variables are reading as numeric
+###dat.summary$lo <- as.numeric(dat.summary$lo)
+###dat.summary$hi <- as.numeric(dat.summary$hi)
+###dat.summary$best <- as.numeric(dat.summary$best)
+dat.summary$mean <- as.numeric(dat.summary$mean)
+dat.summary$sd <- as.numeric(dat.summary$sd)
+
+# checking to make sure data frame is as it should be (just for testing)
+#str(dat.summary)
+
+# setting the colors for experts
+
+exp_colors <- RColorBrewer::brewer.pal(9, "Paired")
+
+```
+
+```{r}
+# Since the plots follow a basic format, I'm adding that theme at the beginning so we keep them all the same
+
+plot1theme <- function(myplot){
+  myplot +
+    geom_linerange(mapping = aes(x = expertID, ymin = lo,ymax = hi),
+                 size = 1.5,color = "grey") +
+        # geom_linerange(mapping = aes(x = expertID, ymin = lo,ymax = hi, alpha = CID),
+        #          size = 1.5,color = "black") +
+    geom_point(aes(x = expertID,y = best,color = as.factor(expert)),
+             size = 4,shape = 1,stroke = 2) +
+    geom_text(aes(label = CI,x = expertID,y = hi),
+            hjust = -0.5, vjust = 0.5, size = 4) +
+    theme_classic() +
+    # scale_color_manual(values = exp_colors) +
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=1),
+          axis.title = element_text(size = rel(1.3)),
+          axis.text = element_text(size = rel(1.1))) +
+    xlab('Expert Identifier') +
+    scale_x_continuous(limits = c(0, n.experts),breaks = seq(0, n.experts, by = 1))+
+    coord_flip() +
+    guides(color = "none", size = "none")
+}
+```
+
+## Bat survival to WNS in different regions of Montana  
+
+White Nose Syndrome (WNS), a fungal disease of bats caused by *Pseudogymnoascus destructans* (*Pd*), was detected in seven species of bats in eastern Montana in 2020-2021, and showed spread towards the west. Although the effects of WNS can be devastating to bat populations in the eastern United States, there is uncertainty regarding the risk for bats in Montana. There exists the possibility that bats in the west, in Montana, would face a similar population decline as in the eastern part of the United States. However, it is also possible that bats in Montana have a different outcome with *Pd* infection due to their genetics or the topographic ruggedness of their environment. Due to the landscape characteristics in Montana, bat behavior is also different and roosting occurs at lower densities across the landscape, perhaps altering the pathogen's effect on bat populations. 
+
+Given the uncertainty in the outcome for bat populations infected with *Pd* we performed an expert elicitation session with 9 experts for bat populations in the western areas of the United States. We started a two hour discussion by asking the experts about all the potential factors that could play into *Pd* infections and determine bat survival. Several experts mentioned that they believed *Pd* would cause less drastic effects on western bat populations due to the landscape, since bats are spread out and not clustered in caves or mines. There was also concern regarding the lack of identified hibernacula in the west, and the uncertainty of how *Pd* would be transmitted in these rocky environments, in contrast to the known behavior associated to hibernacula humid conditions. Additionally, comparisons between the east and west areas for pathogen spread have shown slower spread in the west. A potential explanation is the topographic diversity that limits how bats move around and might spread the fungus.  
+
+Given the importance of the landscape, we asked experts to independently make predictions as to the effect of WNS on bat survival across three different biogegraphic regions in Montana (as shown in the map below). These three regions are based on the continental divide and rocky mountain front on the west, the northeastern area defined by everything north of the mountain ranges, and the southern region encompassing the xeric pine forest mountains and sagebrush steppe.
+
+```{r}
+knitr::include_graphics("images/MT_Map_3_regions.png")
+```
+
+We used a standardized protocol for the expert elicitation where we developed a training question, and three additional questions regarding bat survival to WNS in the three biogeographic regions of Montana. We performed a four-point elicitation, in which each expert independently gave the lowest, highest, and best point estimates for the number of bats that would die due to WNS. The fourth point corresponded to the confindence each expert associated to their generated interval and how it would capture the true value for bat deaths. We discussed the experts estimates individually their aggregated distributions. OVerall, we observed that there was a lot of variation between the experts and across regions. Although during the discussion section of the process, it was mentioned that *Pd* might have less drastic effects for bats in the west, the estimates provided by the experts still show high probabilities of bats succumbing to the disease (median aggregated probabilities shown below each Plot2 for each question). Additionally, there is a big overlap in the estimates across regions, with the west region with slightly lower probabilities for bats dying from WNS, something that was mentioned in the discussion as being associated to the ruggedness of the terrain.
+
+<!-- Things that were mentioned a lot during the meeting was the rocky environment, ruggedness, talus slopes. Uncertainty of how the bats would behave under these different environments. Also, Riley Bernard mentioned towards the end that there is a lot not known of the little brown bat, but it is the most common one in discussion, even though it is not the one that gets captured the most. She also mentioned she understood the question as survival, instead of death, because the word succumb wasn't clear (linguistic uncertainty). -->
+
+## Training and Expert Calibration   
+
+```{r}
+
+# Create subset with the specific question
+
+dat.summary %>% 
+  filter(Qnum == "TQ") %>% 
+  as.data.frame() -> TQ_df
+
+tru_val <- 47.5
+
+```
+
+During our expert elicitation session, we used the first part of the meeting to explain the process to all the experts. We used presented a training question regarding the average size tip to tail for the little brown bat, *Myotis lucifugus*. Several experts noted that this is not a common measurement that they are used to thinking about, given that when capturing bats they consider forearm length. We adjusted the question to the bat measurement from tip to base of tail, and asked experts to use their knowledge on other measurements, such as forearm length, to estimate the average size of a bat measured from head to base of the tail. The reference for the true value is the [Montana Field Guide](https://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMACC01010) which listed the length of head and body from 41-54mm, thus we used the middle value of `r tru_val` as the truth. Based on the expert responses, 5 out of the 9 experts captured this true value within the intervals they provided, with varying degrees of confidence. Using the experts' confidence, we calculated the expected number of experts that would have captured the true value for bat size within the interval they provided (`r sum(TQ_df$CID)`).
+
+## Training Question {.tabset .tabset-fade}
+
+What is the average size of the little brown bat (Myotis lucifugus)? If you were to measure 100 adult bats, tip-to- base of tail, at a site in the center of their range, what would the average length be in millimeters?
+
+
+### Plot 1
+
+#### Plot of individual responses
+
+```{r Plot1}
+# making a plot with individual responses based on lo, hi and best estimates
+
+TQ_df %>%
+  ggplot() + 
+  geom_hline(yintercept = tru_val, color = "black",linetype = "dashed") + #true answers
+  geom_hline(yintercept = 41, color = "black",linetype = "dotted") +
+  geom_hline(yintercept = 54, color = "black",linetype = "dotted") -> p1tq
+  
+plot1theme(p1tq) +
+  ylab("Little brown bat size (tip-to-base-of-tail in mm)") +
+  scale_y_continuous(limits = c(39, 85), breaks = seq(40, 85, by = 5))
+
+
+```
+
+### Plot 2
+
+
+
+```{r}
+
+dat.summary.Q1 <- TQ_df
+
+## Here, fitting distributions to the experts
+
+# defines empty vectors/matrices to store data to come
+parms.1 <- matrix(data = NA,nrow = n.experts, ncol = 6)
+average.1 <- numeric()
+
+# for loop to produce individual distributions and aggregated average distr
+for(j in 1:n.experts){
+  w <- c(dat.summary.Q1[j,"lo"],dat.summary.Q1[j,"best"],dat.summary.Q1[j,"hi"]) 
+  lower <- (1 - dat.summary.Q1[j,"CID"])/2
+  upper <- (dat.summary.Q1[j,"CID"] + (1 - dat.summary.Q1[j,"CID"])/2)
+  
+  # fit distribution based on confidence; qmedist is more robust google way
+  est <- qmedist(data = w,distr = "norm",probs = c(lower,upper))
+  
+  # extract mean and sd values from fitted distribution
+  parms.1[j,1] <- est$estimate[1] # mean  
+  parms.1[j,2] <- est$estimate[2] # sd 
+ #parms.1[j,6] <-dat.summary.Q1[j,"Group"]
+  
+  # extract probability values to evaluate fit (#??#)
+  test <- rnorm(1000, est$estimate[1], est$estimate[2]) 
+  
+  # extract common bounds from each expert
+  parms.1[j,3:5] <- quantile(test, probs = c(0.025, 0.5, 0.975))# 95% CI
+  
+  # calculate average common bounds based on quantiles
+  average.1[1] <- mean(parms.1[,3])
+  average.1[2] <- mean(parms.1[,4])
+  average.1[3] <- mean(parms.1[,5])
+  
+} #j
+
+avg.95 <- c(0.025, 0.975)
+
+# fit distribution based on group aggregate quantiles
+est.g <- qmedist(average.1,"norm",probs = avg.95)
+
+# generate a continuous sequence of values for x axis
+
+# Maybe this needs to be changed to align with bat size. 
+p <- seq(20, 100, by = 0.1)
+
+# for loop to generate dnorm values based on expert params in the above section
+data.Q1 <- data.frame(NA_col = rep(NA, length(p)))
+
+for(i in 1:n.experts) {                             # Head of for-loop
+  new_col <- dnorm(p,parms.1[i,1],parms.1[i,2])       # Creating new variable
+  data.Q1[ , i] <- new_col                     # Adding new variable to data
+  colnames(data.Q1)[i] <- paste0("Ex_", i)    # Renaming new variable
+}
+
+# make a dataframe of p and density data (dnorm) from each expert
+data.Q1.ind = cbind(p,data.Q1)
+
+library(tidyr)
+# converting individual data to long format for plotting
+data.Q1.ind.long = data.Q1.ind %>%
+  pivot_longer(cols = starts_with("Ex_"),names_to = "expert",values_to = "dnorm")
+
+# generate the densities based on average distribution of group
+Agg.avg = dnorm(p,est.g$estimate[1],est.g$estimate[2])%>%
+  as.data.frame() # make it a data frame
+# set the column name
+colnames(Agg.avg)<- c("Average")
+
+# make a dataframe of p and density data (dnorm) from aggregated average
+data.Q1.avg = cbind(p,Agg.avg)
+
+```
+
+
+#### Plot of individual distributions and mean aggregated response
+
+```{r Plot2}
+
+  ggplot()+
+  geom_line(data = data.Q1.ind.long, 
+            aes(x = p, y = dnorm, color = expert), size = 1
+            ,linetype = "dashed"
+            ) +
+  theme_bw() +
+  # scale_color_manual(values = exp_colors)+
+  # ylim(0,1)+
+  xlab("Little brown bat size (tip-to-base-of-tail in mm)")+
+  ylab("Density") +
+  geom_line(data = data.Q1.avg, aes(x = p, y = Average),color = "black",size = 1)+
+  geom_vline(xintercept = 47.5, color = "black", linetype = "dashed") + #true answers
+  geom_linerange(aes(xmin = average.1[1], xmax = average.1[3], y = 0), color = "grey", size = 3) +
+  geom_point(aes(x = average.1[2], y = 0)) +
+  #geom_vline(xintercept = 41, color = "black")+ # add sd?
+  #geom_vline(xintercept = 54, color = "black")+ # add sd?
+  # scale_x_continuous(limits = c(0, max(p)),breaks = seq(0, max(p), by = 1)) +
+  guides(color = "none", size = "none")
+  
+```
+
+Each expert's response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. The vertical dashed line indicates the true answer based on the literature. At the bottom of the figure, the black dot represents the overall mean (`r round(average.1[2], digits = 3)`) for the responses, and the grey bar shows the 95% confidence interval (`r round(average.1[c(1,3)], digits = 3)`).
+
+
+<!-- ### Plot 3 -->
+
+```{r eval=FALSE}
+# So, these distributions seem to be fitted in the same way for all the questions
+# What varies is the data set that is given to it
+# And if we use a normal or logitnorm distribution
+
+# Let's build a function:
+
+fit_dist_experts <- function(my_df, type_dist = "Usually norm or logitnormal"){
+
+  num_exp <- nrow(my_df) # we should have only one expert per row here
+
+  prms_df <- data.frame()
+
+  for(i in 1:num_exp){
+
+    # estimates given by one expert at a time
+    w <- c(my_df[i, "lo"], my_df[i, "best"], my_df[i, "hi"])
+
+    # Get the lower bound of the Confidence interval the expert chose
+    lower <- (1 - my_df[i, "CID"])/2
+
+    # and the upper bound
+    upper <- (my_df[i, "CID"] + (1 - my_df[i, "CID"])/2)
+
+    # Using those bounds, we fit the distribution
+    # qmedist: quantile matching fit
+    est <- qmedist(data = w, distr = type_dist, probs = c(lower, upper))
+
+    # Extract the mean and sd from the fit
+    est_mean <- est$estimate[1]
+    est_sd <- est$estimate[2]
+
+    # Sim values and get quantiles, 95% CI
+    testvals <- rnorm(1000, est_mean, est_sd)
+    bounds <- quantile(testvals, probs = c(0.025, 0.5, 0.975))
+    expert <- i
+
+    prms_df <-  rbind(prms_df, c(expert, est_mean, est_sd, bounds))
+
+  }
+
+  names(prms_df) <- c("expert", "est_mean", "est_sd", "lo", "med", "hi")
+
+  return(prms_df)
+}
+
+```
+
+```{r eval=FALSE}
+# Trying my function and code
+
+library(scales)
+# show_col(hue_pal()(9))
+exp_colors <- hue_pal()(9)
+
+# get params for every expert:
+TQ_prms <- fit_dist_experts(my_df = TQ_df, type = "norm")
+
+# build a density curve for each expert:
+indiv_densities <- purrr::map(1:nrow(TQ_prms),
+                              function(y) stat_function(fun = dnorm,
+                                                        args = list(mean = TQ_prms$est_mean[y],
+                                                                    sd = TQ_df$sd[y]),
+                                                        color = exp_colors[y], linetype = "dashed", size = 1))
+
+# Calculate the aggregate or average, and estimate the parameters for that
+TQ_prms %>%
+  summarise(across(c(lo, med, hi), mean)) %>%
+  as.numeric() -> agg_prms
+
+# fit distribution based on group aggregate quantiles
+est.agg <- qmedist(agg_prms, "norm" ,probs = c(0.025, 0.975))
+
+# build the density curve
+aggr_density <- stat_function(fun = dnorm,
+                              args = list(mean = est.agg$estimate[1],
+                                          sd = est.agg$estimate[2]), color = "black", size = 1)
+
+ggplot() +
+  indiv_densities +
+  aggr_density +
+  scale_x_continuous(limits = c(20, 100)) +
+  scale_y_continuous(limits = c(0, 0.2)) +
+  theme_bw() +
+  # scale_color_manual(values = exp_colors)+
+  xlab("Little brown bat size (tip-to-base-of-tail in mm)")+
+  ylab("Density") +
+  geom_vline(xintercept = 47.5, color = "black", linetype = "dashed")+ #true answers
+  
+  guides(color = "none", size = "none")
+
+```
+
+
+
+
+
+
+## Question 1 {.tabset .tabset-fade}
+
+Consider the Northeast (NE) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by *Myotis lucifugus*, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?
+
+```{r}
+# filter to specific question & convert to probability scale 0-100
+
+dat.summary %>% 
+  filter(., Qnum == "Q1") %>% 
+  mutate(across(c(lo, hi, best), ~ .x * 0.01)) %>% 
+  as.data.frame() -> Q1_df
+
+```
+
+### Plot 1
+
+#### Plot of individual responses
+
+```{r}
+
+# Open a plot for my Q1 data frame
+Q1_df %>% 
+  ggplot() %>% 
+  # put my data into the plot1 function for the theme 
+  plot1theme() +
+  ylab("Proportion bats that will sucumb to WNS") +
+  scale_y_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1)) +
+  ggtitle("NE region of MT")
+
+
+```
+
+### Plot 2
+
+```{r}
+
+dat.summary.Q2 <- Q1_df
+
+parms.2 <- matrix(data = NA,nrow = n.experts, ncol = 5)
+average.2 <- numeric()
+
+for(j in 1:n.experts){
+  w <- c(dat.summary.Q2[j,"lo"],dat.summary.Q2[j,"best"],dat.summary.Q2[j,"hi"])
+  lower <- (1 - dat.summary.Q2[j,"CID"])/2
+  upper <- dat.summary.Q2[j,"CID"] + (1 - dat.summary.Q2[j,"CID"])/2
+  
+  # extract values from google sheet; used to defined starting point in qmedist()
+  mu <- dat.summary.Q2[j,"mean"]
+  sigma <- dat.summary.Q2[j,"sd"]
+  
+  # fit distribution based on confidence; now logitnorm because its a probability
+  est <- qmedist(w,"logitnorm",probs = c(lower, upper),
+                 start = list(mu = mu,sigma = sigma))
+  
+  parms.2[j,1] <- est$estimate[1] 
+  parms.2[j,2] <- est$estimate[2]
+  
+  # extract probability values to evaluate fit (#??#)
+  test <- rlogitnorm(1000, est$estimate[1],est$estimate[2])
+  
+  # extract common bounds from each expert
+  parms.2[j,3:5] <- quantile(test,c(.025,.5,.975))
+
+  
+  # calculate average common bounds based on quantiles
+  average.2[1] <- mean(parms.2[,3])
+  average.2[2] <- mean(parms.2[,4])
+  average.2[3] <- mean(parms.2[,5])
+  
+} #j
+
+
+avg.95 <- c(0.025, 0.975)
+
+# fit distribution based on group aggregate average quantiles
+est.g <- qmedist(average.2,"logitnorm",probs = avg.95,
+                 start = list(mu = mu,sigma = sigma))
+
+```
+
+```{r}
+
+p = seq(0,1,length = 1000)
+
+## for loop to generate dlogitnorm values based on exp. params in  above section
+data.Q2 <- data.frame(NA_col = rep(NA, 1000))
+
+for(i in 1:n.experts) {                             # Head of for-loop
+  new_col <- dlogitnorm(p,parms.2[i,1],parms.2[i,2])   # Creating new variable
+  data.Q2[ , i] <- new_col                     # Adding new variable to data
+  colnames(data.Q2)[i] <- paste0("Ex_", i)    # Renaming new variable
+}
+
+data.Q2.ind = cbind(p,data.Q2)
+
+data.Q2.ind.long = data.Q2.ind %>%
+  pivot_longer(cols = starts_with("Ex_"),names_to = "expert",values_to = "dnorm")
+
+Agg.avg = dlogitnorm(p,est.g$estimate[1],est.g$estimate[2]) %>%
+  as.data.frame()
+
+colnames(Agg.avg)<- c("Average")
+
+data.Q2.avg = cbind(p,Agg.avg)
+
+```
+
+#### Plot of individual distributions and mean aggregated response
+
+```{r}
+
+
+  ggplot()+
+  geom_line(data = data.Q2.ind.long, 
+            aes(x = p, y = dnorm,color = expert),size = 1,linetype = "dashed")+ 
+  theme_bw() +
+  #scale_color_manual(values = colors.vec)+
+  # ylim(0,10)+
+  xlab("Proportion bats that will sucumb to WNS")+
+  ylab("Density") +
+  geom_line(data = data.Q2.avg, aes(x = p, y = Average),color = "black",size = 1)+
+  geom_linerange(aes(xmin = average.2[1], xmax = average.2[3], y = 0), color = "grey", size = 3) +
+  geom_point(aes(x = average.2[2], y = 0)) +
+  scale_x_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1), guide = guide_prism_minor()) +
+  guides(color = "none", size = "none")
+  
+```  
+
+Each expert's response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (`r round(average.2[2], digits = 3)`) for the responses, and the grey bar shows the 95% confidence interval (`r round(average.2[c(1,3)], digits = 3)`).
+
+
+
+## Question 2 {.tabset .tabset-fade}
+
+Consider the South (S) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by *Myotis lucifugus*, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?
+
+```{r}
+# filter to specific question & convert to probability scale 0-100
+
+dat.summary %>% 
+  filter(., Qnum == "Q2") %>% 
+  mutate(across(c(lo,hi, best), ~ .x * 0.01)) %>% 
+  as.data.frame() -> Q2_df
+
+```
+
+### Plot 1
+
+#### Plot of individual responses
+
+```{r}
+
+# Open a plot for my Q2 data frame
+Q2_df %>% 
+  ggplot() %>% 
+  # put my data into the plot1 function for the theme 
+  plot1theme() +
+  ylab("Proportion bats that will sucumb to WNS") +
+  scale_y_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1)) +
+  ggtitle("S region of MT")
+
+```
+
+### Plot 2
+
+```{r}
+
+dat.summary.Q2 <- Q2_df
+
+parms.2 <- matrix(data = NA,nrow = n.experts, ncol = 5)
+average.2 <- numeric()
+
+for(j in 1:n.experts){
+  w <- c(dat.summary.Q2[j,"lo"],dat.summary.Q2[j,"best"],dat.summary.Q2[j,"hi"])
+  lower <- (1 - dat.summary.Q2[j,"CID"])/2
+  upper <- dat.summary.Q2[j,"CID"] + (1 - dat.summary.Q2[j,"CID"])/2
+  
+  # extract values from google sheet; used to defined starting point in qmedist()
+  mu <- dat.summary.Q2[j,"mean"]
+  sigma <- dat.summary.Q2[j,"sd"]
+  
+  # fit distribution based on confidence; now logitnorm because its a probability
+  est <- qmedist(w,"logitnorm",probs = c(lower, upper),
+                 start = list(mu = mu,sigma = sigma))
+  
+  parms.2[j,1] <- est$estimate[1] 
+  parms.2[j,2] <- est$estimate[2]
+  
+  # extract probability values to evaluate fit (#??#)
+  test <- rlogitnorm(1000, est$estimate[1],est$estimate[2])
+  
+  # extract common bounds from each expert
+  parms.2[j,3:5] <- quantile(test,c(.025,.5,.975))
+
+  
+  # calculate average common bounds based on quantiles
+  average.2[1] <- mean(parms.2[,3])
+  average.2[2] <- mean(parms.2[,4])
+  average.2[3] <- mean(parms.2[,5])
+  
+} #j
+
+
+avg.95 <- c(0.025, 0.975)
+
+# fit distribution based on group aggregate average quantiles
+est.g <- qmedist(average.2,"logitnorm",probs = avg.95,
+                 start = list(mu = mu,sigma = sigma))
+
+```
+
+```{r}
+
+p = seq(0,1,length = 1000)
+
+## for loop to generate dlogitnorm values based on exp. params in  above section
+data.Q2 <- data.frame(NA_col = rep(NA, 1000))
+
+for(i in 1:n.experts) {                             # Head of for-loop
+  new_col <- dlogitnorm(p,parms.2[i,1],parms.2[i,2])   # Creating new variable
+  data.Q2[ , i] <- new_col                     # Adding new variable to data
+  colnames(data.Q2)[i] <- paste0("Ex_", i)    # Renaming new variable
+}
+
+data.Q2.ind = cbind(p,data.Q2)
+
+data.Q2.ind.long = data.Q2.ind %>%
+  pivot_longer(cols = starts_with("Ex_"),names_to = "expert",values_to = "dnorm")
+
+Agg.avg = dlogitnorm(p,est.g$estimate[1],est.g$estimate[2]) %>%
+  as.data.frame()
+
+colnames(Agg.avg)<- c("Average")
+
+data.Q2.avg = cbind(p,Agg.avg)
+
+```
+
+#### Plot of individual distributions and mean aggregated response
+
+```{r}
+
+  ggplot()+
+  geom_line(data = data.Q2.ind.long, 
+            aes(x = p, y = dnorm,color = expert),size = 1,linetype = "dashed")+ 
+  theme_bw() +
+  #scale_color_manual(values = colors.vec)+
+  # ylim(0,10)+
+  xlab("Proportion bats that will sucumb to WNS")+
+  ylab("Density") +
+  geom_line(data = data.Q2.avg, aes(x = p, y = Average),color = "black",size = 1)+
+  geom_linerange(aes(xmin = average.2[1], xmax = average.2[3], y = 0), color = "grey", size = 3) +
+  geom_point(aes(x = average.2[2], y = 0)) +
+  # scale_x_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1)) +
+  scale_x_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1), guide = guide_prism_minor()) +
+  guides(color = "none", size = "none")
+  
+```
+
+Each expert's response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (`r round(average.2[2], digits = 3)`) for the responses, and the grey bar shows the 95% confidence interval (`r round(average.2[c(1,3)], digits = 3)`). 
+
+
+## Question 3 {.tabset .tabset-fade}
+
+Consider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by *Myotis lucifugus*, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?
+
+```{r}
+# filter to specific question & convert to probability scale 0-100
+
+dat.summary %>% 
+  filter(., Qnum == "Q3") %>% 
+  mutate(across(c(lo,hi, best), ~ .x * 0.01)) %>% 
+  as.data.frame() -> Q3_df
+
+```
+
+### Plot 1
+
+#### Plot of individual responses
+
+```{r}
+
+# Open a plot for my Q3 data frame
+Q3_df %>% 
+  ggplot() %>% 
+  # put my data into the plot1 function for the theme 
+  plot1theme() +
+  ylab("Proportion bats that will sucumb to WNS") +
+  scale_y_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1)) +
+  ggtitle("W region of MT")
+
+```
+
+### Plot 2
+
+```{r}
+dat.summary.Q2 <- Q3_df
+
+parms.2 <- matrix(data = NA,nrow = n.experts, ncol = 5)
+average.2 <- numeric()
+
+for(j in 1:n.experts){
+  w <- c(dat.summary.Q2[j,"lo"],dat.summary.Q2[j,"best"],dat.summary.Q2[j,"hi"])
+  lower <- (1 - dat.summary.Q2[j,"CID"])/2
+  upper <- dat.summary.Q2[j,"CID"] + (1 - dat.summary.Q2[j,"CID"])/2
+  
+  # extract values from google sheet; used to defined starting point in qmedist()
+  mu <- dat.summary.Q2[j,"mean"]
+  sigma <- dat.summary.Q2[j,"sd"]
+  
+  # fit distribution based on confidence; now logitnorm because its a probability
+  est <- qmedist(w,"logitnorm",probs = c(lower, upper),
+                 start = list(mu = mu,sigma = sigma))
+  
+  parms.2[j,1] <- est$estimate[1] 
+  parms.2[j,2] <- est$estimate[2]
+  
+  # extract probability values to evaluate fit (#??#)
+  test <- rlogitnorm(1000, est$estimate[1],est$estimate[2])
+  
+  # extract common bounds from each expert
+  parms.2[j,3:5] <- quantile(test,c(.025,.5,.975))
+
+  
+  # calculate average common bounds based on quantiles
+  average.2[1] <- mean(parms.2[,3])
+  average.2[2] <- mean(parms.2[,4])
+  average.2[3] <- mean(parms.2[,5])
+  
+} #j
+
+
+avg.95 <- c(0.025, 0.975)
+
+# fit distribution based on group aggregate average quantiles
+est.g <- qmedist(average.2,"logitnorm",probs = avg.95,
+                 start = list(mu = mu,sigma = sigma))
+
+```
+
+```{r}
+
+p = seq(0,1,length = 1000)
+
+## for loop to generate dlogitnorm values based on exp. params in  above section
+data.Q2 <- data.frame(NA_col = rep(NA, 1000))
+
+for(i in 1:n.experts) {                             # Head of for-loop
+  new_col <- dlogitnorm(p,parms.2[i,1],parms.2[i,2])   # Creating new variable
+  data.Q2[ , i] <- new_col                     # Adding new variable to data
+  colnames(data.Q2)[i] <- paste0("Ex_", i)    # Renaming new variable
+}
+
+data.Q2.ind = cbind(p,data.Q2)
+
+data.Q2.ind.long = data.Q2.ind %>%
+  pivot_longer(cols = starts_with("Ex_"),names_to = "expert",values_to = "dnorm")
+
+Agg.avg = dlogitnorm(p,est.g$estimate[1],est.g$estimate[2]) %>%
+  as.data.frame()
+
+colnames(Agg.avg)<- c("Average")
+
+data.Q2.avg = cbind(p,Agg.avg)
+
+```
+
+#### Plot of individual distributions and mean aggregated response
+
+```{r}
+
+  ggplot()+
+  geom_line(data = data.Q2.ind.long, 
+            aes(x = p, y = dnorm,color = expert),size = 1,linetype = "dashed")+ 
+  theme_bw() +
+  #scale_color_manual(values = colors.vec)+
+  # ylim(0,10)+
+  xlab("Proportion bats that will sucumb to WNS")+
+  ylab("Density") +
+  geom_line(data = data.Q2.avg, aes(x = p, y = Average),color = "black",size = 1)+
+  geom_linerange(aes(xmin = average.2[1], xmax = average.2[3], y = 0), color = "grey", size = 3) +
+  geom_point(aes(x = average.2[2], y = 0)) +
+  # scale_x_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1)) +
+  scale_x_continuous(limits = c(0, 1),breaks = seq(0, 1, by = 0.1), guide = guide_prism_minor()) +
+  guides(color = "none", size = "none")
+  
+```
+
+Each expert's response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (`r round(average.2[2], digits = 3)`) for the responses, and the grey bar shows the 95% confidence interval (`r round(average.2[c(1,3)], digits = 3)`).
+
+
+
+

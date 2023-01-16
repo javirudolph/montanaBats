@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.269">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>montanaBats - Expert Elicitation</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">montanaBats</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html">
+ <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-model" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Model</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-model">    
+        <li>
+    <a class="dropdown-item" href="./model.html">
+ <span class="dropdown-text">Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./jurisdictions.html">
+ <span class="dropdown-text">Jurisdictions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./covariates.html">
+ <span class="dropdown-text">Covariates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./predictions.html">
+ <span class="dropdown-text">Multistate occupancy predictions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./estimation.html">
+ <span class="dropdown-text">Estimation</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-more" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">More</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-more">    
+        <li>
+    <a class="dropdown-item" href="./toymodel.html">
+ <span class="dropdown-text">Dynamic Multistate Conditional Model Simulation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./old.html">
+ <span class="dropdown-text">Old</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-bi-github" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-bi-github">    
+        <li>
+    <a class="dropdown-item" href="https://github.com/javirudolph/montanaBats">
+ <span class="dropdown-text">Source Code</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://github.com/javirudolph/montanaBats/issues">
+ <span class="dropdown-text">Issues</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+              <div class="quarto-toggle-container">
+                  <a href="" class="quarto-color-scheme-toggle nav-link" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+              </div>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#bat-survival-to-wns-in-different-regions-of-montana" id="toc-bat-survival-to-wns-in-different-regions-of-montana" class="nav-link active" data-scroll-target="#bat-survival-to-wns-in-different-regions-of-montana">Bat survival to WNS in different regions of Montana</a></li>
+  <li><a href="#training-and-expert-calibration" id="toc-training-and-expert-calibration" class="nav-link" data-scroll-target="#training-and-expert-calibration">Training and Expert Calibration</a></li>
+  <li><a href="#training-question" id="toc-training-question" class="nav-link" data-scroll-target="#training-question">Training Question</a>
+  <ul class="collapse">
+  <li><a href="#plot-1" id="toc-plot-1" class="nav-link" data-scroll-target="#plot-1">Plot 1</a></li>
+  <li><a href="#plot-2" id="toc-plot-2" class="nav-link" data-scroll-target="#plot-2">Plot 2</a></li>
+  </ul></li>
+  <li><a href="#question-1" id="toc-question-1" class="nav-link" data-scroll-target="#question-1">Question 1</a>
+  <ul class="collapse">
+  <li><a href="#plot-1-1" id="toc-plot-1-1" class="nav-link" data-scroll-target="#plot-1-1">Plot 1</a></li>
+  <li><a href="#plot-2-1" id="toc-plot-2-1" class="nav-link" data-scroll-target="#plot-2-1">Plot 2</a></li>
+  </ul></li>
+  <li><a href="#question-2" id="toc-question-2" class="nav-link" data-scroll-target="#question-2">Question 2</a>
+  <ul class="collapse">
+  <li><a href="#plot-1-2" id="toc-plot-1-2" class="nav-link" data-scroll-target="#plot-1-2">Plot 1</a></li>
+  <li><a href="#plot-2-2" id="toc-plot-2-2" class="nav-link" data-scroll-target="#plot-2-2">Plot 2</a></li>
+  </ul></li>
+  <li><a href="#question-3" id="toc-question-3" class="nav-link" data-scroll-target="#question-3">Question 3</a>
+  <ul class="collapse">
+  <li><a href="#plot-1-3" id="toc-plot-1-3" class="nav-link" data-scroll-target="#plot-1-3">Plot 1</a></li>
+  <li><a href="#plot-2-3" id="toc-plot-2-3" class="nav-link" data-scroll-target="#plot-2-3">Plot 2</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Expert Elicitation</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Date: May 9th 2022</p>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="bat-survival-to-wns-in-different-regions-of-montana" class="level2">
+<h2 class="anchored" data-anchor-id="bat-survival-to-wns-in-different-regions-of-montana">Bat survival to WNS in different regions of Montana</h2>
+<p>White Nose Syndrome (WNS), a fungal disease of bats caused by <em>Pseudogymnoascus destructans</em> (<em>Pd</em>), was detected in seven species of bats in eastern Montana in 2020-2021, and showed spread towards the west. Although the effects of WNS can be devastating to bat populations in the eastern United States, there is uncertainty regarding the risk for bats in Montana. There exists the possibility that bats in the west, in Montana, would face a similar population decline as in the eastern part of the United States. However, it is also possible that bats in Montana have a different outcome with <em>Pd</em> infection due to their genetics or the topographic ruggedness of their environment. Due to the landscape characteristics in Montana, bat behavior is also different and roosting occurs at lower densities across the landscape, perhaps altering the pathogen’s effect on bat populations.</p>
+<p>Given the uncertainty in the outcome for bat populations infected with <em>Pd</em> we performed an expert elicitation session with 9 experts for bat populations in the western areas of the United States. We started a two hour discussion by asking the experts about all the potential factors that could play into <em>Pd</em> infections and determine bat survival. Several experts mentioned that they believed <em>Pd</em> would cause less drastic effects on western bat populations due to the landscape, since bats are spread out and not clustered in caves or mines. There was also concern regarding the lack of identified hibernacula in the west, and the uncertainty of how <em>Pd</em> would be transmitted in these rocky environments, in contrast to the known behavior associated to hibernacula humid conditions. Additionally, comparisons between the east and west areas for pathogen spread have shown slower spread in the west. A potential explanation is the topographic diversity that limits how bats move around and might spread the fungus.</p>
+<p>Given the importance of the landscape, we asked experts to independently make predictions as to the effect of WNS on bat survival across three different biogegraphic regions in Montana (as shown in the map below). These three regions are based on the continental divide and rocky mountain front on the west, the northeastern area defined by everything north of the mountain ranges, and the southern region encompassing the xeric pine forest mountains and sagebrush steppe.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="images/MT_Map_3_regions.png" class="img-fluid"></p>
+</div>
+</div>
+<p>We used a standardized protocol for the expert elicitation where we developed a training question, and three additional questions regarding bat survival to WNS in the three biogeographic regions of Montana. We performed a four-point elicitation, in which each expert independently gave the lowest, highest, and best point estimates for the number of bats that would die due to WNS. The fourth point corresponded to the confindence each expert associated to their generated interval and how it would capture the true value for bat deaths. We discussed the experts estimates individually their aggregated distributions. OVerall, we observed that there was a lot of variation between the experts and across regions. Although during the discussion section of the process, it was mentioned that <em>Pd</em> might have less drastic effects for bats in the west, the estimates provided by the experts still show high probabilities of bats succumbing to the disease (median aggregated probabilities shown below each Plot2 for each question). Additionally, there is a big overlap in the estimates across regions, with the west region with slightly lower probabilities for bats dying from WNS, something that was mentioned in the discussion as being associated to the ruggedness of the terrain.</p>
+<!-- Things that were mentioned a lot during the meeting was the rocky environment, ruggedness, talus slopes. Uncertainty of how the bats would behave under these different environments. Also, Riley Bernard mentioned towards the end that there is a lot not known of the little brown bat, but it is the most common one in discussion, even though it is not the one that gets captured the most. She also mentioned she understood the question as survival, instead of death, because the word succumb wasn't clear (linguistic uncertainty). -->
+</section>
+<section id="training-and-expert-calibration" class="level2">
+<h2 class="anchored" data-anchor-id="training-and-expert-calibration">Training and Expert Calibration</h2>
+<div class="cell">
+
+</div>
+<p>During our expert elicitation session, we used the first part of the meeting to explain the process to all the experts. We used presented a training question regarding the average size tip to tail for the little brown bat, <em>Myotis lucifugus</em>. Several experts noted that this is not a common measurement that they are used to thinking about, given that when capturing bats they consider forearm length. We adjusted the question to the bat measurement from tip to base of tail, and asked experts to use their knowledge on other measurements, such as forearm length, to estimate the average size of a bat measured from head to base of the tail. The reference for the true value is the <a href="https://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMACC01010">Montana Field Guide</a> which listed the length of head and body from 41-54mm, thus we used the middle value of 47.5 as the truth. Based on the expert responses, 5 out of the 9 experts captured this true value within the intervals they provided, with varying degrees of confidence. Using the experts’ confidence, we calculated the expected number of experts that would have captured the true value for bat size within the interval they provided (6.45).</p>
+</section>
+<section id="training-question" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="training-question">Training Question</h2>
+<p>What is the average size of the little brown bat (Myotis lucifugus)? If you were to measure 100 adult bats, tip-to- base of tail, at a site in the center of their range, what would the average length be in millimeters?</p>
+<section id="plot-1" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1">Plot 1</h3>
+<section id="plot-of-individual-responses" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.
+ℹ Please use the `linewidth` argument instead.</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/Plot1-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2">Plot 2</h3>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/Plot2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. The vertical dashed line indicates the true answer based on the literature. At the bottom of the figure, the black dot represents the overall mean (57.17) for the responses, and the grey bar shows the 95% confidence interval (42.118, 72.612).</p>
+<!-- ### Plot 3 -->
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+</section>
+</section>
+</section>
+<section id="question-1" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="question-1">Question 1</h2>
+<p>Consider the Northeast (NE) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by <em>Myotis lucifugus</em>, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?</p>
+<div class="cell">
+
+</div>
+<section id="plot-1-1" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1-1">Plot 1</h3>
+<section id="plot-of-individual-responses-1" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses-1">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2-1" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2-1">Plot 2</h3>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response-1" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response-1">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.786) for the responses, and the grey bar shows the 95% confidence interval (0.45, 0.939).</p>
+</section>
+</section>
+</section>
+<section id="question-2" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="question-2">Question 2</h2>
+<p>Consider the South (S) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by <em>Myotis lucifugus</em>, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?</p>
+<div class="cell">
+
+</div>
+<section id="plot-1-2" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1-2">Plot 1</h3>
+<section id="plot-of-individual-responses-2" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses-2">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2-2" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2-2">Plot 2</h3>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response-2" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response-2">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.762) for the responses, and the grey bar shows the 95% confidence interval (0.422, 0.928).</p>
+</section>
+</section>
+</section>
+<section id="question-3" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="question-3">Question 3</h2>
+<p>Consider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by <em>Myotis lucifugus</em>, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?</p>
+<div class="cell">
+
+</div>
+<section id="plot-1-3" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1-3">Plot 1</h3>
+<section id="plot-of-individual-responses-3" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses-3">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2-3" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2-3">Plot 2</h3>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response-3" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response-3">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.721) for the responses, and the grey bar shows the 95% confidence interval (0.364, 0.922).</p>
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">Copyright 2022, F. Javiera Rudolph</div>   
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/javirudolph">
+      <i class="bi bi-github" role="img">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+</body></html>
