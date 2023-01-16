@@ -1,0 +1,503 @@
+---
+title: "Old"
+execute: 
+  echo: false
+---
+
+I created this file back in August when I was trying to figure out what we were doing and what data was out there. Specifically, we were trying to see if there were any available models for occupancy, for which we could use their results as a starting point to generate predictions. 
+
+```{r}
+#| message: false
+
+library(sf) # to read shape files and spatial stuff
+library(ggplot2) # all the plots
+library(scales) # for map colors and stuff
+library(dplyr)
+library(tidyr)
+library(cowplot)
+library(sp)
+library(xml2)
+```
+
+# NABat grids for Montana
+
+I downloaded the Montana Specific grids from the [link]( https://www.sciencebase.gov/catalog/item/5474da02e4b04d7459a7ea82?community=North+American+Bat+Monitoring+Program)
+
+All shape files are stored in the 'datafiles' folder which is not included on version control (or uploaded to github) due to size (check the .gitignore), but the folder. However, I have listed all links from where information was downloaded.
+
+```{r}
+
+mtshape <- read_sf("datafiles/Montana_GRTS/states_albersMontana_GRTS.shp")
+# mtshape2 <- read_sf("shapefilesdata/Montana_GRTS/states_albersMontana_GRTS.shp")
+
+# The randomized ordered list of grid cells
+randomgrids <- readxl::read_xls("datafiles/Montana_GRTS/states_albersMontana_GRTS.xls")
+```
+
+I am not fully sure about what the Montana GRTS files include, the `.xml` file should be it. There is a spreadsheet that downloads with the zip (`.xls` file) which has **the spatially balanced and randomized ordered list (.xls) of the 10x10km grid cells for monitoring site selection.** However, I can't tell the difference between the order of the `.xls` file and the shape files. 
+
+From the same site, the variable `GRTS_ID` shows the sampling priority for the grids, with smaller numbers meaning high priority. We want to focus on the 10 by 10km grids, and I see here that on this shape file, these are divided in 4, so each sub grid is `r mtshape$AREA[1]` squared meters.
+
+The geometry in these files is 4 grids for each 10 by 10 grid. The geometry variable is for each of these subgrids, not the 10by10, so if we visualize right away:   
+
+```{r}
+mtshape %>%
+  ggplot() +
+  geom_sf() +
+  coord_sf(crs = st_crs("NAD83"))
+
+```
+
+But this map shows the tiny girds, not the 10 by 10 km, so we need to change that.
+
+
+```{r}
+mtshape %>% 
+  group_by(GRTS_ID) %>% 
+  summarise() -> mtshape10km
+
+mtshape10km %>%
+  ggplot() +
+  geom_sf() +
+  coord_sf(crs = st_crs("NAD83"))
+```
+
+# MT FWP Phase 1 work
+Kathi Irvine shared this link to the data release for their [Phase 1 work](https://www.sciencebase.gov/catalog/item/5c5a0ddee4b070828900ec94).
+With this [report](https://fwp.mt.gov/binaries/content/assets/fwp/conservation/wildlife-reports/bats/wwright_2018_mtbatphase1_finalwithoutkathi-2.pdf) 
+Unfortunately, I can't find any code associated to this data and report, so we don't have the scripts or data to reproduce these results. 
+
+What I understand is that this work used data that was opportunistically collected, and so getting state-wide occupancy predictions was tricky. The estimates are also done using data collected from 2008-2010. The output they provide in these shapefiles are the model based predictions for the probability of occurrence for each of the study species, and the associated 95% CI for those predictions. 
+
+## Summary 
+### Data 
+Mist netting and acoustic data collected from 13 different bat species. Use observations collected in the summer (Jun-Sep) for years 2008, 2009, 2010. They assume no false positives, and that every detection indicate presence. Analysis focused on 8 species (EPFU, LANO, LACI, MYCA, MYCI, MYEV, **MYLU**, and MYVO.) 
+They used the geographical coordinates associated with each record location (bat) to associate with NABat grids.
+Covariates from Montana Natural Heritage Program at 90x90meter resolution, so they averaged within a grid cell. These covariates are: 
+- forest percent cover (log-transformend)
+- elevation 
+- ruggedness 
+- average degree days 
+For detection probabilities, the covariates used: 
+- detection method (mist netting or acoustic) 
+- date
+- weather covariates (min temp, daily precipitation)
+
+### Model 
+Probability of occupancy modeled using logit link using the associated coefficients, and the covariates for occupancy mentioned above (forest, elev, rugg, degreedays), for $i$ sites and $k$ species. 
+
+$$
+logit(\psi_{ik}) = \mathbf{X_i} \mathbf{\beta_k}
+$$
+
+* They also included a hierarchy for each fixed effect, so that for each covariate, the coefficients across the species come from a common normal distribution ('community-level prior distribution') 
+* Spatial autocorrelation by incorporating spatial random effects in the occupancy process. Intrinsic conditionally autoregressive (ICAR) spatial correlation structure. 
+
+$$
+logit(\psi_{ik}) = \mathbf{X_i} \mathbf{\beta_k} + \mathbf{\eta_k}
+$$
+
+### Load the shapefiles and metadata
+
+```{r}
+# shapefile
+occuMT2010 <- read_sf("datafiles/Bat_Occupancy_Predictions_Montana_2008_2010/Bat_Occupancy_Predictions_Montana_2008_2010.shp")
+
+# metadata
+# Although it is easier to read and open this one in a browser
+occuMT2010_metadata <- read_xml("datafiles/Bat_Occupancy_Predictions_Montana_2008_2010/Bat_Occupancy_Predictions_Montana_2008_2010.xml")
+```
+
+We can explore the data we just loaded: 
+```{r}
+head(occuMT2010)
+```
+
+
+### Some of the variables explained: 
+* CONUS_10KM: NABat grid cell ID for cells in the state of Montana
+* The variables with '_lower' correspond to the lower bound of the posterior 95% interval for occurrence for different bat species 
+* Similarly, '_mean' is the posterior mean occurrence probability 
+* '_upper' is the upper bound 
+* '_width' is the 95% posterior interval width for probability of occurrence 
+* J1-J4 are different groups of bats: 
+  * J1 - all eight species occurence 
+  * J2 - EPFU and all myotis 
+  * J3 - EPFU and MYLU 
+  * J4 - all myotis
+
+We also have a `geometry` list column here, so we can plot the Montana grids using this object.
+
+We can visualize different species by changing the `fill` argument to the different variables. In this case, we look at the `mean probability of occupancy` and `95% CI width` for MYLU.  
+
+```{r}
+occuMT2010 %>%
+  ggplot() +
+  geom_sf(aes(fill = MYLU_mean), color = NA) +
+  coord_sf(crs = "NAD83") -> A
+
+occuMT2010 %>%
+  ggplot() +
+  geom_sf(aes(fill = MYLU_width), color = NA) +
+  coord_sf(crs = "NAD83") -> B
+
+plot_grid(A, B, nrow=2)
+```
+
+One of their results is that MYLU has high predicted occupancy probabilities across the state, with no clear or strong patterns. 
+
+*The shared resources for this Phase 1 did not include data or scripts, just the maps for the predictions*
+
+# Phase 2 work 
+All of the phase2 work came from Kathi in a zipfolder, and I didn't find anything related to this work online. 
+
+## Summary 
+
+Phase 2 focused on analyzing acoustic data to model bat activity, and to avoid misidentification, they focused on overall bat activity (total number of bat calls). I think this work also used data from detectors placed for specific projects, and so not a probabilistic sampling design of Montana. Data from April to October since that's when the bats are most active, and at least 15 nights for a detector.
+
+### Model 
+The number of bat calls in a night modeled as a Poisson variable ($y_i$, where $i$ is one night at a specific detector), so use a generalized linear model to describe this and associated covariates. They model here detector years ($j$), which I don't fully understand. The report mentions *it groups observations if they were collected at the same detector during the same year*. Anyways, the glm goes as follows
+
+$$
+\text{bat calls per night - } y_i \sim Poisson(\lambda_i)
+$$
+log link to associate the mean ($\lambda$) parameter, 
+
+$$
+\log(\lambda_i) = \mathbf{x}_i\mathbf{\alpha}_{j[i]} + \mathbf{w}_i\mathbf{\beta}_{j[i]}+\epsilon_i
+$$
+where the first part is for the weather covariates (air temp, wind speed, humidity, plus the intercept so $\alpha$ length is 4), the second is for a trend over time (using thin plate regression splines, is this a gam?), and the third for the error term for each night. The second part for the trend, $w$ is a spline design matrix for julian date (this matrix has 10 columns, and thus length of $\beta$ is 10). Coefficients ($\alpha \text{ and } \beta$) could vary across detector years (or just years? why use detector years?). They also model each batch of coefficients (each batch is a year) with normal distributions.
+To include variation, they use a hierarchical framework and have the coefficients follow normal distributions:
+$$
+\alpha_{jk} \sim \mathit{Normal}(\mu_{\alpha k}, \sigma_{\alpha k}^2)
+$$
+
+
+### Results 
+The zipfolder had data and scripts, and I was able to run the model to get the results. I have stored those in the same `shapefiles` directory, but these are not on github due to size. 
+For the $alpha$ coefficients ($\alpha_{jk} \sim \mathit{Normal}(\mu_{\alpha k}, \sigma_{\alpha k}^2)$) overall intercept it 3, and posterior mean for $\sigma$ is 2.25, air temp has positive relationship with nightly number of calls. Humidity and wind speed with negative relationship. Figure 3 in the report shows more details, which I reproduced below.
+
+#### Shared data 
+
+I ran this model using the code provided by Kathi, but it is not on Github because of size.  
+```{r}
+# load the data to use:
+data_comp4 <- readRDS("datafiles/PhaseII_RCode/data_comp4.rds")
+mt.map <- readRDS("datafiles/PhaseII_RCode/mt.map.rds")
+```
+
+Quick look at the data
+```{r}
+data_comp4 %>% 
+  dplyr::select(year, month, total) %>% 
+  ggplot(aes(y = total, x = as.factor(month), color = year)) +
+  geom_boxplot() +
+  labs(y = "Number of bat calls", x = "Month") +
+  theme_bw()
+```
+
+These plots show the number of observations (total nights) for each of these sites, and the three habitat covariates they had available.
+
+```{r fig.width=10}
+
+mtoutline <- st_as_sf(mt.map, crs = 4326)
+
+data_comp4 %>% 
+  # dplyr::select(SiteID, year, month, total, Latitude, Longitude, rug, tree, water) %>% 
+    mutate(rug = ifelse(Ruggedness == 'Rugged', 1, 0),
+         tree = ifelse(Trees == 'Trees', 1, 0),
+         water = ifelse(Water_Type == 'Terrestrial', 0, 1)) %>% 
+  st_as_sf(., coords = c("Longitude", "Latitude"), crs = 4326) -> data2map
+
+ggplot(data=mtoutline) +
+  geom_sf() +
+  geom_sf(data = data2map %>% group_by(SiteID) %>% tally(), aes(color = n), size = 2) -> nobsplot
+
+ggplot(data=mtoutline) +
+  geom_sf() +
+  geom_sf(data = data2map, size = 2, alpha = 0.8, aes(color = as.factor(water))) -> waterplot
+
+ggplot(data=mtoutline) +
+  geom_sf() +
+  geom_sf(data = data2map, size = 2, alpha = 0.8,  aes(color = as.factor(rug))) -> rugplot
+
+ggplot(data=mtoutline) +
+  geom_sf() +
+  geom_sf(data = data2map, size = 2, alpha = 0.8,  aes(color = as.factor(tree))) -> treeplot
+
+plot_grid(nobsplot, waterplot, rugplot, treeplot)
+
+```
+
+These are the nightly covariates they used in the model, and the ones associated to the alpha coefficients. They didn't use the environmental covariates because there was not enough variation in those.
+
+```{r}
+data_comp4 %>% 
+  dplyr::select(airT, windS, humid) %>% 
+  pivot_longer(everything()) %>% 
+  ggplot(., aes(x = name, y = value)) +
+  facet_wrap(~name, scales = "free") +
+  geom_boxplot()
+```
+
+These are the parameters for the normal distributions that describe the coefficients for all the covariates. After running the model, I used the available code to reproduce the figure shown in the report. 
+
+```{r echo = FALSE}
+# This model gives the mus and sigmas for the alpha and beta coefficients in the overall model
+
+fit_all3 <- readRDS("datafiles/PhaseII_RCode/fit_all3.RDS")
+
+# The summary for all these parameters that were fit.
+# From what I understand, this is the coefficients across all the data. 
+##summary plots for the report
+param_df <- as.data.frame(summary(fit_all3, pars = c('mu_alphas', 'sigma_alphas', 'mu_betas', 'sigma_betas'))$summary)
+names(param_df) <- c("mean", "se", "sd", "lo1", "lo2", "med", "up2", "up1", "n", "r")
+param_df$level <- c(rep('Nightly covariates', 8), rep('Trend parameters', 20))
+param_df$param <- factor(c('mu_int', 'mu_temp', 'mu_wind', 'mu_humid',
+                           'sd_int', 'sd_temp', 'sd_wind', 'sd_humid',
+                           'mu1', 'mu2', 'mu3', 'mu4', 'mu5', 'mu6',
+                           'mu7', 'mu8', 'mu9', 'mu10',
+                           'sd1', 'sd2', 'sd3', 'sd4', 'sd5', 'sd6',
+                           'sd7', 'sd8', 'sd9', 'sd10'),
+                         levels = c('mu_int', 'mu_temp', 'mu_wind', 'mu_humid',
+                                    'sd_int', 'sd_temp', 'sd_wind', 'sd_humid',
+                                    'mu1', 'mu2', 'mu3', 'mu4', 'mu5', 'mu6',
+                                    'mu7', 'mu8', 'mu9', 'mu10',
+                                    'sd1', 'sd2', 'sd3', 'sd4', 'sd5', 'sd6',
+                                    'sd7', 'sd8', 'sd9', 'sd10'))
+
+param_plot <- ggplot(param_df, aes(x = param, y = mean)) +
+  facet_grid(level~., scales = "free") +
+  geom_errorbar(aes(ymin = lo1, ymax = up1), width = 0) +
+  geom_errorbar(aes(ymin = lo2, ymax = up2), width = 0, colour = "red", linewidth = 1.2) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty = 2) +
+  theme_bw() +
+  xlab('Parameters') +
+  ylab('Posterior Distribution') +
+  coord_flip()
+param_plot
+
+```
+
+# Phase 3 work 
+## Summary 
+This part of the work focuses on evaluating sampling effort and design, it is a power analysis. What is relevant to us, is that they simulate data for bat occupancy in Montana using the coefficients from Phase 1. I only got the report associated to this work, but no data or scripts. This report cites the data release and the report mentioned in Phase 1 to inform the detection and occupancy parameters in all their simulations.
+
+They mention here a package: `DynOccuPow` by [Banner et al 2019](https://code.usgs.gov/usgs/norock/irvine_k/ip-097746/-/tree/master/DynOccuPow) to generate occupancy datasets but I haven't had a chance to explore it. 
+
+### Single-season model 
+To simulate these, it is straightforward using the covariates mentioned in Phase 1, although we don't have the data for those covariates. So a site $i$ is either occupied or not with probability $\psi_i$ following:
+$$
+Z_i \sim \text{Bernoulli}(\psi_i)
+$$
+
+and, 
+$$
+\text{logit}(\psi_i) = \beta_0 + \beta_1\log \text{_Forest}_i + \beta_2\text{Ruggedness}_i + \beta_3\text{Elevation}_i + \beta_4\text{DegreeDays}_i
+$$
+In the report they mention that for MYLU, these coefficients are: $\beta_0 = 2, \beta_1 = 0, \beta_2 = -0.25, \beta_3 = 1, \beta_4 = 2$ and a constant detection probability of 0.378 and generated for visits $j = 1, ..., J$:
+$$
+[Y_{ij}|Z_i=1]\sim\text{Bernoulli}(p_{ij})
+$$
+with $logit(p_{ij}) = \alpha_0$ and $\alpha_0 = -0.5$
+
+#### Multi-season model
+
+simulated data for $t = 1,2,3$ years, and data for the first year was simulated following the single-season model described above.For subsequent years, occupancy was generated based on colonization and survival rates given the occupancy of the previous year. So, occupancy states $Z_{i,t}$ for $t=2,3$ are $\text{Bernoulli}(\psi_{i,t})$ with:
+
+$$
+\psi_{i,t} = z_{i,t-1}\phi_{t-1} + (1- z_{i,t-1})\gamma_{t-1}
+$$
+which means cells that were occupied in the previous year remain occupied with probability $\phi$ and cells that were empty the previous year get occupied with probabilty $\gamma$. Values used here: $\gamma = 0.1$ representing low colonization rate, and used values of $\phi_1 = 0.9$ and declines with $\phi_2 = 0.9 \times d$ with $d = (0.975, 0.95, 0.9)$ to simulate occupancy declines in 15, 20, and 25%. For detections, they used $\alpha_0 = -0.8$ which gave a detection probability of 0.310, constant.
+
+### Activity model
+This one uses the model and coefficients from Phase 2 and generates data. 
+
+## Overall 
+This workis mostly to guide sampling in the future. We could follow the way they have generated the data, but I don't think we have any of the covariates data they used in Phase 1. 
+
+# NABat Status and trends from 2010-2019 
+Found this status and trends page from 2010-2019:  https://www.sciencebase.gov/catalog/item/620e6f3bd34e6c7e83baa603
+There's a bunch of links, so posting them all here 
+- This is the NABat status and trends page: https://sciencebase.usgs.gov/nabat/#/results 
+- The data release: https://www.sciencebase.gov/catalog/item/620e6f3bd34e6c7e83baa603 
+    -This data release has the NABat associated covariates 
+- The report associated to it: https://ecos.fws.gov/ServCat/Reference/Profile/144755 OR https://ecos.fws.gov/ServCat/DownloadFile/216681 
+- This is from the NABat page: 
+https://www.nabatmonitoring.org/post/summer-occupancy-analysis-2010-2019
+
+
+
+## Map 
+The map and covariates are available for the whole continental US. I am just restricting to Montana here:
+
+```{r}
+grid_covariates <- read_sf("datafiles/nabat_covariates/NABat_grid_covariates/NABat_grid_covariates.shp")
+
+
+mt_covariates <- grid_covariates %>% 
+  filter(., admin1 == "Montana")
+
+# check that the map works
+mt_covariates %>% 
+  ggplot() +
+  geom_sf()
+
+```
+
+## Covariates 
+Available covariates, and the ones that were used in the ecological model described in the report:
+
+```{r fig.width=12, echo = FALSE}
+# mt_covariates %>% 
+#   pivot_longer(., cols = c(p_forest, p_wetland, mean_temp, precip, physio_div, DEM_max), names_to = "covariate") %>% 
+#   ggplot() +
+#   facet_wrap(~covariate) +
+#   geom_sf(aes(fill = value, color = value))
+
+
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = p_forest, color = p_forest)) -> a
+
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = p_wetland, color = p_wetland)) -> b
+
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = mean_temp, color = mean_temp)) -> c
+
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = precip, color = precip)) -> d
+
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = physio_div, color = physio_div)) -> e
+
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = DEM_max, color = DEM_max)) -> f
+
+plot_grid(a,b,c,d,e,f, nrow = 2)
+  
+```
+
+
+
+From the same page, we have predictions for mylu occupancy
+
+```{r}
+# Read the csv files provided in the website for mylu occupancy
+mylu_occu <- read.csv("datafiles/nabat_covariates/MYLU_gridcell_occupancy.csv")
+
+mylu_years <- unique(mylu_occu$year)
+
+```
+
+
+Focusing on Montana
+
+```{r}
+
+mylu_occu_mt <- grid_covariates %>% 
+  select(grts, admin1) %>% 
+  left_join(mylu_occu) %>% 
+  filter(admin1 == "Montana")
+
+mylu_plot_list <- list()
+
+for(i in 1:length(mylu_years)){
+  mylu_plot_list[[i]] <- mylu_occu_mt %>% 
+  filter(year == mylu_years[i]) %>% 
+  ggplot() +
+  geom_sf(aes(fill = mean)) +
+      labs(title = paste("Predicted MYLU occupancy probability for", mylu_years[i]))
+}
+
+``` 
+
+:::{.panel-tabset}
+## 2010
+```{r}
+mylu_plot_list[[1]]
+```
+
+## 2011
+```{r}
+mylu_plot_list[[2]]
+```
+
+## 2012
+```{r}
+mylu_plot_list[[3]]
+```
+
+## 2013
+```{r}
+mylu_plot_list[[4]]
+```
+
+## 2014
+```{r}
+mylu_plot_list[[5]]
+```
+
+## 2015
+```{r}
+mylu_plot_list[[6]]
+```
+
+## 2016
+```{r}
+mylu_plot_list[[7]]
+```
+
+## 2017
+```{r}
+mylu_plot_list[[8]]
+```
+
+## 2018
+```{r}
+mylu_plot_list[[9]]
+```
+
+## 2019
+```{r}
+mylu_plot_list[[10]]
+```
+
+:::
+
+
+
+# Other predictions 
+
+Then, I found [summertime predictions](https://www.sciencebase.gov/catalog/item/603ea9fad34eb12031185d1e)
+
+## MYLU specific predictions
+https://www.sciencebase.gov/catalog/item/6046ab46d34eb120311a44ba
+saved as the 'rangewidesummer' zip download and sent to datafiles folder. There is a .xml file for metadata, just hard to read it and don't know how else to open. Just getting info from when I open in the browser. It says this is from the NABat acoustic database. 
+The missing rows of data show up as empty in the map, not sure what these are in the first place. This is shapefiles, and there is no report associated, but there are several covariates for each cell: distance from wind farms, forest cover, water cover, elevation, ruggedness, precipitation, temperature. 
+
+```{r}
+
+mylupred <- read_sf("datafiles/rangewidesummer/mylu/mylu.shp")
+
+# This plots the whole US and Canada
+
+# mylupred %>% 
+#   ggplot() +
+#   geom_sf()
+
+mylupred %>%
+  dplyr::filter(., frame == "Montana") -> mtmylu
+
+mtmylu %>%
+  ggplot(aes(fill = mean_2019)) + # Mean predicted occupancy for mylu in 2019
+  geom_sf()
+```
+
