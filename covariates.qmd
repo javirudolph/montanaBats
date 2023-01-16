@@ -1,0 +1,106 @@
+---
+title: "Covariates"
+---
+
+# Overview 
+
+We are generating predictions at the grid cell scale (10x10km) using a set of covariates from the latest NABat report. We are focusing on the state of Montana, and incorporating different jurisdictions that may or may not implement all management actions. 
+
+## Data sources 
+Covariate data and grids are coming from NABat 
+
+```{r libs}
+#| message: false
+
+# Libraries
+library(tidyverse)
+library(sf)
+library(jagsUI)
+library(scales)
+
+```
+
+```{r load_data}
+
+## COVARIATES --------
+mt_covariates <- readRDS("datafiles/mt_covariates.RDS") %>% 
+  # Abbreviate jurisdiction names
+    mutate(jurisd_abbr = case_when(
+    jurisdiction == "Montana Fish, Wildlife, and Parks" ~ "MFWP",
+    jurisdiction == "US Bureau of Land Management" ~ "BLM",
+    jurisdiction == "US Forest Service" ~ "USFS",
+    jurisdiction == "Reservations" ~ "Res",
+    jurisdiction == "US Fish and Wildlife Service" ~ "USFWS",
+    jurisdiction == "National Park Service" ~ "NPS",
+    jurisdiction == "Montana Department of Natural Resources and Conservation" ~ "DNRC"
+    ))
+
+grid_geometry <- mt_covariates %>% 
+  select(GRTS_ID)
+```
+
+```{css, echo=FALSE}
+.panel-tabset .nav-item {
+  font-size: 12px;
+}
+```
+
+
+# Covariates 
+All the information from the report regarding the different covariates they used for their analysis.
+
+## Ecoregions
+
+:::{.panel-tabset}
+
+## Eco1
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = eco1_name))
+```
+
+## Eco2
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = eco2_name))
+```
+
+## Eco3
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = eco3_name))
+```
+:::
+
+## Covariates
+
+:::{.panel-tabset}
+## Elev
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = DEM_max))
+```
+
+## Temp
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = mean_temp))
+```
+
+## Physdiv
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = physio_div))
+```
+
+## Precip
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = precip))
+```
+
+## Forest
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = p_forest))
+```
+
+## Wetland
+```{r}
+ggplot(data = mt_covariates) + geom_sf(aes(fill = p_wetland))
+```
+
+
+:::
