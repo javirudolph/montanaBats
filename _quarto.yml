@@ -9,18 +9,23 @@ website:
     left:
       - text: "Home"
         file: index.qmd
-      - text: "Presentations"
+      - text: "Model"
         menu:
-          - talks.qmd
-          - about.qmd 
-      - text: "Predictions"
-        file: predictions.qmd
+          - model.qmd
+          - jurisdictions.qmd
+          - covariates.qmd
+          - predictions.qmd
+          - estimation.qmd
+      - text: "More"
+        menu:
+          - toymodel.qmd
+          - old.qmd
     right:
       - icon: github
         menu:
           - text: Source Code
             url:  https://github.com/javirudolph/montanaBats
-          - text: Report a Bug
+          - text: Issues
             url:  https://github.com/javirudolph/montanaBats/issues
   page-footer: 
     left: "Copyright 2022, F. Javiera Rudolph" 
