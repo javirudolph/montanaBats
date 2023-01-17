@@ -127,14 +127,16 @@ model {
   D ~ dunif(0,1)
   
   # Priors for parameters in local occupancy (Theta)
-  # theta2 ~ dunif(0, 1)              # Detection prob. when in state 2
-  # for (s in 1:3) {                 # Detection prob. when in state 3
-  #   beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
-  #   theta3[s] <- beta[s] / sum(beta[])
-  # }
-  for(s in 1:3){
-    theta[s] ~ dunif(0, 1)
+  theta2 ~ dunif(0, 1)              # Detection prob. when in state 2
+  for (s in 1:3) {                 # Detection prob. when in state 3
+    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
+    theta3[s] <- beta[s] / sum(beta[])
   }
+  
+  # no Dirichlet prior
+  # for(s in 1:3){
+  #   theta[s] ~ dunif(0, 1)
+  # }
 
   # Priors for parameters in observation process (varp)
   p2 ~ dunif(0, 1)                 # Detection prob. when in state 2
@@ -165,12 +167,17 @@ model {
   Theta[1,1] <- 1
   Theta[1,2] <- 0
   Theta[1,3] <- 0
-  Theta[2,1] <- 1-theta[1]
-  Theta[2,2] <- theta[1]
+  # Theta[2,1] <- 1-theta[1]
+  # Theta[2,2] <- theta[1]
+  Theta[2,1] <- 1-theta2
+  Theta[2,2] <- theta2
   Theta[2,3] <- 0
-  Theta[3,1] <- 1-theta[2]
-  Theta[3,2] <- theta[2] * (1 - theta[3])
-  Theta[3,3] <- theta[2] * theta[3]
+  # Theta[3,1] <- 1-theta[2]
+  # Theta[3,2] <- theta[2] * (1 - theta[3])
+  # Theta[3,3] <- theta[2] * theta[3]
+  Theta[3,1] <- theta3[1]
+  Theta[3,2] <- theta3[2]
+  Theta[3,3] <- theta3[3]
   
   # Define observation probability matrix (p)
   # Order of indices: true state, observed state
@@ -245,7 +252,7 @@ inits <- function(){list(z = zst, u = ust)}
 #inits <- function(){list(z = zst)}
 
 # Parameters monitored
-params <- c("psi", "r", "phi", "lgamma", "G", "D", "theta", "p2", "p3", "Omega", "PhiMat",
+params <- c("psi", "r", "phi", "lgamma", "G", "D", "theta2", "theta3", "p2", "p3", "Omega", "PhiMat",
             "Theta", "varp", "n.occ", "n.occ.total") # Could add "z"
 
 # MCMC settings
