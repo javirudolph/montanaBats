@@ -692,7 +692,6 @@ yms <- date <- y <- array(NA, dim = c(nsites, max.nsurveys, nyears),
 
 for(i in 1:nsites){
   for(t in 1:nyears){
-    t<-1
     sel.cell.year <- paste(sitelist[i], t+yearm1, sep = "_")
     tmp <- obs2[obs2$cellsiteidyear == sel.cell.year,]
     nr <- nrow(tmp)
