@@ -1,5 +1,5 @@
 ---
-title: "Multistate occupancy predictions"
+title: "Predictions"
 format:
   html:
     code-fold: true
@@ -12,22 +12,22 @@ execute:
 
 We are generating predictions at the grid cell scale (10x10km) using a set of covariates from the latest NABat report. We are focusing on the state of Montana, and incorporating different jurisdictions that may or may not implement all management actions. 
 
-## Data sources 
-Covariate data and grids are coming from NABat 
 
 ```{r libs}
 #| message: false
+#| echo: false
 
 # Libraries
 library(tidyverse)
 library(sf)
 library(jagsUI)
 library(scales)
-
+library(cowplot)
 ```
 
 ```{r load_data}
-
+#| echo: false
+#| 
 ## COVARIATES --------
 mt_covariates <- readRDS("datafiles/mt_covariates.RDS") %>% 
   # Abbreviate jurisdiction names
@@ -43,30 +43,7 @@ mt_covariates <- readRDS("datafiles/mt_covariates.RDS") %>%
 
 grid_geometry <- mt_covariates %>% 
   select(GRTS_ID)
-```
 
-```{css, echo=FALSE}
-.panel-tabset .nav-item {
-  font-size: 12px;
-}
-```
-
-
-```{r set_params}
-
-## CELL LEVEL --------
-
-# intercepts
-alpha.lpsi <- c(0, 1.968, 1.719, 1.126, 0.150, 1.134, 0.332)
-alpha.lr <- c(0, 0.115, -0.409, 0.321, 0.871, -0.465, 0.855)
-
-# Coefficients
-beta.lpsi <- c(0.64, 5.3, 1.2, 4.6, 0.15, 1.054, 0.051, -0.029)
-beta.lr <- c(0.566, -0.43, 0.346)
-
-
-
-# build the parameters psi and r based on covariates
 # center and scale the covariates
 center_scale <- function(x){
   center <- mean(x, na.rm = TRUE)
@@ -76,6 +53,41 @@ center_scale <- function(x){
   x
 }
 
+states_col <- brewer_pal(palette = "BuPu")(3)
+
+```
+
+```{css, echo=FALSE}
+.panel-tabset .nav-item {
+  font-size: 12px;
+}
+```
+
+
+
+## Parameters 
+
+For now, these parameters are not informed by the data model, they are just to build the structure of the simulation. We set the parameters $psi$ and $r$ to generate the occupancy state in the first year for each grid cell. 
+
+```{r set_params}
+#| code-fold: false
+
+## CELL LEVEL --------
+ncells <- length(unique(mt_covariates$GRTS_ID))
+nregions <- length(unique(mt_covariates$eco3_name))
+nyears <- 5
+
+# Giving intercepts for each ecoregion
+alpha.lpsi <- runif(nregions, 0, 2)
+alpha.lr <- runif(nregions, 0, 2)
+
+# Coefficients
+beta.lpsi <- rnorm(8)
+beta.lr <- rnorm(3)
+
+
+
+# build the parameters psi and r based on covariates
 mt_covariates %>% 
   st_drop_geometry() %>% 
   transmute(GRTS_ID,
@@ -86,23 +98,25 @@ mt_covariates %>%
             wetlands = center_scale(p_wetland),
             physdiv = center_scale(physio_div),
             karst = karst,
-            region = as.numeric(as.factor(eco3_name))) -> scaled_covariates
+            region = as.numeric(as.factor(eco3_name))) %>% 
+  mutate(lpsi = alpha.lpsi[as.numeric(region)] + beta.lpsi[1] * elev + beta.lpsi[2] * elev^2 +
+           beta.lpsi[3] * temp + beta.lpsi[4] * temp^2 + beta.lpsi[5] * physdiv +
+           beta.lpsi[6] * precip + beta.lpsi[7] * forest + beta.lpsi[8] * wetlands,
+         psi = exp(lpsi)/(1+exp(lpsi)),
+         lr = alpha.lr[as.numeric(region)] + beta.lr[1] * karst +
+           beta.lr[2] * forest + beta.lr[3] * physdiv,
+         r = exp(lr)/(1+exp(lr))) -> scaled_covariates
 
 
-scaled_covariates %>% 
-  # st_drop_geometry() %>% 
-  transmute(GRTS_ID,
-            lpsi = alpha.lpsi[as.numeric(region)] + beta.lpsi[1] * elev + beta.lpsi[2] * elev^2 + beta.lpsi[3] * temp + beta.lpsi[4] * temp^2 + beta.lpsi[5] * physdiv + beta.lpsi[6] * precip + beta.lpsi[7] * forest + beta.lpsi[8] * wetlands,
-            psi = exp(lpsi)/(1+exp(lpsi)),
-            lr = alpha.lr[as.numeric(region)] + beta.lr[1] * karst + beta.lr[2] * forest + beta.lr[3] * physdiv,
-            r = exp(lr)/(1+exp(lr))) -> psi_and_r
-
-psi <- psi_and_r$psi
-r <- psi_and_r$r
+psi <- scaled_covariates$psi
+r <- scaled_covariates$r
 Omega <- matrix(c(1-psi, psi*(1-r), psi*r), ncol = 3)
+```
 
-ncells <- nrow(scaled_covariates)
-nyears <- 5
+
+## Y1 predictions 
+
+```{r}
 z <- array(NA, dim = c(ncells, nyears))
 
 # Calculate state for each cell in year 1
@@ -113,12 +127,27 @@ for(i in 1:ncells){
 
 # Viz year 1
 cbind(grid_geometry, z1 = z[,1]) %>% 
-  mutate(z1 = as.factor(z1)) %>% 
+  mutate(y1 = case_when(
+    z1 == 1 ~ "no bats",
+    z1 == 2 ~ "few bats",
+    z1 == 3 ~ "many bats"
+  )) %>% 
+  mutate(y1 = factor(y1, levels = c("no bats", "few bats", "many bats"))) %>% 
   ggplot() +
-  geom_sf(aes(fill = z1, color = z1))
+  geom_sf(aes(fill = y1)) +
+  scale_fill_manual(values = states_col) +
+  labs(fill = "", title = "Occupancy state in the first year") -> plotY1
 
+states_legend <- get_legend(plotY1)
+
+plotY1
+```
+
+```{r}
 # Define transition probability matrix (Phi)
-# for now, just using the same matrix for all sites and all years.
+# for now, just using the same matrix for all sites and all years
+# Assuming no changes and no management
+
 gamma1 <- 0.001
 gamma2 <- 0.001
 phi1 <- 0.5
@@ -138,24 +167,70 @@ for(t in 2:nyears){
   }
 }
 
-# Viz year 1
 as.data.frame(z) %>% 
   cbind(grid_geometry, .) %>% 
   pivot_longer(., cols = starts_with("V"), names_to = "year", values_to = "yms") %>% 
-  mutate(yms = as.factor(yms)) -> yms_prediction
+  mutate(year = str_remove(year, "V")) %>% 
+  mutate(yms = as.factor(yms)) %>% 
+  mutate(yms_txt = case_when(
+    yms == 1 ~ "no bats",
+    yms == 2 ~ "few bats",
+    yms == 3 ~ "many bats"
+  )) %>% 
+  mutate(yms = factor(yms, levels = c("no bats", "few bats", "many bats"))) -> yms_prediction
+```
 
-# viz all
-yms_prediction %>% 
-  ggplot() +
-  facet_wrap(~year) +
-  geom_sf(aes(fill = yms, color = yms))
+
+## Years 2...t
+
+```{r}
+plotlist_years <- list()
+
+for(i in 1:nyears){
+  plotlist_years[[i]] <- yms_prediction %>% 
+    filter(year == i) %>% 
+    ggplot() +
+    geom_sf(aes(fill = yms_txt)) +
+    scale_fill_manual(values = states_col) +
+    labs(fill = "", title = paste0("Y", i))
+}
 
 ```
 
 
+::: {.panel-tabset}
 
+## Y1
+```{r}
+#| echo: false
+plotlist_years[[1]]
+```
 
+## Y2
+```{r}
+#| echo: false
+plotlist_years[[2]]
+```
 
+## Y3
+```{r}
+#| echo: false
+plotlist_years[[3]]
+```
+
+## Y4
+```{r}
+#| echo: false
+plotlist_years[[4]]
+```
+
+## Y5
+```{r}
+#| echo: false
+plotlist_years[[5]]
+```
+
+:::
 
 
 
