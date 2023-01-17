@@ -21,6 +21,7 @@ website:
           - expert_elicitation.qmd
           - toymodel.qmd
           - old.qmd
+          - alternatives.qmd
     right:
       - icon: github
         menu:
