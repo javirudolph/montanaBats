@@ -825,7 +825,9 @@ model {
   for (i in 1:nsites){
     for (t in 1:nyears){
       for (j in 1:nsurveys[i,t]){
-        for(k in )
+        for(k in 1:4){
+          y[i,j,t,k] ~ dcat(varp[u[i,j,t],])
+        }
       }
     }
   }
@@ -850,7 +852,7 @@ zst <- array(3, dim = c(bcalldata$nsites, bcalldata$nyears) )
 inits <- function(){list(z = zst)}
 
 # Parameters monitored
-params <- c("psi", "r", "phi", "lgamma", "G", "D", "p2", "p3", "Omega", "PhiMat",
+params <- c("psi", "r", "phi", "lgamma", "G", "D", "theta2", "theta3","p2", "p3", "Omega", "PhiMat",
             "Theta", "n.occ", "n.occ.total") # Could add "z"
 
 # MCMC settings

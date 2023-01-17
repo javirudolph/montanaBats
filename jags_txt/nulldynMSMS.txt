@@ -94,7 +94,9 @@ model {
   for (i in 1:nsites){
     for (t in 1:nyears){
       for (j in 1:nsurveys[i,t]){
-        for(k in )
+        for(k in 1:4){
+          y[i,j,t,k] ~ dcat(varp[u[i,j,t],])
+        }
       }
     }
   }
