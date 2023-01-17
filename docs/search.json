@@ -257,5 +257,26 @@
     "title": "Expert Elicitation",
     "section": "Question 3",
     "text": "Question 3\nConsider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.722) for the responses, and the grey bar shows the 95% confidence interval (0.37, 0.93)."
+  },
+  {
+    "objectID": "estimation.html",
+    "href": "estimation.html",
+    "title": "Estimation",
+    "section": "",
+    "text": "Multiscale occupancy\nGeneral model based on occupancy at the grid cell level, each with several sites within each cell, and multiple surveys to each site:\n\\[\nz_i \\sim \\text{Bernoulli}(\\psi_i) \\\\\nu_{i,j} \\sim \\text{Bernoulli}(z_i \\times \\theta_{i,j}) \\\\\ny_{i,j,k} \\sim text{Bernoulli}(u_{i,j} \\times p_{i,j,k})\n\\] We incorporate covariates as follows, with the probability of occupancy (\\(\\psi_i\\)) for each site \\(i\\) given by:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nlocal occupancy (\\(u_{i,j}\\)) at each site \\(j\\) within grid cell \\(i\\) dependent on:\n\\[\nlogit(\\theta_{i,j}) = \\alpha_0 + \\alpha_1 \\cdot \\text{Start date} + \\alpha_2 \\cdot \\text{Duration} + \\alpha_3 \\cdot \\text{Site type}\n\\] and detection probabilities dependent on wind\n\n\nMultistate mean occupancy\n\n\nDynamic multistate mean occupancy\n\n\nMultistate multiscale occupancy\n\n\nDynamic multistate multiscale occupancy"
+  },
+  {
+    "objectID": "estimation.html#model-description",
+    "href": "estimation.html#model-description",
+    "title": "Estimation",
+    "section": "Model description",
+    "text": "Model description\nGeneral model based on occupancy at the grid cell level, each with several sites within each cell, and multiple surveys to each site:\n\\[\nz_i \\sim \\text{Bernoulli}(\\psi_i)\n\\]\n\\[\nu_{i,j} \\sim \\text{Bernoulli}(z_i \\times \\theta_{i,j})\n\\]\n\\[\ny_{i,j,k} \\sim \\text{Bernoulli}(u_{i,j} \\times p_{i,j,k})\n\\] We incorporate covariates as follows, with the probability of occupancy (\\(\\psi_i\\)) for each site \\(i\\) given by:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nlocal occupancy (\\(u_{i,j}\\)) at each site \\(j\\) within grid cell \\(i\\) dependent on:\n\\[\nlogit(\\theta_{i,j}) = \\alpha_0 + \\alpha_1 \\cdot \\text{Start date} + \\alpha_2 \\cdot \\text{Duration} + \\alpha_3 \\cdot \\text{Site type}\n\\] I did not include covariates for the detection probability."
+  },
+  {
+    "objectID": "estimation.html#code",
+    "href": "estimation.html#code",
+    "title": "Estimation",
+    "section": "CODE",
+    "text": "CODE"
   }
 ]

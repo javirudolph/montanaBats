@@ -92,7 +92,7 @@ for(i in 1:nunits){
   for(j in 1:nsubunits){
     theta[i,j,] <- plogis(qlogis(mean.theta) + theta.time.effect[j] + (beta.Xtheta*covB)[,j] + array(rnorm(nunits*nsubunits, 0, sd.logit.theta), dim = c(nunits, nsubunits))[,j])
     for(k in 1:nreps){
-      p[,j,k] <- plogis(qlogis(mean.p) + p.time.effect[k] + (beta.Xp*covC)[,j,k]+ array(rnorm(nunits*nsubunits*nreps, 0,sd.logit.p),dim =c(nunits, nsubunits, nreps))[,j,k])
+      p[,j,k] <- plogis(qlogis(mean.p[]) + p.time.effect[k] + (beta.Xp*covC)[,j,k]+ array(rnorm(nunits*nsubunits*nreps, 0,sd.logit.p),dim =c(nunits, nsubunits, nreps))[,j,k])
     }
   }
 }

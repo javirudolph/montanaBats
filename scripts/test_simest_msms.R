@@ -7,3 +7,4 @@
 # I can't fit the model and get errors with JAGS
 # There's too much nuisance with the data
 # simulate a theoretical dataset and fit model to estimate coeffs
+
