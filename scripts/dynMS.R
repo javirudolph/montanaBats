@@ -852,8 +852,8 @@ zst <- array(3, dim = c(bcalldata$nsites, bcalldata$nyears) )
 inits <- function(){list(z = zst)}
 
 # Parameters monitored
-params <- c("psi", "r", "phi", "lgamma", "G", "D", "theta2", "theta3","p2", "p3", "Omega", "PhiMat",
-            "Theta", "n.occ", "n.occ.total") # Could add "z"
+params <- c("psi", "r", "phi", "lgamma", "G", "D", "theta2", "theta3", "p2", "p3", "Omega", "PhiMat",
+            "Theta", "varp", "n.occ", "n.occ.total") # Could add "z"
 
 # MCMC settings
 # na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
@@ -861,7 +861,7 @@ na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 m
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
-odms_null <- jags(bcalldata, inits, params, "jags_txt/nulldynMS.txt", n.adapt = na,
+odms_null <- jags(bcalldata, inits, params, "jags_txt/nulldynMSMS.txt", n.adapt = na,
                   n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 
 saveRDS(odms_null, file = "modelouts/odms_null.RDS")
