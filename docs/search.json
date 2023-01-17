@@ -56,11 +56,74 @@
     "text": "MYLU specific predictions\nhttps://www.sciencebase.gov/catalog/item/6046ab46d34eb120311a44ba saved as the ‘rangewidesummer’ zip download and sent to datafiles folder. There is a .xml file for metadata, just hard to read it and don’t know how else to open. Just getting info from when I open in the browser. It says this is from the NABat acoustic database. The missing rows of data show up as empty in the map, not sure what these are in the first place. This is shapefiles, and there is no report associated, but there are several covariates for each cell: distance from wind farms, forest cover, water cover, elevation, ruggedness, precipitation, temperature."
   },
   {
+    "objectID": "estimation.html#model-description",
+    "href": "estimation.html#model-description",
+    "title": "Estimation",
+    "section": "Model description",
+    "text": "Model description\nGeneral model based on occupancy at the grid cell level, each with several sites within each cell, and multiple surveys to each site:\n\\[\nz_i \\sim \\text{Bernoulli}(\\psi_i)\n\\]\n\\[\nu_{i,j} \\sim \\text{Bernoulli}(z_i \\times \\theta_{i,j})\n\\]\n\\[\ny_{i,j,k} \\sim \\text{Bernoulli}(u_{i,j} \\times p_{i,j,k})\n\\] We incorporate covariates as follows, with the probability of occupancy (\\(\\psi_i\\)) for each site \\(i\\) given by:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nlocal occupancy (\\(u_{i,j}\\)) at each site \\(j\\) within grid cell \\(i\\) dependent on:\n\\[\nlogit(\\theta_{i,j}) = \\alpha_0 + \\alpha_1 \\cdot \\text{Start date} + \\alpha_2 \\cdot \\text{Duration} + \\alpha_3 \\cdot \\text{Site type}\n\\] I did not include covariates for the detection probability."
+  },
+  {
+    "objectID": "estimation.html#code",
+    "href": "estimation.html#code",
+    "title": "Estimation",
+    "section": "Code",
+    "text": "Code\n\nBunde data"
+  },
+  {
     "objectID": "model.html",
     "href": "model.html",
     "title": "Model",
     "section": "",
     "text": "We consider a basic dynamic model with a Markovian structure, in which the state of each year is dependent on the state of the previous year. Transition probabilities (the probability of a site going from one state to another, or remaining in the same state the following year) are determined as functions of colonization and survival rates.\nWe start by determining the initial state for each site \\(i\\), which follows a multinomial distribution:\n\\[\nz_{i,1} \\sim Categorical(\\Omega_i)\n\\]\nwhere \\(\\Omega_i\\) is the state vector, with the probabilities of each site \\(i\\) being in one of the states (\\(1,2,3\\)) on the first year (\\(t=1\\)), given by:\n\\[\n\\Omega_i = [\\phi_1 \\quad \\phi_2 \\quad \\phi_3]\n\\] The probability of a site being empty or unoccupied (state \\(1\\)) the first year is given by \\(\\phi_1\\), the probability of site \\(i\\) having a few bats or many bats the first year is given by \\(\\phi_2\\) and \\(\\phi_3\\) respectively, where the subscript indicates the state. Since the probabilities have to add up to 1, we can write the state vector probabilities in terms of one another, we reparameterize to:\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\] where \\(\\psi\\) is the probability of a site being occupied and \\(r\\) is the probability of an occupied site having many bats, thus the probability that a site is occupied with a few bats (\\(\\psi(1-r)\\)) is equivalent to the probability that a sites is occupied (\\(\\psi\\)) AND it is not occupied by many bats (\\(1-r\\)).\nThe state of each site \\(i\\) in the following years (\\(t = 2 \\dots T\\)) is given by:\n\\[\nz_{i,t}|z_{i,t-1} \\sim Categorical(\\Phi_{z{(t-1)}, z{(t)}, i, t})\n\\] where the transition matrix determines the probabilities of a site going from one state to another, or remaining in the same state, depending on the state it was in on the previous year:\n\\[\n\\Phi_{z{(t-1)}, z{(t)}, i,t} =  \\begin{bmatrix}\n                                \\pi_{11} & \\pi_{12} & \\pi_{13} \\\\\n                                \\pi_{21} & \\pi_{22} & \\pi_{23} \\\\\n                                \\pi_{31} & \\pi_{32} & \\pi_{33}\n                                \\end{bmatrix}_{i,t}\n\\] we can read \\(\\pi_{n,m,i,t}\\) as the probability that site \\(i\\) transitions from state \\(n\\) in year \\(t-1\\) to state \\(m\\) in year \\(t\\). We reparameterize this transition matrix in terms of colonization (\\(\\gamma\\)) and persistence (\\(\\phi\\)), plus growth \\(G\\) or decline \\(D\\) when moving between the states of few and many bats.\n\\[\n\\Phi_{z{(t-1)}, z{(t)}} =  \\begin{bmatrix}\n                                1-\\gamma & \\gamma & 0 \\\\\n                                1-\\phi_1 & \\phi_1(1-G) &  \\phi_1G\\\\\n                                1-\\phi_2 & \\phi_2D & \\phi_2(1 - D)\n                                \\end{bmatrix}\n\\]\nBoth the initial state vector \\(\\Omega_i\\) and the transition matrix \\(\\Phi\\) can be reparameterized in order to have these probabilities in terms of environmental covariates, which can then be modified by different management actions.\n\n\n\nInitially, I am only using covariates that NABAt used for their report, where the data release is found here, and the report here. Descriptions on how these covariates were obtained and aggregated at the cell level are found in the report. Briefly,\n\nPhysiographic diversity on page 8 of the report - it’s a measure of landscape complexity: ruggedness source\nEcoregions could be very useful as they describe habitat features descriptions for ecoregions are here and the paper\n\nin the report they mention these can be used to account for spatial autocorrelation seems like in their model they use these as the intercept\n\nkarst - grid cells that intersect karst polygons get a 1, source is this paper karst indicator was included to capture the effect of caves\nriverlake variable is a 1 if the grid intersects rivers or shorelines\nFor detection-level covariates they extracted the data from here\n\nThese depend on the specific night and where not provided in the data release\n\n\nBased on the MYLU ecological model presented in the report, I included the following covariates as predictors for the initial state occupancy:\nWith state vector,\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\]\nthe probability of occupancy for site \\(i\\), \\(\\psi_i\\) is set as:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nWhat we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)\n\\[\nlogit(r_i) = \\beta_0 + \\beta_1 \\cdot \\text{karst} + \\beta_2 \\cdot \\text{Percent Forest} +\n                \\beta_3 \\cdot \\text{Physiographic diversity}\n\\] For both parameters, I included the ecoregion with the intercept, so we have region-specific intercepts"
+  },
+  {
+    "objectID": "alternatives.html",
+    "href": "alternatives.html",
+    "title": "Management Strategies - Alternatives",
+    "section": "",
+    "text": "Chemical and mechanical treatment of known hibernaculums\n\n(e.g., Chitosan applied to bats, UV, PEG - apply to surface)\nTreatable caves: Azure, Mystery, Little Ice\n\nMaintain optimal microhabitat in hibernacula\nApply probiotics on bats in the hibernaculum\nApply probiotics on ats in the bat houses and in the landscape\n\n\n\n\n\nImprove quality of water sources near roosts\n\n(e.g., increase access, structural integrity of stock tanks, bat friendly, availability of water for entire season)\n\nRelease pheromones for insect lures to provide efficient foraging opportunities\nInsect lures before fall swarming to provide efficient foraging opportunities\nInsect lures during spring to provide efficient foraging opportunities\nIncrease water availability near hibernacula to prevent distress from WNS induced dehydration\nIncrease foraging opportunities through habitat management near hibernacula to prevent distress from WNS induced dehydration\nVaccinate bats in hibernacula\nVaccinate bats in bat houses and landscape\n\n\n\n\n\nMinimize research capture of bats during late summer and fall to reduce interstate and intrastate transmission\nRestrict human access to bat caves"
+  },
+  {
+    "objectID": "alternatives.html#maintain-health-of-riparian-forests",
+    "href": "alternatives.html#maintain-health-of-riparian-forests",
+    "title": "Management Strategies - Alternatives",
+    "section": "Maintain health of riparian forests",
+    "text": "Maintain health of riparian forests\n\nIncrease age and stand diversity\nRemove invasive like Russian olives, Tamarisk\nIncrease recruitment of cottonwood (excellent roost trees) trees by allowing flooding, promoting natural and established artificial dams\nPromote regeneration of riparian forests by fencing\nPromote regeneration of riparian forests by livestock management"
+  },
+  {
+    "objectID": "alternatives.html#water-sources",
+    "href": "alternatives.html#water-sources",
+    "title": "Management Strategies - Alternatives",
+    "section": "Water sources",
+    "text": "Water sources\n\nProvide consistent water sources during dry season in known dry areas through following actions based on location:\n\nIncrease stock reservoirs\nPromote beaver dams through relocation\nBat friendly stock tanks\nRetrofit wildlife friendly bat ramps in stock tanks"
+  },
+  {
+    "objectID": "alternatives.html#increase-forest-diversity",
+    "href": "alternatives.html#increase-forest-diversity",
+    "title": "Management Strategies - Alternatives",
+    "section": "Increase forest diversity",
+    "text": "Increase forest diversity\n\nMaintain snags> 20 inches in diameter\nRestrict logging between May-July to prevent maternity roosts disturbance\nEncourage stand diversity (age and habitat type) by following ways:\nEncourage young seral stages in public lands\nEncourage young seral stages in private lands (family forest program USDA)\nDesign projects to promote large trees and old growth forests\nEncourage forest thinning and understory removal by promoting multiple benefits (prevent fire fuel, insect outbreaks etc) - Restore native habitat in burnt forested regions within a reasonable timeframe"
+  },
+  {
+    "objectID": "alternatives.html#talus-and-rocky-outcrop-management",
+    "href": "alternatives.html#talus-and-rocky-outcrop-management",
+    "title": "Management Strategies - Alternatives",
+    "section": "Talus and rocky outcrop management",
+    "text": "Talus and rocky outcrop management\n\nPrevent destruction of talus and rocky-outcrop from anthropogenic development"
+  },
+  {
+    "objectID": "alternatives.html#protection-of-aggregation-of-bats-in-maternity-season",
+    "href": "alternatives.html#protection-of-aggregation-of-bats-in-maternity-season",
+    "title": "Management Strategies - Alternatives",
+    "section": "Protection of aggregation of bats in maternity season",
+    "text": "Protection of aggregation of bats in maternity season\n\nInsect lures before fall swarming to provide efficient foraging opportunities\nInsect lures during spring to provide efficient foraging opportunities\nMicroclimate controlled bat boxes available in spring\nChange project timing around maternity colonies to prevent disturbance\nOutreach against maternity colony destructions\n\nFunding program for rehousing maternity colonies (building bat boxes etc)\nEncourage Montana Wildlife Control operators to take NWCOA bat standard certification\n\nMaintain and upkeep known maternity roosts (unused buildings/mines etc)\nOutreach to MDT against destruction of maternity colony under bridges\n\nState, federal, and tribal governments should use no net loss approach for agency buildings by putting alternate roosts"
+  },
+  {
+    "objectID": "alternatives.html#citizen-related",
+    "href": "alternatives.html#citizen-related",
+    "title": "Management Strategies - Alternatives",
+    "section": "Citizen related",
+    "text": "Citizen related\n\nActive provisions of alternative roosting sites in important areas through following ways:\n\nMicroclimate controlled bat boxes\nLarger bat boxes to allow for a range of temperature\nGuide citizens about location and type of the bat boxes\n\nMaintain and create (when needed) bat access in caves and mines through structural reinforcement"
   },
   {
     "objectID": "toymodel.html#where-we-are",
@@ -235,48 +298,27 @@
     "href": "expert_elicitation.html#training-question",
     "title": "Expert Elicitation",
     "section": "Training Question",
-    "text": "Training Question\nWhat is the average size of the little brown bat (Myotis lucifugus)? If you were to measure 100 adult bats, tip-to- base of tail, at a site in the center of their range, what would the average length be in millimeters?\n\nPlot 1\n\nPlot of individual responses\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nWarning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.\nℹ Please use the `linewidth` argument instead.\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. The vertical dashed line indicates the true answer based on the literature. At the bottom of the figure, the black dot represents the overall mean (57.149) for the responses, and the grey bar shows the 95% confidence interval (41.646, 72.102)."
+    "text": "Training Question\nWhat is the average size of the little brown bat (Myotis lucifugus)? If you were to measure 100 adult bats, tip-to- base of tail, at a site in the center of their range, what would the average length be in millimeters?\n\nPlot 1\n\nPlot of individual responses\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nWarning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.\nℹ Please use the `linewidth` argument instead.\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. The vertical dashed line indicates the true answer based on the literature. At the bottom of the figure, the black dot represents the overall mean (57.017) for the responses, and the grey bar shows the 95% confidence interval (41.627, 72.734)."
   },
   {
     "objectID": "expert_elicitation.html#question-1",
     "href": "expert_elicitation.html#question-1",
     "title": "Expert Elicitation",
     "section": "Question 1",
-    "text": "Question 1\nConsider the Northeast (NE) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.788) for the responses, and the grey bar shows the 95% confidence interval (0.459, 0.938)."
+    "text": "Question 1\nConsider the Northeast (NE) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.785) for the responses, and the grey bar shows the 95% confidence interval (0.45, 0.94)."
   },
   {
     "objectID": "expert_elicitation.html#question-2",
     "href": "expert_elicitation.html#question-2",
     "title": "Expert Elicitation",
     "section": "Question 2",
-    "text": "Question 2\nConsider the South (S) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.758) for the responses, and the grey bar shows the 95% confidence interval (0.421, 0.929)."
+    "text": "Question 2\nConsider the South (S) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.759) for the responses, and the grey bar shows the 95% confidence interval (0.425, 0.93)."
   },
   {
     "objectID": "expert_elicitation.html#question-3",
     "href": "expert_elicitation.html#question-3",
     "title": "Expert Elicitation",
     "section": "Question 3",
-    "text": "Question 3\nConsider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.722) for the responses, and the grey bar shows the 95% confidence interval (0.37, 0.93)."
-  },
-  {
-    "objectID": "estimation.html",
-    "href": "estimation.html",
-    "title": "Estimation",
-    "section": "",
-    "text": "Multiscale occupancy\nGeneral model based on occupancy at the grid cell level, each with several sites within each cell, and multiple surveys to each site:\n\\[\nz_i \\sim \\text{Bernoulli}(\\psi_i) \\\\\nu_{i,j} \\sim \\text{Bernoulli}(z_i \\times \\theta_{i,j}) \\\\\ny_{i,j,k} \\sim text{Bernoulli}(u_{i,j} \\times p_{i,j,k})\n\\] We incorporate covariates as follows, with the probability of occupancy (\\(\\psi_i\\)) for each site \\(i\\) given by:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nlocal occupancy (\\(u_{i,j}\\)) at each site \\(j\\) within grid cell \\(i\\) dependent on:\n\\[\nlogit(\\theta_{i,j}) = \\alpha_0 + \\alpha_1 \\cdot \\text{Start date} + \\alpha_2 \\cdot \\text{Duration} + \\alpha_3 \\cdot \\text{Site type}\n\\] and detection probabilities dependent on wind\n\n\nMultistate mean occupancy\n\n\nDynamic multistate mean occupancy\n\n\nMultistate multiscale occupancy\n\n\nDynamic multistate multiscale occupancy"
-  },
-  {
-    "objectID": "estimation.html#model-description",
-    "href": "estimation.html#model-description",
-    "title": "Estimation",
-    "section": "Model description",
-    "text": "Model description\nGeneral model based on occupancy at the grid cell level, each with several sites within each cell, and multiple surveys to each site:\n\\[\nz_i \\sim \\text{Bernoulli}(\\psi_i)\n\\]\n\\[\nu_{i,j} \\sim \\text{Bernoulli}(z_i \\times \\theta_{i,j})\n\\]\n\\[\ny_{i,j,k} \\sim \\text{Bernoulli}(u_{i,j} \\times p_{i,j,k})\n\\] We incorporate covariates as follows, with the probability of occupancy (\\(\\psi_i\\)) for each site \\(i\\) given by:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nlocal occupancy (\\(u_{i,j}\\)) at each site \\(j\\) within grid cell \\(i\\) dependent on:\n\\[\nlogit(\\theta_{i,j}) = \\alpha_0 + \\alpha_1 \\cdot \\text{Start date} + \\alpha_2 \\cdot \\text{Duration} + \\alpha_3 \\cdot \\text{Site type}\n\\] I did not include covariates for the detection probability."
-  },
-  {
-    "objectID": "estimation.html#code",
-    "href": "estimation.html#code",
-    "title": "Estimation",
-    "section": "Code",
-    "text": "Code\n\nBunde data"
+    "text": "Question 3\nConsider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.718) for the responses, and the grey bar shows the 95% confidence interval (0.374, 0.927)."
   }
 ]
