@@ -7,7 +7,7 @@ library(jagsUI)
 
 ## Params --------------------------
 
-ncells = 10; nsites = 4; nreps = 5; nyears = 3; nstates = 3
+ncells = 100; nsites = 4; nreps = 5; nyears = 3; nstates = 3
 
 # cell occupancy parameters
 psi = 0.4 # probability that a grid cell is occupied
@@ -175,11 +175,11 @@ model {
   # Define observation probability matrix (p)
   # Order of indices: true state, observed state
   varp[1,1] <- 1
-  varp[1,2] <- 0
-  varp[1,3] <- 0
+  varp[1,2] <- 0.0001
+  varp[1,3] <- 0.0001
   varp[2,1] <- 1-p2
   varp[2,2] <- p2
-  varp[2,3] <- 0
+  varp[2,3] <- 0.0001
   varp[3,1] <- p3[1]
   varp[3,2] <- p3[2]
   varp[3,3] <- p3[3]
@@ -237,15 +237,15 @@ model {
 
 # Initial values (chosen to avoid data/model/init conflict)
 zst <- array(3, dim = c(jagsdata$ncells, jagsdata$nyears))
-# ust <- array(3, dim = c(jagsdata$ncells, jagsdata$nsites, jagsdata$nyears))
+ust <- array(3, dim = c(jagsdata$ncells, jagsdata$nsites, jagsdata$nyears))
 # yst <- array(3, dim = c(jagsdata$ncells, jagsdata$nsites, jagsdata$nsurveys, jagsdata$nyears))
 
-#inits <- function(){list(z = zst, u = ust, y = yst)}
+inits <- function(){list(z = zst, u = ust)}
 
-inits <- function(){list(z = zst)}
+#inits <- function(){list(z = zst)}
 
 # Parameters monitored
-params <- c("psi", "r", "phi", "lgamma", "G", "D", "theta2", "theta3", "p2", "p3", "Omega", "PhiMat",
+params <- c("psi", "r", "phi", "lgamma", "G", "D", "theta", "p2", "p3", "Omega", "PhiMat",
             "Theta", "varp", "n.occ", "n.occ.total") # Could add "z"
 
 # MCMC settings
@@ -259,7 +259,7 @@ odmsms_null <- jags(jagsdata, inits, params, jagsfilename, n.adapt = na,
 
 # ERROR - node inconsistent with parents
 
-#traceplot(odms_null)
+traceplot(odmsms_null)
 print(odmsms_null, 3)
 
 # PhiMat
@@ -322,11 +322,11 @@ model {
   # Define observation probability matrix (p)
   # Order of indices: true state, observed state
   varp[1,1] <- 1
-  varp[1,2] <- 0
-  varp[1,3] <- 0
+  varp[1,2] <- 0.000001
+  varp[1,3] <- 0.000001
   varp[2,1] <- 1-p2
   varp[2,2] <- p2
-  varp[2,3] <- 0
+  varp[2,3] <- 0.000001
   varp[3,1] <- p3[1]
   varp[3,2] <- p3[2]
   varp[3,3] <- p3[3]
@@ -387,3 +387,4 @@ omsms_null <- jags(jagsdata, inits, params, jagsfilename, n.adapt = na,
 # ERROR - node inconsistent with parents
 # also the error for node inconsistent with parents
 
+print(omsms_null, 3)

@@ -62,11 +62,11 @@ model {
   # Define observation probability matrix (p)
   # Order of indices: true state, observed state
   varp[1,1] <- 1
-  varp[1,2] <- 0
-  varp[1,3] <- 0
+  varp[1,2] <- 0.0001
+  varp[1,3] <- 0.0001
   varp[2,1] <- 1-p2
   varp[2,2] <- p2
-  varp[2,3] <- 0
+  varp[2,3] <- 0.0001
   varp[3,1] <- p3[1]
   varp[3,2] <- p3[2]
   varp[3,3] <- p3[3]
