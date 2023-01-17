@@ -1,4 +1,120 @@
 ---
 title: "Estimation"
+execute: 
+  echo: false
+html:
+    code-fold: true
+    code-summary: "Show the code"
 ---
 
+```{r libraries}
+#| message: false
+library(tidyverse)
+library(jagsUI)
+library(sf)
+```
+
+```{r load_calls}
+#| messgae: false
+#| warning: false
+raw_wns_calls <- read_csv("datafiles/mt_batcalls/mt_calls_csvs/WNSCallsCapHistory.csv", show_col_types = FALSE)
+
+# Transform to long format:
+raw_wns_calls %>%
+  # create variable for julian date, formerly in the columns
+  pivot_longer(., 4:last_col(), names_to = "jdate", values_to = "y") %>%
+  # keep only needed variables
+  select(SiteID, CSY, jdate, y) %>%
+  # julian date should be a number
+  mutate(jdate = as.double(jdate)) %>%
+  # remove NAs - means recorders wasn't on
+  drop_na(y) %>%
+  # clean the names
+  janitor::clean_names() %>%
+  # separate CSY into three
+  separate(csy, c("cell", "site", "year"), remove = FALSE) %>%
+  # create index for siteid.year, and cell.site
+  mutate(site_id_year = paste(site_id, year, sep = "_"),
+         cell_site = paste(cell, site, sep = "_"),
+         cell_year = paste(cell, year, sep = "_")) %>%
+  # create binary version of detection data
+  mutate(det_non_det = as.numeric(y > 0)) %>%
+  # Create state categories, y multi state
+  # Asumming a cutoff of 100 bat calls as many bats
+  mutate(y_multi_state = case_when(
+    y == 0 ~ 1,
+    y <= 100 ~ 2,
+    y > 100 ~ 3
+  )) %>%
+  # add column for number of nights of recording for each site_id
+  add_count(site_id, name = "n_nights_site_id") -> wns_calls_long
+
+```
+
+
+```{r site_covariates}
+#| message: false
+#| warning: false
+#| results: hide
+raw_sites <- read_csv("datafiles/mt_batcalls/mt_calls_csvs/SiteDataCleanFinal.csv")
+```
+
+
+```{r mt_covariates}
+mt_covariates <- readRDS("datafiles/mt_covariates.RDS")
+```
+
+# Multiscale occupancy
+
+## Model description
+
+General model based on occupancy at the grid cell level, each with several sites within each cell, and multiple surveys to each site:
+
+$$
+z_i \sim \text{Bernoulli}(\psi_i)
+$$
+
+$$
+u_{i,j} \sim \text{Bernoulli}(z_i \times \theta_{i,j})
+$$
+
+$$
+y_{i,j,k} \sim \text{Bernoulli}(u_{i,j} \times p_{i,j,k})
+$$
+We incorporate covariates as follows, with the probability of occupancy ($\psi_i$) for each site $i$ given by:
+
+$$
+\begin{align*}
+logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{Elevation}^2 +
+\beta_3 \cdot \text{Temp} + \beta_4 \cdot \text{Temp}^2 + \\
+\beta_5 \cdot \text{Physiographic diversity} +
+\beta_6 \cdot \text{Precipitation} + \\
+\beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
+\end{align*}
+$$
+
+local occupancy ($u_{i,j}$) at each site $j$ within grid cell $i$ dependent on:
+
+$$
+logit(\theta_{i,j}) = \alpha_0 + \alpha_1 \cdot \text{Start date} + \alpha_2 \cdot \text{Duration} + \alpha_3 \cdot \text{Site type}
+$$
+I did not include covariates for the detection probability.
+
+## Code
+
+### Bunde data
+
+```{r}
+
+```
+
+
+
+
+# Multistate mean occupancy
+
+# Dynamic multistate mean occupancy
+
+# Multistate multiscale occupancy
+
+# Dynamic multistate multiscale occupancy
