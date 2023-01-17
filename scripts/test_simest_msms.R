@@ -87,7 +87,7 @@ for(i in 1:ncells){
 # No covariates
 
 yms <- y
-str(bcalldata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], 
+str(jagsdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], 
                       nsurveys = dim(yms)[3],
                       nyears = dim(yms)[4]))
 
@@ -220,7 +220,7 @@ model {
 ")
 
 # Initial values (chosen to avoid data/model/init conflict)
-zst <- array(3, dim = c(bcalldata$ncells, bcalldata$nyears) )
+zst <- array(3, dim = c(jagsdata$ncells, jagsdata$nyears) )
 inits <- function(){list(z = zst)}
 
 # Parameters monitored
@@ -233,7 +233,7 @@ na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 m
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
-odmsms_null <- jags(bcalldata, inits, params, "jags_txt/nulldynMSMS.txt", n.adapt = na,
+odmsms_null <- jags(jagsdata, inits, params, "jags_txt/nulldynMSMS.txt", n.adapt = na,
                   n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 
 # ERROR - node inconsistent with parents
@@ -251,7 +251,7 @@ round(odmsms_null$mean$Theta, 2)
 
 yms <- y[,,,1] #only one year
 
-str(bcalldata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], 
+str(jagsdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], 
                       nsurveys = dim(yms)[3]))
 
 
@@ -274,11 +274,6 @@ model {
   # D ~ dunif(0,1)
   
   # Priors for parameters in local occupancy (Theta)
-  # theta2 ~ dunif(0, 1)              # Detection prob. when in state 2
-  # for (s in 1:3) {                 # Detection prob. when in state 3
-  #   beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
-  #   theta3[s] <- beta[s] / sum(beta[])
-  # }
   for(s in 1:3){
     theta[s] ~ dunif(0, 1)
   }
@@ -368,7 +363,7 @@ model {
 ")
 
 # Initial values (chosen to avoid data/model/init conflict)
-zst <- array(3, dim = c(bcalldata$ncells) )
+zst <- array(3, dim = c(jagsdata$ncells) )
 inits <- function(){list(z = zst)}
 
 # Parameters monitored
@@ -381,7 +376,7 @@ na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 m
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
-omsms_null <- jags(bcalldata, inits, params, "jags_txt/nullMSMS.txt", n.adapt = na,
+omsms_null <- jags(jagsdata, inits, params, "jags_txt/nullMSMS.txt", n.adapt = na,
                     n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 
 # ERROR - node inconsistent with parents
