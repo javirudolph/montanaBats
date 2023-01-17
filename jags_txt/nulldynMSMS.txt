@@ -37,7 +37,6 @@ model {
   # Define state transition probability matrix (PhiMat): years 2:nyears
   # Define probabilities of state S(t+1) given S(t)
   # For now, constant over sites and years
-  # Note conditional Bernoulli parameterization of multinomial
   # Order of indices: Departing state, arrival state
   PhiMat[1,1] <- 1 - lgamma
   PhiMat[1,2] <- lgamma
@@ -59,6 +58,7 @@ model {
   Theta[3,1] <- 1-theta[2]
   Theta[3,2] <- theta[2] * (1 - theta[3])
   Theta[3,3] <- theta[2] * theta[3]
+  
   # Define observation probability matrix (p)
   # Order of indices: true state, observed state
   varp[1,1] <- 1
@@ -107,16 +107,16 @@ model {
   }
   
   ### (4) Derived quantities
-  # Number of sites in each state per year
+  # Number of cells in each state per year
   for (t in 1:nyears){
     for (i in 1:ncells){
-      state1[i,t] <- equals(z[i,t], 1)   # Indicator for site in state 1
+      state1[i,t] <- equals(z[i,t], 1)   # Indicator for cell in state 1
       state2[i,t] <- equals(z[i,t], 2)   # ... state 2
       state3[i,t] <- equals(z[i,t], 3)   # ... state 3
     }
-    n.occ[t,1] <- sum(state1[,t])        # Number of unoccupied sites
-    n.occ[t,2] <- sum(state2[,t])        # Number of sites with few bats
-    n.occ[t,3] <- sum(state3[,t])        # Number of sites with many bats
+    n.occ[t,1] <- sum(state1[,t])        # Number of unoccupied cells
+    n.occ[t,2] <- sum(state2[,t])        # Number of cells with few bats
+    n.occ[t,3] <- sum(state3[,t])        # Number of cells with many bats
     n.occ.total[t] <- n.occ[t,2] + n.occ[t, 3] # All occupied
   }
 }

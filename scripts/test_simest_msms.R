@@ -3,19 +3,27 @@
 
 library(jagsUI)
 
+# Data sim ----------------------------
+
+## Params --------------------------
 
 ncells = 10; nsites = 4; nreps = 5; nyears = 3; nstates = 3
 
 # cell occupancy parameters
-psi = 0.4; r = 0.3
+psi = 0.4 # probability that a grid cell is occupied
+r = 0.3 # probability that if occupied, it is occupied with many bats
 
+# Initial state occupancy matrix
 omega <- array(NA, dim = c(ncells, nstates))
 omega[,1] <- 1-psi
 omega[,2] <- psi*(1-r)
 omega[,3] <- psi * r
 
 # site occupancy parameters
-theta1 = 0.65; theta2 = 0.8; theta3 = 0.7
+theta1 = 0.65 # if a grid cell is occupied with a few bats, probability the site has few bats
+theta2 = 0.8 # if a grid cell is occupied with many bats, probability that the site has bats
+theta3 = 0.7 # if the site does have bats, probability it is occupied by many bats
+# structure the matrix for site occupancy
 theta <- matrix(c(1,0,0,
                   1-theta1, theta1, 0,
                   1-theta2, theta2*(1-theta3), theta2*theta3), nrow = 3, byrow = TRUE)
@@ -27,24 +35,25 @@ mean.p<- matrix(c(1,0,0,
                   p3[1], p3[2], p3[3]), nrow = 3, byrow = TRUE)
 
 # transition matrix parameters
-gamma1 = 0.001; gamma2 = 0.001; phi1 = 0.5; G = 0.01
-phi2 = 0.3; D = 0.5
+gamma1 = 0.001; gamma2 = 0.001 # from no bats to few bats or many bats 
+phi1 = 0.5; G = 0.01 # persistence at few bats or growth to many bats
+phi2 = 0.3; D = 0.5 # persistence at many bats or decline to few bats
 
+# assemble matrix
 Phi <- matrix(c(1-gamma1, gamma1*(1-gamma2), gamma1*gamma2,
                 1-phi1, phi1*(1-G), phi1*G,
                 1-phi2, phi2*D, phi2*(1-D)), nrow = 3, byrow = TRUE)
 
 
-# create empty arrays
+## Generation ---------------------------
+
+# create empty arrays for data
 z <- array(NA, dim = c(ncells, nyears))
 u <- array(NA, dim = c(ncells, nsites, nyears))
 y <- array(NA, dim = c(ncells, nsites, nreps, nyears))
 
 
-
-# Simulation
-
-# Cell occupancy
+### Cell ----------------
 # year 1
 for (i in 1:ncells) {
   draw1 <- rmultinom(n = 1, size = 1, prob = omega[i,])
@@ -59,7 +68,7 @@ for(t in 2:nyears){
   }
 }
 
-# Local occupancy (site occupancy)
+### Site -----------------
 for(i in 1:ncells){
   for(j in 1:nsites){
     for(t in 1:nyears){
@@ -69,7 +78,7 @@ for(i in 1:ncells){
   }
 }
 
-# Detection
+### Obs -------------------
 
 for(i in 1:ncells){
   for(j in 1:nsites){
@@ -83,8 +92,12 @@ for(i in 1:ncells){
 }
 
 
-##  Fit null model ------------------------------------------
-# No covariates
+#  Fit null models ------------------------------------------
+
+## DMSMS --------------------
+# dynamic multiscale multistate
+
+# Gives an ERROR: node inconsistent with parents
 
 yms <- y
 str(jagsdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], 
@@ -92,10 +105,13 @@ str(jagsdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2],
                       nyears = dim(yms)[4]))
 
 
-# Dynamic multiseason model with the parameterization for the PhiMat using growth, decline, persistence, etc
-
 # Specify model
-cat(file = "jags_txt/nulldynMSMS.txt", "
+
+# CHANGE file name depending on working directory
+
+jagsfilename <- "jags_txt/nulldynMSMS.txt"
+
+cat(file = jagsfilename, "
 model {
   ### (1) Priors for parameters
   # State process priors
@@ -134,7 +150,6 @@ model {
   # Define state transition probability matrix (PhiMat): years 2:nyears
   # Define probabilities of state S(t+1) given S(t)
   # For now, constant over sites and years
-  # Note conditional Bernoulli parameterization of multinomial
   # Order of indices: Departing state, arrival state
   PhiMat[1,1] <- 1 - lgamma
   PhiMat[1,2] <- lgamma
@@ -156,6 +171,7 @@ model {
   Theta[3,1] <- 1-theta[2]
   Theta[3,2] <- theta[2] * (1 - theta[3])
   Theta[3,3] <- theta[2] * theta[3]
+  
   # Define observation probability matrix (p)
   # Order of indices: true state, observed state
   varp[1,1] <- 1
@@ -204,23 +220,28 @@ model {
   }
   
   ### (4) Derived quantities
-  # Number of sites in each state per year
+  # Number of cells in each state per year
   for (t in 1:nyears){
     for (i in 1:ncells){
-      state1[i,t] <- equals(z[i,t], 1)   # Indicator for site in state 1
+      state1[i,t] <- equals(z[i,t], 1)   # Indicator for cell in state 1
       state2[i,t] <- equals(z[i,t], 2)   # ... state 2
       state3[i,t] <- equals(z[i,t], 3)   # ... state 3
     }
-    n.occ[t,1] <- sum(state1[,t])        # Number of unoccupied sites
-    n.occ[t,2] <- sum(state2[,t])        # Number of sites with few bats
-    n.occ[t,3] <- sum(state3[,t])        # Number of sites with many bats
+    n.occ[t,1] <- sum(state1[,t])        # Number of unoccupied cells
+    n.occ[t,2] <- sum(state2[,t])        # Number of cells with few bats
+    n.occ[t,3] <- sum(state3[,t])        # Number of cells with many bats
     n.occ.total[t] <- n.occ[t,2] + n.occ[t, 3] # All occupied
   }
 }
 ")
 
 # Initial values (chosen to avoid data/model/init conflict)
-zst <- array(3, dim = c(jagsdata$ncells, jagsdata$nyears) )
+zst <- array(3, dim = c(jagsdata$ncells, jagsdata$nyears))
+# ust <- array(3, dim = c(jagsdata$ncells, jagsdata$nsites, jagsdata$nyears))
+# yst <- array(3, dim = c(jagsdata$ncells, jagsdata$nsites, jagsdata$nsurveys, jagsdata$nyears))
+
+#inits <- function(){list(z = zst, u = ust, y = yst)}
+
 inits <- function(){list(z = zst)}
 
 # Parameters monitored
@@ -233,10 +254,11 @@ na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 m
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
-odmsms_null <- jags(jagsdata, inits, params, "jags_txt/nulldynMSMS.txt", n.adapt = na,
+odmsms_null <- jags(jagsdata, inits, params, jagsfilename, n.adapt = na,
                   n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 
 # ERROR - node inconsistent with parents
+
 #traceplot(odms_null)
 print(odmsms_null, 3)
 
@@ -247,31 +269,27 @@ round(odmsms_null$mean$PhiMat, 2)
 round(odmsms_null$mean$Theta, 2)
 
 
-# null MSMS ---------------
+## MSMS ------------------
+
+# Try just one year, not dynamic anymore
+# multiscale multistate
 
 yms <- y[,,,1] #only one year
 
 str(jagsdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], 
                       nsurveys = dim(yms)[3]))
 
+# specify model
 
-# Dynamic multiseason model with the parameterization for the PhiMat using growth, decline, persistence, etc
-
-# Specify model
-cat(file = "jags_txt/nullMSMS.txt", "
+jagsfilename <- "jags_txt/nullMSMS.txt"
+  
+cat(file = jagsfilename, "
 model {
   ### (1) Priors for parameters
   # State process priors
   # Priors for parameters in initial state vector (Omega)
   psi ~ dunif(0, 1)
   r ~ dunif(0, 1)
-  # # Priors for parameters in state transition matrix (PhiMat)
-  # for(s in 1:2){
-  #   phi[s] ~ dunif(0, 1)
-  # }
-  # lgamma ~ dunif(0,1)
-  # G ~ dunif(0,1)
-  # D ~ dunif(0,1)
   
   # Priors for parameters in local occupancy (Theta)
   for(s in 1:3){
@@ -289,20 +307,6 @@ model {
   Omega[1] <- 1 - psi              # Prob. of non-occupation
   Omega[2] <- psi * (1-r)          # Prob. of occ. by a few bats
   Omega[3] <- psi * r              # Prob. of occ. by many bats
-  # Define state transition probability matrix (PhiMat): years 2:nyears
-  # Define probabilities of state S(t+1) given S(t)
-  # For now, constant over sites and years
-  # Note conditional Bernoulli parameterization of multinomial
-  # Order of indices: Departing state, arrival state
-  # PhiMat[1,1] <- 1 - lgamma
-  # PhiMat[1,2] <- lgamma
-  # PhiMat[1,3] <- 0
-  # PhiMat[2,1] <- 1 - phi[1]
-  # PhiMat[2,2] <- phi[1] * (1 - G)
-  # PhiMat[2,3] <- phi[1] * G
-  # PhiMat[3,1] <- 1 - phi[2]
-  # PhiMat[3,2] <- phi[2] * D
-  # PhiMat[3,3] <- phi[2] * (1 - D)
   
   # Define local occupancy probability (Theta)
   Theta[1,1] <- 1
@@ -314,6 +318,7 @@ model {
   Theta[3,1] <- 1-theta[2]
   Theta[3,2] <- theta[2] * (1 - theta[3])
   Theta[3,3] <- theta[2] * theta[3]
+  
   # Define observation probability matrix (p)
   # Order of indices: true state, observed state
   varp[1,1] <- 1
@@ -376,18 +381,9 @@ na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 m
 
 # Call JAGS (ART 21 min), check convergence and summarize posteriors
 # odms stands for 'output dynamic multi-state'
-omsms_null <- jags(jagsdata, inits, params, "jags_txt/nullMSMS.txt", n.adapt = na,
+omsms_null <- jags(jagsdata, inits, params, jagsfilename, n.adapt = na,
                     n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 
 # ERROR - node inconsistent with parents
 # also the error for node inconsistent with parents
-
-
-
-
-
-
-
-
-
 
