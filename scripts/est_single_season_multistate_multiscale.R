@@ -225,11 +225,11 @@ model {
   # Define observation probability matrix (detP)
   # Order of indices: true local state, observed local state
   detP[1,1] <- 1
-  detP[1,2] <- 0
-  detP[1,3] <- 0
+  detP[1,2] <- 0.0000001
+  detP[1,3] <- 0.0000001
   detP[2,1] <- 1-p2
   detP[2,2] <- p2
-  detP[2,3] <- 0
+  detP[2,3] <- 0.0000001
   detP[3,1] <- p3[1]
   detP[3,2] <- p3[2]
   detP[3,3] <- p3[3]
@@ -278,7 +278,7 @@ out_msms <- jags(bcalldata, inits, params, "ss_ms_ms.txt", n.adapt = na,
                   n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 
 
-traceplot(odms_msms)
+traceplot(out_msms)
 print(out_msms, 3)
 
 
@@ -286,7 +286,7 @@ print(out_msms, 3)
 round(out_msms$mean$Theta, 2)
 
 # Detection probabilities
-round(out_msms$mean$dtP, 2)
+round(out_msms$mean$detP, 2)
 
 
 
