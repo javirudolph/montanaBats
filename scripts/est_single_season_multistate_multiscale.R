@@ -54,6 +54,11 @@ raw_wns_calls %>%
   add_count(site_id, name = "n_surveys") -> wns_calls_long
 
 
+# Pretty high number of detections. Over 90% of surveys have a detection
+sum(wns_calls_long$dnd)/nrow(wns_calls_long)
+
+
+
 # The spatial scale we decided to work on was the 10x10km cell grid from NABat
 # The data presented here has four sites sampled within a cell grid: multi-scale
 # There is a varying number of nights surveyed for each site
@@ -287,6 +292,265 @@ round(out_msms$mean$Theta, 2)
 
 # Detection probabilities
 round(out_msms$mean$detP, 2)
+
+
+## Detection covariates -----
+
+raw_sitecovs <- read_csv("datafiles/mt_batcalls/mt_calls_csvs/SiteDataCleanFinal.csv")
+unique(raw_sitecovs$Site_Type)
+raw_sitecovs %>% 
+  mutate(site_type = str_remove(Site_Type, " "),
+         Jduration = Jstop-Jstart) %>% 
+  select(CSY, SiteID, site_type, Jstart, Jduration) -> site_covs
+unique(site_covs$site_type)
+
+
+
+
+manybats_cut <- 100
+
+# Transform to long format:
+raw_wns_calls %>%
+  # create variable for julian date, formerly in the columns
+  pivot_longer(., 4:last_col(), names_to = "jdate", values_to = "y") %>%
+  # keep only needed variables
+  select(SiteID, CSY, jdate, y) %>%
+  # julian date should be a number
+  mutate(jdate = as.double(jdate)) %>%
+  # remove NAs - means recorders wasn't on
+  drop_na(y) %>%
+  # clean the names
+  janitor::clean_names() %>%
+  # separate CSY into three
+  separate(csy, c("cell", "site", "year"), remove = FALSE) %>%
+  # create binary version of detection data
+  mutate(dnd = as.numeric(y > 0)) %>%
+  # Create state categories, y multi state
+  # Asumming a cutoff of 100 bat calls as many bats
+  mutate(yms = case_when(
+    y == 0 ~ 1,
+    y <= manybats_cut ~ 2,
+    y > manybats_cut ~ 3
+  )) %>%
+  # add column for number of nights of recording for each site_id
+  add_count(site_id, name = "n_surveys") -> wns_calls_long
+
+
+# The spatial scale we decided to work on was the 10x10km cell grid from NABat
+# The data presented here has four sites sampled within a cell grid: multi-scale
+# There is a varying number of nights surveyed for each site
+
+
+nsites <- as.numeric(max(obs$site))
+max_nsurveys <- as.numeric(max(obs$n_surveys))
+ncell <- as.numeric(length(unique(obs$cell)))
+
+siteidlist <- sort(unique(obs$site_id))
+sitelist <- sort(unique(obs$site))
+celllist <- sort(unique(obs$cell))
+
+
+# create id column 
+wns_calls_long %>% 
+  mutate(cell_site = paste(cell, site, sep = "_")) %>% 
+  filter(year == 2020) -> obs
+
+# Create empty arrays and fill them with the data
+yms <- date <- y <- array(NA, dim = c(ncell, nsites, max_nsurveys),
+                          dimnames = list(celllist, 1:nsites, 1:max_nsurveys))
+
+for(i in 1:ncell){
+  for(j in 1:nsites){
+    sel_cell_site <- paste(celllist[i], sitelist[j], sep = "_")
+    tmp <- obs[obs$cell_site == sel_cell_site,]
+    nr <- nrow(tmp)
+    if(nr > 0){
+      yms[i, j, 1:nr] <- tmp$yms
+      date[i, j, 1:nr] <- tmp$jdate
+      y[i, j, 1:nr] <- tmp$dnd
+    }
+  }
+}
+
+
+# site covs
+
+sitetypes <- unique(site_covs$site_type)
+site_covs %>% 
+  separate(CSY, c("cell", "site", "year")) %>% 
+  filter(year == 2020) %>% 
+  mutate(cell_site = paste(cell, site, sep = "_")) %>% 
+  mutate(sitetype_fctr = as.numeric(factor(site_type, levels = sitetypes))) -> siteobs
+
+
+nsitecovs <- 3
+sitecovs <- array(NA, dim = c(ncell, nsites, nsitecovs))
+for(i in 1:ncell){
+  for(j in 1:nsites){
+    sel_cell_site <- paste(celllist[i], sitelist[j], sep = "_")
+    tmp <- siteobs[siteobs$cell_site == sel_cell_site,]
+    nr <- nrow(tmp)
+    if(nr > 0){
+      sitecovs[i,j,1] <- tmp$sitetype_fctr
+      sitecovs[i,j,2] <- tmp$Jstart
+      sitecovs[i,j,3] <- tmp$Jduration
+    }
+  }
+}
+
+
+# Bundle data -------------------------------
+
+str(bcalldata <- list(y = yms, ncell = dim(yms)[1], nsite = dim(yms)[2], 
+                      nsurveys = dim(yms)[3], 
+                      sitecovs = sitecovs,
+                      region = region,
+                      elev = elev.scaled, 
+                      temp = temp.scaled,
+                      physdiv = physdiv.scaled,
+                      precip = precip.scaled,
+                      forest = forest.scaled,
+                      wetlands = wetlands.scaled,
+                      karst = karst))
+
+# Specify model----------------------------
+cat(file = "ss_ms_ms.txt", "
+model {
+
+  ### (1) Priors
+  ## Omega
+  for (i in 1:ncell){
+    logit(psi[i]) <- alpha.lpsi[region[i]] + beta.lpsi[1] * elev[i] + beta.lpsi[2] * elev[i]^2 + beta.lpsi[3] * temp[i] + beta.lpsi[4] * temp[i]^2 + beta.lpsi[5] * physdiv[i] + beta.lpsi[6] * precip[i] + beta.lpsi[7] * forest[i] + beta.lpsi[8] * wetlands[i]
+    logit(r[i]) <- alpha.lr[region[i]] + beta.lr[1] * karst[i] + beta.lr[2] * forest[i] + beta.lr[3] * physdiv[i]
+  }
+  
+  # Priors for parameters in the linear models of psi and r
+  # Region-specific intercepts
+  for (k in 1:6){
+    alpha.lpsi[k] <- logit(mean.psi[k])
+    mean.psi[k] ~ dunif(0, 1)
+    alpha.lr[k] <- logit(mean.r[k])
+    mean.r[k] ~ dunif(0, 1)
+  }
+  
+  # Priors for coefficients of covariates in Omega
+  for (k in 1:8){
+    beta.lpsi[k] ~ dnorm(0, 0.1)
+  }
+  
+  for (k in 1:3){
+    beta.lr[k] ~ dnorm(0, 0.1)
+  }
+  
+  ## Theta 
+  # Priors for parameters in local occupancy
+  theta2 ~ dunif(0, 1)              # Local occupancy when cell has few bats
+  for (s in 1:3) {                  # Local occupancy when cell has many bats
+    beta[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
+    theta3[s] <- beta[s] / sum(beta[])
+  }
+  
+  ## detP
+  # Priors for parameters in observation process
+  p2 ~ dunif(0, 1)              # detection with few bats locally
+  for (s in 1:3) {                  # detection with many bats locally
+    alpha[s] ~ dgamma(1, 1)         # Induce Dirichlet prior
+    p3[s] <- alpha[s] / sum(alpha[])
+  }
+  
+  ### (2) Define relationships between basic model structure and parameters
+  # Define initial state vector
+  for (i in 1:ncell){
+    Omega[i,1] <- 1 - psi[i]                 # Prob. of no bats
+    Omega[i,2] <- psi[i] * (1-r[i])          # Prob. of occ. by a few bats
+    Omega[i,3] <- psi[i] * r[i]              # Prob. of occ. by many bats
+  }
+  
+  # Define local occupancy probability matrix (Theta)
+  # Order of indices: global state, local state
+  Theta[1,1] <- 1
+  Theta[1,2] <- 0
+  Theta[1,3] <- 0
+  Theta[2,1] <- 1-theta2
+  Theta[2,2] <- p2
+  Theta[2,3] <- 0
+  Theta[3,1] <- theta3[1]
+  Theta[3,2] <- theta3[2]
+  Theta[3,3] <- theta3[3]
+  
+  # Define observation probability matrix (detP)
+  # Order of indices: true local state, observed local state
+  
+  for (i in 1:ncell){
+    for (j in 1:nsite){
+        detP[1,1,i,j] <- 1
+        detP[1,2,i,j] <- 0.0000001
+        detP[1,3,i,j] <- 0.0000001
+        detP[2,1,i,j] <- 1-p2[i,j]
+        detP[2,2,i,j] <- p2[i,j]
+        detP[2,3,i,j] <- 0.0000001
+        detP[3,1,i,j] <- p3[1,i,j]
+        detP[3,2,i,j] <- p3[2,i,j]
+        detP[3,3,i,j] <- p3[3,i,j]
+    }
+  }
+  
+  
+  ### (3) Likelihood
+  
+  # global occupancy
+  for (i in 1:ncell){
+    z[i] ~ dcat(Omega[i,])
+  }
+  
+  # local occupancy
+  for (i in 1:ncell){
+    for (j in 1:nsite){
+      u[i,j] ~ dcat(Theta[z[i], ])
+    }
+  }
+  
+  # detection
+  for (i in 1:ncell){
+    for (j in 1:nsite){
+      for (k in 1:nsurveys){
+        y[i,j,k] ~ dcat(detP[u[i,j], ,i,j])
+      }
+    }
+  }
+}
+")
+
+# Initial values (chosen to avoid data/model/init conflict)
+zst <- array(3, dim = bcalldata$ncell)
+inits <- function(){list(z = zst)}
+
+# Parameters monitored
+params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr", "psi", "r","theta2", "theta3", "p2", "p3", "Omega",
+            "Theta", "detP", "z") # Could add "z"
+
+# MCMC settings
+# na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 5000 ; nc <- 3
+na <- 1000 ; ni <- 1000 ; nt <- 1 ; nb <- 500 ; nc <- 3  # ~~~~ for testing, 2 mins
+
+# Call JAGS (ART 21 min), check convergence and summarize posteriors
+# odms stands for 'output dynamic multi-state'
+out_msms <- jags(bcalldata, inits, params, "ss_ms_ms.txt", n.adapt = na,
+                 n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
+
+
+traceplot(out_msms)
+print(out_msms, 3)
+
+
+# Local probabilities
+round(out_msms$mean$Theta, 2)
+
+# Detection probabilities
+round(out_msms$mean$detP, 2)
+
+
+
 
 
 

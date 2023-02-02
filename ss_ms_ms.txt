@@ -64,15 +64,20 @@ model {
   
   # Define observation probability matrix (detP)
   # Order of indices: true local state, observed local state
-  detP[1,1] <- 1
-  detP[1,2] <- 0.0000001
-  detP[1,3] <- 0.0000001
-  detP[2,1] <- 1-p2
-  detP[2,2] <- p2
-  detP[2,3] <- 0.0000001
-  detP[3,1] <- p3[1]
-  detP[3,2] <- p3[2]
-  detP[3,3] <- p3[3]
+  
+  for (i in 1:ncell){
+    for (j in 1:nsite){
+        detP[1,1,i,j] <- 1
+        detP[1,2,i,j] <- 0.0000001
+        detP[1,3,i,j] <- 0.0000001
+        detP[2,1,i,j] <- 1-p2[i,j]
+        detP[2,2,i,j] <- p2[i,j]
+        detP[2,3,i,j] <- 0.0000001
+        detP[3,1,i,j] <- p3[1,i,j]
+        detP[3,2,i,j] <- p3[2,i,j]
+        detP[3,3,i,j] <- p3[3,i,j]
+    }
+  }
   
   
   ### (3) Likelihood
@@ -93,7 +98,7 @@ model {
   for (i in 1:ncell){
     for (j in 1:nsite){
       for (k in 1:nsurveys){
-        y[i,j,k] ~ dcat(detP[u[i,j], ])
+        y[i,j,k] ~ dcat(detP[u[i,j], ,i,j])
       }
     }
   }
