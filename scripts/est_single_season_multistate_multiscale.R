@@ -59,6 +59,8 @@ sum(wns_calls_long$dnd)/nrow(wns_calls_long)
 
 
 
+
+
 # The spatial scale we decided to work on was the 10x10km cell grid from NABat
 # The data presented here has four sites sampled within a cell grid: multi-scale
 # There is a varying number of nights surveyed for each site
