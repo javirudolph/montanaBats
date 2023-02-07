@@ -583,7 +583,6 @@ model {
       mlogit.theta3[3,i,j] <- alpha.ltheta33 + beta.site.type.ltheta33[site_type[i,j]] +
         beta.ltheta33[1] * date[i,j] + beta.ltheta33[2] * date_sqrd[i,j] + 
         beta.ltheta33[3] * duration[i,j]
-      
     }
   }
   
@@ -593,6 +592,7 @@ model {
   mean.alpha.theta2 ~ dunif(0,1)
   alpha.ltheta32 ~ dnorm(0, 0.01)
   alpha.ltheta33 ~ dnorm(0, 0.01)
+  
   # effects of site type -------
   beta.site.type.ltheta2[1] <- 0
   beta.site.type.ltheta32[1] <- 0
@@ -615,6 +615,7 @@ model {
     for (j in 1:nsites){
       theta3[2, i, j] <- exp(mlogit.theta3[2,i,j]) / (1 + exp(mlogit.theta3[2,i,j]) + exp(mlogit.theta3[3,i,j]))
       theta3[3, i, j] <- exp(mlogit.theta3[3,i,j]) / (1 + exp(mlogit.theta3[2,i,j]) + exp(mlogit.theta3[3,i,j]))
+      theta3[1, i, j] <- 1 - theta3[2, i, j] - theta3[3, i, j]
     }
   }
   
@@ -643,7 +644,7 @@ model {
         Theta[2,1,i,j] <- 1-theta2[i,j]
         Theta[2,2,i,j] <- theta2[i,j]
         Theta[2,3,i,j] <- 0.0000001
-        Theta[3,1,i,j] <- 1 - theta3[2,i,j] - theta3[3,i,j]                    
+        Theta[3,1,i,j] <- theta3[1,i,j]                  
         Theta[3,2,i,j] <- theta3[2,i,j]
         Theta[3,3,i,j] <- theta3[3,i,j]
     }
