@@ -130,10 +130,25 @@ sitecovs %>%
     str_detect(other_site_type, "lotic|river") ~ "LoticWater",
     str_detect(other_site_type, "wooded") ~ "OtherRoost"
   )) %>% 
-  mutate(site_type = ifelse(site_type == "Other", fix_other, site_type)) %>% 
+  mutate(site_type = ifelse(site_type == "Other", fix_other, site_type),
+         site_type_num = as.numeric(factor(site_type))) %>% 
   select(-fix_other) -> sitecovs
 
 table(sitecovs$site_type)
+
+
+# scale the starting survey dates
+hist(sitecovs$jstart)
+summary(sitecovs$jstart)
+mean(sitecovs$jstart) # July 1st is 182
+sd(sitecovs$jstart)
+
+hist(standardize(sitecovs$jstart))
+hist((sitecovs$jstart-182)/15) # scale so 0 is July 1st, and sd = 2 weeks
+
+sitecovs %>% 
+  mutate(st_jstart = (jstart-182)/15) -> sitecovs
+
 
 ## 1c. NABat covariates ------------------------
 mt_covariates <- read_sf("datafiles/nabat_covariates/NABat_grid_covariates/NABat_grid_covariates.shp") %>%
@@ -481,5 +496,36 @@ diagPlot(out_M1_msms)
 
 
 ## M2 - sitecovs ---------------------------
+
+
+jstart <- jstart_sqrd <- site_type <- array(NA, dim = c(ncells, nsites),
+                                         dimnames = list(cell_list, 1:nsites))
+
+duration <- nsurveys
+
+
+# match the cell_site with the one for the call data
+
+null_msms_dat %>% 
+  select(site_id, cell_site) %>% 
+  left_join(., sitecovs) -> M2_sitecovs
+
+for(i in 1:ncells){
+  for(j in 1:nsites){
+    sel_cell_site <- paste(cell_list[i], j, sep = "_")
+    tmp <- M2_sitecovs[M2_sitecovs$cell_site == sel_cell_site,]
+    nr <- nrow(tmp)
+    if(nr > 0){
+      jstart[i,j] <- tmp$st_jstart[1]
+      jstart_sqrd[i,j] <- (tmp$st_jstart[1])^2 
+      site_type[i,j] <- tmp$site_type_num[1]
+    }
+  }
+}
+
+
+
+
+
 
 
