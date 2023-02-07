@@ -542,7 +542,7 @@ for(i in 1:ncells){
 nsites
 
 
-str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = 3, nsurveys = max_surveys, 
+str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = nsites, nsurveys = max_surveys, 
                     region = region,
                     elev = elev.scaled, 
                     temp = temp.scaled,
@@ -586,7 +586,7 @@ model {
   
   # availability model with covariates
   for (i in 1:ncells){
-    for (j in 1:nsites){
+    for (j in 1:nsites[i]){
       logit(theta2[i,j]) <- alpha.ltheta2 + beta.site.type.ltheta2[site_type[i,j]] +
         beta.ltheta2[1] * date[i,j] + beta.ltheta2[2] * date_sqrd[i,j] + 
         beta.ltheta2[3] * duration[i,j]
@@ -627,7 +627,7 @@ model {
   
   # Multinomial logit link for availability model for state 3 (= many bats)
   for (i in 1:ncells){
-    for (j in 1:nsites){
+    for (j in 1:nsites[i]){
       theta3[2, i, j] <- exp(mlogit.theta3[2,i,j]) / (1 + exp(mlogit.theta3[2,i,j]) + exp(mlogit.theta3[3,i,j]))
       theta3[3, i, j] <- exp(mlogit.theta3[3,i,j]) / (1 + exp(mlogit.theta3[2,i,j]) + exp(mlogit.theta3[3,i,j]))
       theta3[1, i, j] <- 1 - theta3[2, i, j] - theta3[3, i, j]
@@ -652,7 +652,7 @@ model {
   # Define availability matrix (Theta)
   # Order of indices: true state, observed state for each cell_site 
   for (i in 1:ncells){
-    for (j in 1:nsites){
+    for (j in 1:nsites[i]){
         Theta[1,1,i,j] <- 1
         Theta[1,2,i,j] <- 0.0000001
         Theta[1,3,i,j] <- 0.0000001
@@ -686,14 +686,14 @@ model {
   
   # Availability equation
   for (i in 1:ncells){
-    for (j in 1:nsites){
+    for (j in 1:nsites[i]){
       a[i,j] ~ dcat(Theta[z[i],,i,j])
     }
   }
   
   # Observation equation
   for (i in 1:ncells){
-    for (j in 1:nsites){
+    for (j in 1:nsites[i]){
       for (k in 1:nsurveys){
         y[i,j,k] ~ dcat(pDet[a[i,j],])
       }
