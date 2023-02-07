@@ -39,16 +39,17 @@ raw_mtcalls %>%
 
 # Summary of the bat call data
 
-median_calls <- median(mt_calls$y)
+# bat_threshold <- median(mt_calls$y)
+bat_threshold <- 100
 ggplot(data = mt_calls, aes(x = y)) + 
   geom_histogram() + 
-  geom_vline(xintercept = median_calls, color = "red") -> call_dist_plot
+  geom_vline(xintercept = bat_threshold, color = "red") -> call_dist_plot
 
 mt_calls %>% 
   mutate(yms = case_when(
     y == 0 ~ 1,
-    y <= median_calls ~ 2, 
-    y > median_calls ~ 3
+    y <= bat_threshold ~ 2, 
+    y > bat_threshold ~ 3
   )) -> mt_calls
 
 ggplot(data = mt_calls, aes(x = yms, fill = year)) +
@@ -495,6 +496,8 @@ print(out_M1_msms, 3)
 
 diagPlot(out_M1_msms)
 
+hist(out_M1_msms$mean$psi)
+hist(out_M1_msms$mean$r)
 
 ## M2 - sitecovs ---------------------------
 # add julian date start, duration, and site type as availability covariates
