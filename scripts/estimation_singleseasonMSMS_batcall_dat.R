@@ -485,7 +485,7 @@ params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
             "Omega", "Theta", "pDet", "n.occ")
 
 # MCMC settings
-na <- 1000 ; ni <- 2000 ; nt <- 2 ; nb <- 1000 ; nc <- 3
+na <- 1000 ; ni <- 5000 ; nt <- 5 ; nb <- 1000 ; nc <- 3
 
 # Call JAGS, check convergence and summarize posteriors
 out_M1_msms <- jags(batdata, inits, params, "jags_txt/M1_msms.txt", n.adapt = na,
@@ -495,6 +495,9 @@ traceplot(out_M1_msms)
 print(out_M1_msms, 3)
 
 diagPlot(out_M1_msms)
+
+mean(out_M1_msms$mean$psi)
+mean(out_M1_msms$mean$r)
 
 hist(out_M1_msms$mean$psi)
 hist(out_M1_msms$mean$r)
@@ -638,7 +641,7 @@ model {
   }
   
   # Define availability matrix (Theta)
-  # Order of indices: true state, observed state
+  # Order of indices: true state, observed state for each cell_site 
   for (i in 1:ncells){
     for (j in 1:nsites){
         Theta[1,1,i,j] <- 1
