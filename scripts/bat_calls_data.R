@@ -76,7 +76,15 @@ mt_calls %>%
   count(cell, year) %>% 
   count(n)
 
-# How many sites have info for both years?
+nsites <- mt_calls %>% select(site_id, cell) %>% distinct() %>% count(cell) %>% pull(n) %>% max()
+
+# how many surveys/nights per site:
+mt_calls %>% 
+  count(site_id, cell) %>% 
+  pull(n) %>% 
+  max() -> max_surveys
+
+# How many cells have info for both years?
 mt_calls %>% 
   select(site_id, cell, year) %>% 
   distinct() %>% 
@@ -132,9 +140,43 @@ sitecov
 #      1-p2, p2, 0,
 #      1-p32-p33, p32, p33]
 
+# Create new site identifier that pools data from both years
+# and then creates an identifier for cell_site
+mt_calls %>% 
+  group_split(cell) %>% 
+  purrr::map_df(~.x %>% group_by(site_id) %>% mutate(id = cur_group_id())) %>% 
+  mutate(cell_site = paste(cell, id, sep = "_")) -> null_msms_dat
 
-# Using multinomial logit link
-# specify the model
+
+# bundle data
+yms <- array(NA, dim = c(ncells, nsites, max_surveys),
+             dimnames = list(cell_list, 1:nsites, 1:max_surveys))
+
+for(i in 1:ncells){
+  for(j in 1:nsites){
+    sel_cell_site <- paste(cell_list[i], j, sep = "_")
+    tmp <- null_msms_dat[null_msms_dat$cell_site == sel_cell_site,]
+    nr <- nrow(tmp)
+    if(nr > 0){
+      yms[i,j, 1:nr] <- tmp$yms
+    }
+  }
+}
+
+# There is variation in the number of nights that microphones are recording for each cell or site
+nsurveys <- array(NA, dim = c(ncells, nsites))
+for(i in 1:ncells){
+  for(j in 1:nsites){
+    tmp <- which(!is.na(yms[i,j,]))
+    if(length(tmp) > 0){
+      nsurveys[i,j] <- max(tmp)
+    }
+  }
+}
+
+str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = nsurveys))
+
+# Specify the model
 
 cat(file = "jags_txt/null_msms.txt", "
 model {
@@ -203,7 +245,7 @@ model {
   # Observation equation
   for (i in 1:ncells){
     for (j in 1:nsites){
-      for (k in 1:nsurveys){
+      for (k in 1:nsurveys[i,j]){
         y[i,j,k] ~ dcat(pDet[a[i,j],])
       }
     }
@@ -221,6 +263,23 @@ model {
 }
 ")
 
+# Initial values
+zst <- rep(3, nrow(batdata$y)) # Initialize at highest possible state
+inits <- function(){list(z = zst)}
+
+# Parameters monitored (could add "z")
+params <- c("psi", "r", "p2", "p31", "p32", "p33", "Omega", "Theta", "pDet", "n.occ")
+
+# MCMC settings
+na <- 1000 ; ni <- 2000 ; nt <- 2 ; nb <- 1000 ; nc <- 3
+
+# Call JAGS, check convergence and summarize posteriors
+library(jagsUI)
+out_null_msms <- jags(batdata, inits, params, "jags_txt/null_msms.txt", n.adapt = na,
+             n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
+# par(mfrow = c(3,3))  # ~~~ no longer needed
+traceplot(out1)
+print(out1, 3)
 
 
 
