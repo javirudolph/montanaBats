@@ -82,7 +82,7 @@ mt_calls %>%
   count(cell, year) %>% 
   count(n)
 
-nsites <- mt_calls %>% select(site_id, cell) %>% distinct() %>% count(cell) %>% pull(n) %>% max()
+max_nsites <- mt_calls %>% select(site_id, cell) %>% distinct() %>% count(cell) %>% pull(n) %>% max()
 
 # how many surveys/nights per site:
 mt_calls %>% 
@@ -213,11 +213,11 @@ mt_calls %>%
 
 
 # bundle data
-yms <- array(NA, dim = c(ncells, nsites, max_surveys),
-             dimnames = list(cell_list, 1:nsites, 1:max_surveys))
+yms <- array(NA, dim = c(ncells, max_nsites, max_surveys),
+             dimnames = list(cell_list, 1:max_nsites, 1:max_surveys))
 
 for(i in 1:ncells){
-  for(j in 1:nsites){
+  for(j in 1:max_nsites){
     sel_cell_site <- paste(cell_list[i], j, sep = "_")
     tmp <- null_msms_dat[null_msms_dat$cell_site == sel_cell_site,]
     nr <- nrow(tmp)
@@ -228,9 +228,9 @@ for(i in 1:ncells){
 }
 
 # There is variation in the number of nights that microphones are recording for each cell or site
-nsurveys <- array(NA, dim = c(ncells, nsites))
+nsurveys <- array(NA, dim = c(ncells, max_nsites))
 for(i in 1:ncells){
-  for(j in 1:nsites){
+  for(j in 1:max_nsites){
     tmp <- which(!is.na(yms[i,j,]))
     if(length(tmp) > 0){
       nsurveys[i,j] <- max(tmp)
@@ -238,7 +238,19 @@ for(i in 1:ncells){
   }
 }
 
-str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = max_surveys))
+nsites <- array(NA, dim = ncells)
+for(i in 1:ncells){
+  tmp <- which(!is.na(yms[i,,1]))
+  if(length(tmp) > 0){
+    nsites[i] <- max(tmp)
+  }
+}
+
+
+# same for number of sites. Since not all cells were sampled in both years, so some have only 4 sites instead of 8
+
+
+str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = dim(yms)[3]))
 
 # Specify the model
 
@@ -530,6 +542,7 @@ for(i in 1:ncells){
     }
   }
 }
+
 
 
 
