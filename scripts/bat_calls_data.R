@@ -112,7 +112,8 @@ sitecovs <- raw_sitecovs %>%
   select(cell, site_id, year, latitude, longitude, 
          jstart, jstop,
          site_type, other_site_type) %>% 
-  mutate(duration = jstop - jstart)
+  mutate(duration = jstop - jstart,
+         duration = standardize(duration))
 
 # interested in site type as a covariate for local availability
 unique(sitecovs$site_type)
@@ -498,10 +499,10 @@ diagPlot(out_M1_msms)
 ## M2 - sitecovs ---------------------------
 # add julian date start, duration, and site type as availability covariates
 
-jstart <- jstart_sqrd <- site_type <- array(NA, dim = c(ncells, nsites),
+jstart <- jstart_sqrd <- duration <- site_type <- array(NA, dim = c(ncells, nsites),
                                          dimnames = list(cell_list, 1:nsites))
 
-duration <- nsurveys
+# duration <- nsurveys
 
 
 # match the cell_site with the one for the call data
@@ -518,6 +519,7 @@ for(i in 1:ncells){
     if(nr > 0){
       jstart[i,j] <- tmp$st_jstart[1]
       jstart_sqrd[i,j] <- (tmp$st_jstart[1])^2 
+      duration[i,j] <- tmp$duration[1]
       site_type[i,j] <- tmp$site_type_num[1]
     }
   }
@@ -542,9 +544,6 @@ str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurvey
 
 cat(file = "jags_txt/M2_msms.txt", "
 model {
-
-
-  # Priors
   
   # Omega
   for (i in 1:ncells){
@@ -570,13 +569,54 @@ model {
     beta.lr[k] ~ dnorm(0, 0.1)
   }
   
+  # availability model with covariates
+  for (i in 1:ncells){
+    for (j in 1:nsites){
+      logit(theta2) <- alpha.ltheta2 + beta.site.type.ltheta2[site_type[i,j]] +
+        beta.ltheta2[1] * date[i,j] + beta.ltheta2[2] * date_sqrd[i,j] + 
+        beta.ltheta2[3] * duration[i,j]
+      
+      mlogit.theta3[2,i,j] <- alpha.ltheta32 + beta.site.type.ltheta32[site_type[i,j]] +
+        beta.ltheta32[1] * date[i,j] + beta.ltheta32[2] * date_sqrd[i,j] + 
+        beta.ltheta32[3] * duration[i,j]
+        
+      mlogit.theta3[3,i,j] <- alpha.ltheta33 + beta.site.type.ltheta33[site_type[i,j]] +
+        beta.ltheta33[1] * date[i,j] + beta.ltheta33[2] * date_sqrd[i,j] + 
+        beta.ltheta33[3] * duration[i,j]
+      
+    }
+  }
+  
+  # Priors for parameters in the linear models in Theta
+  # intercepts --------
+  alpha.ltheta2 <- logit(mean.alpha.theta2)
+  mean.alpha.theta2 ~ dunif(0,1)
+  alpha.ltheta32 ~ dnorm(0, 0.01)
+  alpha.ltheta33 ~ dnorm(0, 0.01)
+  # effects of site type -------
+  beta.site.type.ltheta2[1] <- 0
+  beta.site.type.ltheta32[1] <- 0
+  beta.site.type.ltheta33[1] <- 0
+  for (k in 2:8){
+    beta.site.type.ltheta2[k] ~ dnorm(0, 0.1)
+    beta.site.type.ltheta32[k] ~ dnorm(0, 0.1)
+    beta.site.type.ltheta33[k] ~ dnorm(0, 0.1)
+  }
+  # coefficients of date and duration
+  for (k in 1:3){
+    beta.ltheta2[k] ~ dnorm(0, 0.1)
+    beta.ltheta32[k] ~ dnorm(0, 0.1)
+    beta.ltheta33[k] ~ dnorm(0, 0.1)
+  }
+  
+  
   # Multinomial logit link for availability model for state 3 (= many bats)
-  theta2 ~ dunif(0,1)
-  ltheta32 ~ dnorm(0, 0.001)
-  ltheta33 ~ dnorm(0, 0.001)
-  theta32 <- exp(ltheta32) / (1 + exp(ltheta32) + exp(ltheta33))
-  theta33 <- exp(ltheta33) / (1 + exp(ltheta32) + exp(ltheta33))
-  theta31 <- 1-theta32-theta33  
+  for (i in 1:ncells){
+    for (j in 1:nsites){
+      theta3[2, i, j] <- exp(mlogit.theta3[2,i,j]) / (1 + exp(mlogit.theta3[2,i,j]) + exp(mlogit.theta3[3,i,j]))
+      theta3[3, i, j] <- exp(mlogit.theta3[3,i,j]) / (1 + exp(mlogit.theta3[2,i,j]) + exp(mlogit.theta3[3,i,j]))
+    }
+  }
   
   # Multinomial logit link for observation model for state 3
   p2 ~ dunif(0, 1)
@@ -595,15 +635,20 @@ model {
   
   # Define availability matrix (Theta)
   # Order of indices: true state, observed state
-  Theta[1,1] <- 1
-  Theta[1,2] <- 0
-  Theta[1,3] <- 0
-  Theta[2,1] <- 1-theta2
-  Theta[2,2] <- theta2
-  Theta[2,3] <- 0
-  Theta[3,1] <- theta31                    
-  Theta[3,2] <- theta32
-  Theta[3,3] <- theta33
+  for (i in 1:ncells){
+    for (j in 1:nsites){
+        Theta[1,1,i,j] <- 1
+        Theta[1,2,i,j] <- 0
+        Theta[1,3,i,j] <- 0
+        Theta[2,1,i,j] <- 1-theta2[i,j]
+        Theta[2,2,i,j] <- theta2[i,j]
+        Theta[2,3,i,j] <- 0
+        Theta[3,1,i,j] <- 1 - theta3[2,i,j] - theta3[3,i,j]                    
+        Theta[3,2,i,j] <- theta3[2,i,j]
+        Theta[3,3,i,j] <- theta3[3,i,j]
+    }
+  }
+
   
   # Define observation matrix (pDet)
   # Order of indices: true state, observed state
@@ -626,7 +671,7 @@ model {
   # Availability equation
   for (i in 1:ncells){
     for (j in 1:nsites){
-      a[i,j] ~ dcat(Theta[z[i],])
+      a[i,j] ~ dcat(Theta[z[i],,i,j])
     }
   }
   
