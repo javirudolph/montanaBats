@@ -542,7 +542,7 @@ for(i in 1:ncells){
 nsites
 
 
-str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = 4, nsurveys = max_surveys, 
+str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = 3, nsurveys = max_surveys, 
                     region = region,
                     elev = elev.scaled, 
                     temp = temp.scaled,
