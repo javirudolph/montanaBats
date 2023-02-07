@@ -718,16 +718,19 @@ inits <- function(){list(z = zst)}
 
 # Parameters monitored (could add "z")
 params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
-            "mean.psi", "mean.r", "n.occ")
+            "alpha.ltheta2", "alpha.ltheta32", "alpha.ltheta33", 
+            "beta.site.type.ltheta2", "beta.site.type.ltheta32", "beta.site.type.ltheta33", 
+            "beta.ltheta2", "beta.ltheta32", "beta.ltheta33",
+            "pDet", "n.occ")
 
 # MCMC settings
-na <- 1000 ; ni <- 2000 ; nt <- 2 ; nb <- 1000 ; nc <- 3
+na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 2000 ; nc <- 3
 
 # Call JAGS, check convergence and summarize posteriors
 out_M2_msms <- jags(batdata, inits, params, "jags_txt/M2_msms.txt", n.adapt = na,
                     n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 # par(mfrow = c(3,3))  # ~~~ no longer needed
-traceplot(out_M2_msms)
+# traceplot(out_M2_msms)
 print(out_M2_msms, 3)
 
 diagPlot(out_M2_msms)
