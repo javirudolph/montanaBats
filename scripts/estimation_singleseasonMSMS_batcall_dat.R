@@ -300,7 +300,7 @@ model {
   pDet[1,3] <- 0.000001
   pDet[2,1] <- 1-p2
   pDet[2,2] <- p2
-  pDet[2,3] <- 0
+  pDet[2,3] <- 0.000001
   pDet[3,1] <- p31                    # = 1-p32-p33 as per prior section
   pDet[3,2] <- p32
   pDet[3,3] <- p33
@@ -349,13 +349,13 @@ params <- c("psi", "r", "p2", "p31", "p32", "p33",
             "Omega", "Theta", "pDet", "n.occ")
 
 # MCMC settings
-na <- 1000 ; ni <- 2000 ; nt <- 2 ; nb <- 1000 ; nc <- 3
+na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 2000 ; nc <- 3
 
 # Call JAGS, check convergence and summarize posteriors
 out_null_msms <- jags(batdata, inits, params, "jags_txt/null_msms.txt", n.adapt = na,
              n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 # par(mfrow = c(3,3))  # ~~~ no longer needed
-traceplot(out_null_msms)
+# traceplot(out_null_msms)
 print(out_null_msms, 3)
 
 diagPlot(out_null_msms)
@@ -492,33 +492,29 @@ inits <- function(){list(z = zst)}
 
 # Parameters monitored (could add "z")
 params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
-            "psi", "r", "p2", "p31", "p32", "p33",
+            # "psi", "r", 
+            "p2", "p31", "p32", "p33",
             "theta2", "theta31", "theta32", "theta33",
-            "Omega", "Theta", "pDet", "n.occ")
+            # "Omega", "Theta", "pDet",
+            "n.occ")
 
 # MCMC settings
-na <- 1000 ; ni <- 5000 ; nt <- 5 ; nb <- 1000 ; nc <- 3
+na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 2000 ; nc <- 3
 
 # Call JAGS, check convergence and summarize posteriors
 out_M1_msms <- jags(batdata, inits, params, "jags_txt/M1_msms.txt", n.adapt = na,
                       n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 # par(mfrow = c(3,3))  # ~~~ no longer needed
-traceplot(out_M1_msms)
+# traceplot(out_M1_msms)
 print(out_M1_msms, 3)
 
 diagPlot(out_M1_msms)
 
-mean(out_M1_msms$mean$psi)
-mean(out_M1_msms$mean$r)
-
-hist(out_M1_msms$mean$psi)
-hist(out_M1_msms$mean$r)
-
 ## M2 - sitecovs ---------------------------
 # add julian date start, duration, and site type as availability covariates
 
-jstart <- jstart_sqrd <- duration <- site_type <- array(NA, dim = c(ncells, nsites),
-                                         dimnames = list(cell_list, 1:nsites))
+jstart <- jstart_sqrd <- duration <- site_type <- array(NA, dim = c(ncells, max_nsites),
+                                         dimnames = list(cell_list, 1:max_nsites))
 
 # duration <- nsurveys
 
@@ -530,7 +526,7 @@ null_msms_dat %>%
   left_join(., sitecovs) -> M2_sitecovs
 
 for(i in 1:ncells){
-  for(j in 1:nsites){
+  for(j in 1:max_nsites){
     sel_cell_site <- paste(cell_list[i], j, sep = "_")
     tmp <- M2_sitecovs[M2_sitecovs$cell_site == sel_cell_site,]
     nr <- nrow(tmp)
@@ -542,7 +538,6 @@ for(i in 1:ncells){
     }
   }
 }
-
 
 
 
