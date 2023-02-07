@@ -320,5 +320,19 @@
     "title": "Expert Elicitation",
     "section": "Question 3",
     "text": "Question 3\nConsider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.717) for the responses, and the grey bar shows the 95% confidence interval (0.379, 0.924)."
+  },
+  {
+    "objectID": "estimation.html",
+    "href": "estimation.html",
+    "title": "Estimation",
+    "section": "",
+    "text": "Using bat call data provided by the state of Montana, we fit a set of multistate multiscale occupancy models to assess the effects of environmental covariates on the probability of bat occupancy. These models are multistate because they consider different levels of bat activity (no bats, few bats, many bats), and multi-scale since each sampled grid cell had multiple sites sampled over a varying number of nights."
+  },
+  {
+    "objectID": "estimation.html#null-multi-state-multi-scale-model",
+    "href": "estimation.html#null-multi-state-multi-scale-model",
+    "title": "Estimation",
+    "section": "Null multi-state multi-scale model",
+    "text": "Null multi-state multi-scale model\nA grid cell \\(i\\) is in one of the three states described (1 = no bats, 2 = few bats, 3 = many bats) given:\n\\[\nz_i \\sim \\text{Categorical}(\\Omega)\n\\] where the vector of probabilities for each state follows:\n\\[\n\\Omega = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]\n\\]\nwhere \\(\\psi\\) is the probability that a grid cell is occupied by bats, and if occupied, \\(r\\) is the probability that it will be occupied by many bats. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.\nWe incorporate the multi-scale component into this model by considering local availability as follows:\n\\[\na_{i,j} \\sim \\text{Categorical}[\\Theta]\n\\] The matrix \\(\\Theta\\) gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows:\n\\[\n\\Theta = \\begin{bmatrix}\n         1 & 0 & 0 \\\\\n         1-\\theta_2 & \\theta_2 & 0 \\\\\n         \\theta_{31} & \\theta_{32} & \\theta_{33}\n         \\end{bmatrix}\n\\] And the detection model follows for each one of the \\(k\\) surveys on each site \\(j\\) within a grid cell \\(i\\):\n\\[\ny_{i,j,k} \\sim \\text{Categorical}(detP)\n\\]\nWhere \\(detP\\) is given by:\n\\[\ndetP = \\begin{bmatrix}\n         1 & 0 & 0 \\\\\n         1-p_2 & p_2 & 0 \\\\\n         p_{31} & p_{32} & p_{33}\n         \\end{bmatrix}\n\\]"
   }
 ]
