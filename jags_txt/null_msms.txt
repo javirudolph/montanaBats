@@ -65,7 +65,7 @@ model {
   # Observation equation
   for (i in 1:ncells){
     for (j in 1:nsites){
-      for (k in 1:nsurveys[i,j]){
+      for (k in 1:nsurveys){
         y[i,j,k] ~ dcat(pDet[a[i,j],])
       }
     }

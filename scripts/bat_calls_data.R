@@ -174,7 +174,7 @@ for(i in 1:ncells){
   }
 }
 
-str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = nsurveys))
+str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = max_surveys))
 
 # Specify the model
 
@@ -245,7 +245,7 @@ model {
   # Observation equation
   for (i in 1:ncells){
     for (j in 1:nsites){
-      for (k in 1:nsurveys[i,j]){
+      for (k in 1:nsurveys){
         y[i,j,k] ~ dcat(pDet[a[i,j],])
       }
     }
@@ -278,8 +278,8 @@ library(jagsUI)
 out_null_msms <- jags(batdata, inits, params, "jags_txt/null_msms.txt", n.adapt = na,
              n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 # par(mfrow = c(3,3))  # ~~~ no longer needed
-traceplot(out1)
-print(out1, 3)
+traceplot(out_null_msms)
+print(out_null_msms, 3)
 
 
 
