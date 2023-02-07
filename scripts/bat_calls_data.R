@@ -496,7 +496,7 @@ diagPlot(out_M1_msms)
 
 
 ## M2 - sitecovs ---------------------------
-
+# add julian date start, duration, and site type as availability covariates
 
 jstart <- jstart_sqrd <- site_type <- array(NA, dim = c(ncells, nsites),
                                          dimnames = list(cell_list, 1:nsites))
@@ -523,6 +523,155 @@ for(i in 1:ncells){
   }
 }
 
+
+
+str(batdata <- list(y = yms, ncells = dim(yms)[1], nsites = dim(yms)[2], nsurveys = max_surveys, 
+                    region = region,
+                    elev = elev.scaled, 
+                    temp = temp.scaled,
+                    physdiv = physdiv.scaled,
+                    precip = precip.scaled,
+                    forest = forest.scaled,
+                    wetlands = wetlands.scaled,
+                    karst = karst,
+                    date = jstart,
+                    date_sqrd = jstart_sqrd,
+                    site_type = site_type,
+                    duration = duration))
+
+
+cat(file = "jags_txt/M2_msms.txt", "
+model {
+
+
+  # Priors
+  
+  # Omega
+  for (i in 1:ncells){
+    logit(psi[i]) <- alpha.lpsi[region[i]] + beta.lpsi[1] * elev[i] + beta.lpsi[2] * elev[i]^2 + beta.lpsi[3] * temp[i] + beta.lpsi[4] * temp[i]^2 + beta.lpsi[5] * physdiv[i] + beta.lpsi[6] * precip[i] + beta.lpsi[7] * forest[i] + beta.lpsi[8] * wetlands[i]
+    logit(r[i]) <- alpha.lr[region[i]] + beta.lr[1] * karst[i] + beta.lr[2] * forest[i] + beta.lr[3] * physdiv[i]
+  }
+  
+  # Priors for parameters in the linear models of psi and r
+  # Region-specific intercepts
+  for (k in 1:6){
+    alpha.lpsi[k] <- logit(mean.psi[k])
+    mean.psi[k] ~ dunif(0, 1)
+    alpha.lr[k] <- logit(mean.r[k])
+    mean.r[k] ~ dunif(0, 1)
+  }
+  
+  # Priors for coefficients of covariates in Omega
+  for (k in 1:8){
+    beta.lpsi[k] ~ dnorm(0, 0.1)
+  }
+  
+  for (k in 1:3){
+    beta.lr[k] ~ dnorm(0, 0.1)
+  }
+  
+  # Multinomial logit link for availability model for state 3 (= many bats)
+  theta2 ~ dunif(0,1)
+  ltheta32 ~ dnorm(0, 0.001)
+  ltheta33 ~ dnorm(0, 0.001)
+  theta32 <- exp(ltheta32) / (1 + exp(ltheta32) + exp(ltheta33))
+  theta33 <- exp(ltheta33) / (1 + exp(ltheta32) + exp(ltheta33))
+  theta31 <- 1-theta32-theta33  
+  
+  # Multinomial logit link for observation model for state 3
+  p2 ~ dunif(0, 1)
+  lp32 ~ dnorm(0, 0.001)
+  lp33 ~ dnorm(0, 0.001)
+  p32 <- exp(lp32) / (1 + exp(lp32) + exp(lp33))
+  p33 <- exp(lp33) / (1 + exp(lp32) + exp(lp33))
+  p31 <- 1-p32-p33                     
+  
+  # Define initial state vector (Omega)
+  for (i in 1:ncells){
+    Omega[i,1] <- 1 - psi[i]                 # Prob. of no bats
+    Omega[i,2] <- psi[i] * (1-r[i])          # Prob. of occ. by a few bats
+    Omega[i,3] <- psi[i] * r[i]              # Prob. of occ. by many bats
+  }
+  
+  # Define availability matrix (Theta)
+  # Order of indices: true state, observed state
+  Theta[1,1] <- 1
+  Theta[1,2] <- 0
+  Theta[1,3] <- 0
+  Theta[2,1] <- 1-theta2
+  Theta[2,2] <- theta2
+  Theta[2,3] <- 0
+  Theta[3,1] <- theta31                    
+  Theta[3,2] <- theta32
+  Theta[3,3] <- theta33
+  
+  # Define observation matrix (pDet)
+  # Order of indices: true state, observed state
+  pDet[1,1] <- 1
+  pDet[1,2] <- 0.000001
+  pDet[1,3] <- 0.000001
+  pDet[2,1] <- 1-p2
+  pDet[2,2] <- p2
+  pDet[2,3] <- 0
+  pDet[3,1] <- p31                    # = 1-p32-p33 as per prior section
+  pDet[3,2] <- p32
+  pDet[3,3] <- p33
+  
+  # State-space likelihood
+  # State equation: model of true states (z)
+  for (i in 1:ncells){
+    z[i] ~ dcat(Omega[i,])
+  }
+  
+  # Availability equation
+  for (i in 1:ncells){
+    for (j in 1:nsites){
+      a[i,j] ~ dcat(Theta[z[i],])
+    }
+  }
+  
+  # Observation equation
+  for (i in 1:ncells){
+    for (j in 1:nsites){
+      for (k in 1:nsurveys){
+        y[i,j,k] ~ dcat(pDet[a[i,j],])
+      }
+    }
+  }
+  
+  # Derived quantities
+  for (i in 1:ncells){
+    occ1[i] <- equals(z[i], 1)
+    occ2[i] <- equals(z[i], 2)
+    occ3[i] <- equals(z[i], 3)
+  }
+  n.occ[1] <- sum(occ1[]) # Grid cells in state 1
+  n.occ[2] <- sum(occ2[]) # Grid cells in state 2
+  n.occ[3] <- sum(occ3[]) # Grid cells in state 3
+}
+")
+
+# Initial values
+zst <- rep(3, nrow(batdata$y)) # Initialize at highest possible state
+inits <- function(){list(z = zst)}
+
+# Parameters monitored (could add "z")
+params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
+            "psi", "r", "p2", "p31", "p32", "p33",
+            "theta2", "theta31", "theta32", "theta33",
+            "Omega", "Theta", "pDet", "n.occ")
+
+# MCMC settings
+na <- 1000 ; ni <- 2000 ; nt <- 2 ; nb <- 1000 ; nc <- 3
+
+# Call JAGS, check convergence and summarize posteriors
+out_M2_msms <- jags(batdata, inits, params, "jags_txt/M2_msms.txt", n.adapt = na,
+                    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
+# par(mfrow = c(3,3))  # ~~~ no longer needed
+traceplot(out_M2_msms)
+print(out_M2_msms, 3)
+
+diagPlot(out_M2_msms)
 
 
 
