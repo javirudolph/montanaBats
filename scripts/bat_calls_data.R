@@ -572,7 +572,7 @@ model {
   # availability model with covariates
   for (i in 1:ncells){
     for (j in 1:nsites){
-      logit(theta2) <- alpha.ltheta2 + beta.site.type.ltheta2[site_type[i,j]] +
+      logit(theta2[i,j]) <- alpha.ltheta2 + beta.site.type.ltheta2[site_type[i,j]] +
         beta.ltheta2[1] * date[i,j] + beta.ltheta2[2] * date_sqrd[i,j] + 
         beta.ltheta2[3] * duration[i,j]
       
@@ -638,11 +638,11 @@ model {
   for (i in 1:ncells){
     for (j in 1:nsites){
         Theta[1,1,i,j] <- 1
-        Theta[1,2,i,j] <- 0
-        Theta[1,3,i,j] <- 0
+        Theta[1,2,i,j] <- 0.0000001
+        Theta[1,3,i,j] <- 0.0000001
         Theta[2,1,i,j] <- 1-theta2[i,j]
         Theta[2,2,i,j] <- theta2[i,j]
-        Theta[2,3,i,j] <- 0
+        Theta[2,3,i,j] <- 0.0000001
         Theta[3,1,i,j] <- 1 - theta3[2,i,j] - theta3[3,i,j]                    
         Theta[3,2,i,j] <- theta3[2,i,j]
         Theta[3,3,i,j] <- theta3[3,i,j]
@@ -702,9 +702,7 @@ inits <- function(){list(z = zst)}
 
 # Parameters monitored (could add "z")
 params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
-            "psi", "r", "p2", "p31", "p32", "p33",
-            "theta2", "theta31", "theta32", "theta33",
-            "Omega", "Theta", "pDet", "n.occ")
+            "mean.psi", "mean.r", "n.occ")
 
 # MCMC settings
 na <- 1000 ; ni <- 2000 ; nt <- 2 ; nb <- 1000 ; nc <- 3
