@@ -176,6 +176,8 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#model-descriptions" id="toc-model-descriptions" class="nav-link active" data-scroll-target="#model-descriptions">Model descriptions</a>
   <ul class="collapse">
   <li><a href="#null-multi-state-multi-scale-model" id="toc-null-multi-state-multi-scale-model" class="nav-link" data-scroll-target="#null-multi-state-multi-scale-model">Null multi-state multi-scale model</a></li>
+  <li><a href="#m1" id="toc-m1" class="nav-link" data-scroll-target="#m1">M1</a></li>
+  <li><a href="#m2" id="toc-m2" class="nav-link" data-scroll-target="#m2">M2</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -234,6 +236,45 @@ detP = \begin{bmatrix}
          1-p_2 &amp; p_2 &amp; 0 \\
          p_{31} &amp; p_{32} &amp; p_{33}
          \end{bmatrix}
+\]</span></p>
+</section>
+<section id="m1" class="level2">
+<h2 class="anchored" data-anchor-id="m1">M1</h2>
+<p>We incorporate covariates at the cell level but local availability and detection remain as in the null model.</p>
+<p><span class="math display">\[
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+\]</span></p>
+<p>the probability of occupancy for site <span class="math inline">\(i\)</span>, <span class="math inline">\(\psi_i\)</span> is set as:</p>
+<p><span class="math display">\[
+\begin{align*}
+logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{Elevation}^2 +
+\beta_3 \cdot \text{Temp} + \beta_4 \cdot \text{Temp}^2 + \\
+\beta_5 \cdot \text{Physiographic diversity} +
+\beta_6 \cdot \text{Precipitation} + \\
+\beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
+\end{align*}
+\]</span></p>
+<p>What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)</p>
+<p><span class="math display">\[
+logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} +
+                \beta_3 \cdot \text{Physiographic diversity}
+\]</span></p>
+<p>both parameters have region-specific intercepts.</p>
+</section>
+<section id="m2" class="level2">
+<h2 class="anchored" data-anchor-id="m2">M2</h2>
+<p>In this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.</p>
+<p>Then, for each site <span class="math inline">\(j\)</span> within a cell <span class="math inline">\(i\)</span>, the probability for local availability depends on the site type, starting date, and duration.</p>
+<p><span class="math display">\[
+\Theta_{i,j} = \begin{bmatrix}
+         1 &amp; 0 &amp; 0 \\
+         1-\theta_2 &amp; \theta_2 &amp; 0 \\
+         \theta_{31} &amp; \theta_{32} &amp; \theta_{33}
+         \end{bmatrix}_{i,j}
+\]</span></p>
+<p><span class="math display">\[
+logit(\theta) = \beta_0 + \beta_1 \cdot \text{SiteType} + \beta_2 \cdot \text{date} +
+                \beta_3 \cdot \text{date}^2 + \beta_4 \cdot \text{duration}
 \]</span></p>
 
 

@@ -334,5 +334,19 @@
     "title": "Estimation",
     "section": "Null multi-state multi-scale model",
     "text": "Null multi-state multi-scale model\nA grid cell \\(i\\) is in one of the three states described (1 = no bats, 2 = few bats, 3 = many bats) given:\n\\[\nz_i \\sim \\text{Categorical}(\\Omega)\n\\] where the vector of probabilities for each state follows:\n\\[\n\\Omega = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]\n\\]\nwhere \\(\\psi\\) is the probability that a grid cell is occupied by bats, and if occupied, \\(r\\) is the probability that it will be occupied by many bats. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.\nWe incorporate the multi-scale component into this model by considering local availability as follows:\n\\[\na_{i,j} \\sim \\text{Categorical}[\\Theta]\n\\] The matrix \\(\\Theta\\) gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows:\n\\[\n\\Theta = \\begin{bmatrix}\n         1 & 0 & 0 \\\\\n         1-\\theta_2 & \\theta_2 & 0 \\\\\n         \\theta_{31} & \\theta_{32} & \\theta_{33}\n         \\end{bmatrix}\n\\] And the detection model follows for each one of the \\(k\\) surveys on each site \\(j\\) within a grid cell \\(i\\):\n\\[\ny_{i,j,k} \\sim \\text{Categorical}(detP)\n\\]\nWhere \\(detP\\) is given by:\n\\[\ndetP = \\begin{bmatrix}\n         1 & 0 & 0 \\\\\n         1-p_2 & p_2 & 0 \\\\\n         p_{31} & p_{32} & p_{33}\n         \\end{bmatrix}\n\\]"
+  },
+  {
+    "objectID": "estimation.html#m1",
+    "href": "estimation.html#m1",
+    "title": "Estimation",
+    "section": "M1",
+    "text": "M1\nWe incorporate covariates at the cell level but local availability and detection remain as in the null model.\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\]\nthe probability of occupancy for site \\(i\\), \\(\\psi_i\\) is set as:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nWhat we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)\n\\[\nlogit(r_i) = \\beta_0 + \\beta_1 \\cdot \\text{karst} + \\beta_2 \\cdot \\text{Percent Forest} +\n                \\beta_3 \\cdot \\text{Physiographic diversity}\n\\]\nboth parameters have region-specific intercepts."
+  },
+  {
+    "objectID": "estimation.html#m2",
+    "href": "estimation.html#m2",
+    "title": "Estimation",
+    "section": "M2",
+    "text": "M2\nIn this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.\nThen, for each site \\(j\\) within a cell \\(i\\), the probability for local availability depends on the site type, starting date, and duration.\n\\[\n\\Theta_{i,j} = \\begin{bmatrix}\n         1 & 0 & 0 \\\\\n         1-\\theta_2 & \\theta_2 & 0 \\\\\n         \\theta_{31} & \\theta_{32} & \\theta_{33}\n         \\end{bmatrix}_{i,j}\n\\]\n\\[\nlogit(\\theta) = \\beta_0 + \\beta_1 \\cdot \\text{SiteType} + \\beta_2 \\cdot \\text{date} +\n                \\beta_3 \\cdot \\text{date}^2 + \\beta_4 \\cdot \\text{duration}\n\\]"
   }
 ]

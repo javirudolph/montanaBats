@@ -57,3 +57,60 @@ detP = \begin{bmatrix}
          \end{bmatrix}
 $$
 
+
+## M1 
+
+We incorporate covariates at the cell level but local availability and detection remain as in the null model.
+
+$$
+\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
+$$
+
+the probability of occupancy for site $i$, $\psi_i$ is set as: 
+
+$$
+\begin{align*}
+logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{Elevation}^2 +
+\beta_3 \cdot \text{Temp} + \beta_4 \cdot \text{Temp}^2 + \\
+\beta_5 \cdot \text{Physiographic diversity} +
+\beta_6 \cdot \text{Precipitation} + \\
+\beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
+\end{align*}
+$$
+
+What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)
+
+$$
+logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} + 
+                \beta_3 \cdot \text{Physiographic diversity}
+$$
+
+both parameters have region-specific intercepts. 
+
+
+## M2 
+
+In this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.
+
+Then, for each site $j$ within a cell $i$, the probability for local availability depends on the site type, starting date, and duration. 
+
+$$
+\Theta_{i,j} = \begin{bmatrix}
+         1 & 0 & 0 \\
+         1-\theta_2 & \theta_2 & 0 \\
+         \theta_{31} & \theta_{32} & \theta_{33}
+         \end{bmatrix}_{i,j}
+$$
+
+$$
+logit(\theta) = \beta_0 + \beta_1 \cdot \text{SiteType} + \beta_2 \cdot \text{date} + 
+                \beta_3 \cdot \text{date}^2 + \beta_4 \cdot \text{duration}
+$$
+
+
+
+
+
+
+
+
