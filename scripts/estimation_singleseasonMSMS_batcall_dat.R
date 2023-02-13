@@ -736,6 +736,28 @@ print(out_M2_msms, 3)
 diagPlot(out_M2_msms)
 
 
+### To do on the next steps:
+#1. Create a dataframe with the output of these models to compare
+# 1.b I want the model algebra in a table together so that I can see exactly what I was comparing
+# Which parameters are the ones we are interested in keeping track of right now?
+# Because we are using the multiscale component to get a better estimation of the effects of
+# environmental covariates by using the site specific covariates, but we are not truly interested in the site
+# since the effects and management would probably take place at the cell level anyways
+
+# I personally want to see this model comparison because it doesn't seem that by incorporating these
+# the multiscale and such we get such differences
+# Paper number 1 is the model comparison and use of these models to generate predictions on alternatives
+# for the management
+
+# Paper number 2 is the dynamic model. Again, we can do the null and one that incorporates covariates
+# set up the structure for future years of data where we can estimate this correctly. 
+# the importance of the dynamic component is that it would allow to incorporate real time pathogen info
+
+# clean this model and write the output on a table. 
+# Compare with the deviance
+# 
+
+
 
 
 
