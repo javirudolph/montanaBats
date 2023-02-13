@@ -22,6 +22,7 @@ website:
           - toymodel.qmd
           - old.qmd
           - alternatives.qmd
+          - testShiny.qmd
     right:
       - icon: github
         menu:
