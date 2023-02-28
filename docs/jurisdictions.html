@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>montanaBats - Estimation</title>
+<title>montanaBats - Jurisdictions</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -61,7 +61,6 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -173,12 +172,7 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#model-descriptions" id="toc-model-descriptions" class="nav-link active" data-scroll-target="#model-descriptions">Model descriptions</a>
-  <ul class="collapse">
-  <li><a href="#null-multi-state-multi-scale-model" id="toc-null-multi-state-multi-scale-model" class="nav-link" data-scroll-target="#null-multi-state-multi-scale-model">Null multi-state multi-scale model</a></li>
-  <li><a href="#m1" id="toc-m1" class="nav-link" data-scroll-target="#m1">M1</a></li>
-  <li><a href="#m2" id="toc-m2" class="nav-link" data-scroll-target="#m2">M2</a></li>
-  </ul></li>
+  <li><a href="#jurisdictions" id="toc-jurisdictions" class="nav-link active" data-scroll-target="#jurisdictions">Jurisdictions</a></li>
   </ul>
 </nav>
     </div>
@@ -187,7 +181,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Estimation</h1>
+<h1 class="title">Jurisdictions</h1>
 </div>
 
 
@@ -202,86 +196,88 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>We fitted a series of multistate multiscale occupancy models to bat call data provided by the state of Montana. The data provided was not species-specific but was associated to a frequency of bat calls known to be susceptible to white nose syndrome. These models allowed us to evaluate the impact of environmental covariates on the likelihood of bat occupancy at multiple abundance levels. In this context, multistate refers to three levels of bat activity: no bats, few bats, and many bats. On the other hand, multiscale refers to the fact that each grid cell that was sampled had multiple sites sampled over a certain number of nights.</p>
-<p>The multistate aspect of the models allows us to understand not just if bats are present, but also how many bats are present, without fitting an abundance model. We were able to consider several variables that might affect the likelihood of bat occupancy, such as temperature, humidity, forest cover, and elevation, following the regional model published by NABat.</p>
-<p>Overall, our analysis using these multistate multiscale occupancy models has allowed us to gain a base understanding of the factors affecting bat occupancy in Montana, which we can use to generate base predictive models that incorporate different management strategies that support and protect bat populations in the state.</p>
-<section id="model-descriptions" class="level1">
-<h1>Model descriptions</h1>
-<p>We fitted three different models: a null model with no covariates to serve as a base comparison, a model with covariates affecting occupancy states only, and a third model with covariates affecting occupancy and detection. Mathematical descriptions for the three models are found below and the code used to fit these models is in the following <a href="https://github.com/javirudolph/montanaBats/blob/main/scripts/estimation_singleseasonMSMS_batcall_dat.R">script</a></p>
-<section id="null-multi-state-multi-scale-model" class="level2">
-<h2 class="anchored" data-anchor-id="null-multi-state-multi-scale-model">Null multi-state multi-scale model</h2>
-<p>A grid cell <span class="math inline">\(i\)</span> is in one of the three states described (1 = no bats, 2 = few bats, 3 = many bats) given:</p>
-<p><span class="math display">\[
-z_i \sim \text{Categorical}(\Omega)
-\]</span> where the vector of probabilities for each state follows:</p>
-<p><span class="math display">\[
-\Omega = [1-\psi \quad \psi(1-r) \quad \psi r]
-\]</span></p>
-<p>where <span class="math inline">\(\psi\)</span> is the probability that a grid cell is occupied by bats, and if occupied, <span class="math inline">\(r\)</span> is the probability that it will be occupied by many bats. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.</p>
-<p>We incorporate the multi-scale component into this model by considering local availability as follows:</p>
-<p><span class="math display">\[
-a_{i,j} \sim \text{Categorical}[\Theta]
-\]</span> The matrix <span class="math inline">\(\Theta\)</span> gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows:</p>
-<p><span class="math display">\[
-\Theta = \begin{bmatrix}
-         1 &amp; 0 &amp; 0 \\
-         1-\theta_2 &amp; \theta_2 &amp; 0 \\
-         \theta_{31} &amp; \theta_{32} &amp; \theta_{33}
-         \end{bmatrix}
-\]</span> And the detection model follows for each one of the <span class="math inline">\(k\)</span> surveys on each site <span class="math inline">\(j\)</span> within a grid cell <span class="math inline">\(i\)</span>:</p>
-<p><span class="math display">\[
-y_{i,j,k} \sim \text{Categorical}(detP)
-\]</span></p>
-<p>Where <span class="math inline">\(detP\)</span> is given by:</p>
-<p><span class="math display">\[
-detP = \begin{bmatrix}
-         1 &amp; 0 &amp; 0 \\
-         1-p_2 &amp; p_2 &amp; 0 \\
-         p_{31} &amp; p_{32} &amp; p_{33}
-         \end{bmatrix}
-\]</span></p>
-</section>
-<section id="m1" class="level2">
-<h2 class="anchored" data-anchor-id="m1">M1</h2>
-<p>We incorporate covariates at the cell level but local availability and detection remain as in the null model.</p>
-<p><span class="math display">\[
-\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
-\]</span></p>
-<p>the probability of occupancy for site <span class="math inline">\(i\)</span>, <span class="math inline">\(\psi_i\)</span> is set as:</p>
-<p><span class="math display">\[
-\begin{align*}
-logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{Elevation}^2 +
-\beta_3 \cdot \text{Temp} + \beta_4 \cdot \text{Temp}^2 + \\
-\beta_5 \cdot \text{Physiographic diversity} +
-\beta_6 \cdot \text{Precipitation} + \\
-\beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
-\end{align*}
-\]</span></p>
-<p>What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)</p>
-<p><span class="math display">\[
-logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} +
-                \beta_3 \cdot \text{Physiographic diversity}
-\]</span></p>
-<p>both parameters have region-specific intercepts.</p>
-</section>
-<section id="m2" class="level2">
-<h2 class="anchored" data-anchor-id="m2">M2</h2>
-<p>In this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.</p>
-<p>Then, for each site <span class="math inline">\(j\)</span> within a cell <span class="math inline">\(i\)</span>, the probability for local availability depends on the site type, starting date, and duration.</p>
-<p><span class="math display">\[
-\Theta_{i,j} = \begin{bmatrix}
-         1 &amp; 0 &amp; 0 \\
-         1-\theta_2 &amp; \theta_2 &amp; 0 \\
-         \theta_{31} &amp; \theta_{32} &amp; \theta_{33}
-         \end{bmatrix}_{i,j}
-\]</span></p>
-<p><span class="math display">\[
-logit(\theta) = \beta_0 + \beta_1 \cdot \text{SiteType} + \beta_2 \cdot \text{date} +
-                \beta_3 \cdot \text{date}^2 + \beta_4 \cdot \text{duration}
-\]</span></p>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+<style type="text/css">
+.panel-tabset .nav-item {
+  font-size: 12px;
+}
+</style>
+</div>
+<section id="jurisdictions" class="level1">
+<h1>Jurisdictions</h1>
+<p>We overlayed a jurisdiction map from the Montana state library and saw which jurisdictions overlapped with different grid cells. Below you can see the different jurisdictions we have considered.</p>
+<div class="cell">
+
+</div>
+<div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">ALL</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">MFWP</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">BLM</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">USFS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-5" role="tab" aria-controls="tabset-1-5" aria-selected="false">Res</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-6" role="tab" aria-controls="tabset-1-6" aria-selected="false">USFWS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-7-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-7" role="tab" aria-controls="tabset-1-7" aria-selected="false">NPS</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-8-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-8" role="tab" aria-controls="tabset-1-8" aria-selected="false">DNRC</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-5-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-6-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-7" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-7-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+<div id="tabset-1-8" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-8-tab">
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="jurisdictions_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

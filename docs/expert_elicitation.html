@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>montanaBats - Estimation</title>
+<title>montanaBats - Expert Elicitation</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -61,7 +61,6 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -173,11 +172,27 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#model-descriptions" id="toc-model-descriptions" class="nav-link active" data-scroll-target="#model-descriptions">Model descriptions</a>
+  <li><a href="#bat-survival-to-wns-in-different-regions-of-montana" id="toc-bat-survival-to-wns-in-different-regions-of-montana" class="nav-link active" data-scroll-target="#bat-survival-to-wns-in-different-regions-of-montana">Bat survival to WNS in different regions of Montana</a></li>
+  <li><a href="#training-and-expert-calibration" id="toc-training-and-expert-calibration" class="nav-link" data-scroll-target="#training-and-expert-calibration">Training and Expert Calibration</a></li>
+  <li><a href="#training-question" id="toc-training-question" class="nav-link" data-scroll-target="#training-question">Training Question</a>
   <ul class="collapse">
-  <li><a href="#null-multi-state-multi-scale-model" id="toc-null-multi-state-multi-scale-model" class="nav-link" data-scroll-target="#null-multi-state-multi-scale-model">Null multi-state multi-scale model</a></li>
-  <li><a href="#m1" id="toc-m1" class="nav-link" data-scroll-target="#m1">M1</a></li>
-  <li><a href="#m2" id="toc-m2" class="nav-link" data-scroll-target="#m2">M2</a></li>
+  <li><a href="#plot-1" id="toc-plot-1" class="nav-link" data-scroll-target="#plot-1">Plot 1</a></li>
+  <li><a href="#plot-2" id="toc-plot-2" class="nav-link" data-scroll-target="#plot-2">Plot 2</a></li>
+  </ul></li>
+  <li><a href="#question-1" id="toc-question-1" class="nav-link" data-scroll-target="#question-1">Question 1</a>
+  <ul class="collapse">
+  <li><a href="#plot-1-1" id="toc-plot-1-1" class="nav-link" data-scroll-target="#plot-1-1">Plot 1</a></li>
+  <li><a href="#plot-2-1" id="toc-plot-2-1" class="nav-link" data-scroll-target="#plot-2-1">Plot 2</a></li>
+  </ul></li>
+  <li><a href="#question-2" id="toc-question-2" class="nav-link" data-scroll-target="#question-2">Question 2</a>
+  <ul class="collapse">
+  <li><a href="#plot-1-2" id="toc-plot-1-2" class="nav-link" data-scroll-target="#plot-1-2">Plot 1</a></li>
+  <li><a href="#plot-2-2" id="toc-plot-2-2" class="nav-link" data-scroll-target="#plot-2-2">Plot 2</a></li>
+  </ul></li>
+  <li><a href="#question-3" id="toc-question-3" class="nav-link" data-scroll-target="#question-3">Question 3</a>
+  <ul class="collapse">
+  <li><a href="#plot-1-3" id="toc-plot-1-3" class="nav-link" data-scroll-target="#plot-1-3">Plot 1</a></li>
+  <li><a href="#plot-2-3" id="toc-plot-2-3" class="nav-link" data-scroll-target="#plot-2-3">Plot 2</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -187,7 +202,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Estimation</h1>
+<h1 class="title">Expert Elicitation</h1>
 </div>
 
 
@@ -202,85 +217,192 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>We fitted a series of multistate multiscale occupancy models to bat call data provided by the state of Montana. The data provided was not species-specific but was associated to a frequency of bat calls known to be susceptible to white nose syndrome. These models allowed us to evaluate the impact of environmental covariates on the likelihood of bat occupancy at multiple abundance levels. In this context, multistate refers to three levels of bat activity: no bats, few bats, and many bats. On the other hand, multiscale refers to the fact that each grid cell that was sampled had multiple sites sampled over a certain number of nights.</p>
-<p>The multistate aspect of the models allows us to understand not just if bats are present, but also how many bats are present, without fitting an abundance model. We were able to consider several variables that might affect the likelihood of bat occupancy, such as temperature, humidity, forest cover, and elevation, following the regional model published by NABat.</p>
-<p>Overall, our analysis using these multistate multiscale occupancy models has allowed us to gain a base understanding of the factors affecting bat occupancy in Montana, which we can use to generate base predictive models that incorporate different management strategies that support and protect bat populations in the state.</p>
-<section id="model-descriptions" class="level1">
-<h1>Model descriptions</h1>
-<p>We fitted three different models: a null model with no covariates to serve as a base comparison, a model with covariates affecting occupancy states only, and a third model with covariates affecting occupancy and detection. Mathematical descriptions for the three models are found below and the code used to fit these models is in the following <a href="https://github.com/javirudolph/montanaBats/blob/main/scripts/estimation_singleseasonMSMS_batcall_dat.R">script</a></p>
-<section id="null-multi-state-multi-scale-model" class="level2">
-<h2 class="anchored" data-anchor-id="null-multi-state-multi-scale-model">Null multi-state multi-scale model</h2>
-<p>A grid cell <span class="math inline">\(i\)</span> is in one of the three states described (1 = no bats, 2 = few bats, 3 = many bats) given:</p>
-<p><span class="math display">\[
-z_i \sim \text{Categorical}(\Omega)
-\]</span> where the vector of probabilities for each state follows:</p>
-<p><span class="math display">\[
-\Omega = [1-\psi \quad \psi(1-r) \quad \psi r]
-\]</span></p>
-<p>where <span class="math inline">\(\psi\)</span> is the probability that a grid cell is occupied by bats, and if occupied, <span class="math inline">\(r\)</span> is the probability that it will be occupied by many bats. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.</p>
-<p>We incorporate the multi-scale component into this model by considering local availability as follows:</p>
-<p><span class="math display">\[
-a_{i,j} \sim \text{Categorical}[\Theta]
-\]</span> The matrix <span class="math inline">\(\Theta\)</span> gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows:</p>
-<p><span class="math display">\[
-\Theta = \begin{bmatrix}
-         1 &amp; 0 &amp; 0 \\
-         1-\theta_2 &amp; \theta_2 &amp; 0 \\
-         \theta_{31} &amp; \theta_{32} &amp; \theta_{33}
-         \end{bmatrix}
-\]</span> And the detection model follows for each one of the <span class="math inline">\(k\)</span> surveys on each site <span class="math inline">\(j\)</span> within a grid cell <span class="math inline">\(i\)</span>:</p>
-<p><span class="math display">\[
-y_{i,j,k} \sim \text{Categorical}(detP)
-\]</span></p>
-<p>Where <span class="math inline">\(detP\)</span> is given by:</p>
-<p><span class="math display">\[
-detP = \begin{bmatrix}
-         1 &amp; 0 &amp; 0 \\
-         1-p_2 &amp; p_2 &amp; 0 \\
-         p_{31} &amp; p_{32} &amp; p_{33}
-         \end{bmatrix}
-\]</span></p>
+<p>Date: May 9th 2022</p>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="bat-survival-to-wns-in-different-regions-of-montana" class="level2">
+<h2 class="anchored" data-anchor-id="bat-survival-to-wns-in-different-regions-of-montana">Bat survival to WNS in different regions of Montana</h2>
+<p>White Nose Syndrome (WNS), a fungal disease of bats caused by <em>Pseudogymnoascus destructans</em> (<em>Pd</em>), was detected in seven species of bats in eastern Montana in 2020-2021, and showed spread towards the west. Although the effects of WNS can be devastating to bat populations in the eastern United States, there is uncertainty regarding the risk for bats in Montana. There exists the possibility that bats in the west, in Montana, would face a similar population decline as in the eastern part of the United States. However, it is also possible that bats in Montana have a different outcome with <em>Pd</em> infection due to their genetics or the topographic ruggedness of their environment. Due to the landscape characteristics in Montana, bat behavior is also different and roosting occurs at lower densities across the landscape, perhaps altering the pathogen’s effect on bat populations.</p>
+<p>Given the uncertainty in the outcome for bat populations infected with <em>Pd</em> we performed an expert elicitation session with 9 experts for bat populations in the western areas of the United States. We started a two hour discussion by asking the experts about all the potential factors that could play into <em>Pd</em> infections and determine bat survival. Several experts mentioned that they believed <em>Pd</em> would cause less drastic effects on western bat populations due to the landscape, since bats are spread out and not clustered in caves or mines. There was also concern regarding the lack of identified hibernacula in the west, and the uncertainty of how <em>Pd</em> would be transmitted in these rocky environments, in contrast to the known behavior associated to hibernacula humid conditions. Additionally, comparisons between the east and west areas for pathogen spread have shown slower spread in the west. A potential explanation is the topographic diversity that limits how bats move around and might spread the fungus.</p>
+<p>Given the importance of the landscape, we asked experts to independently make predictions as to the effect of WNS on bat survival across three different biogegraphic regions in Montana (as shown in the map below). These three regions are based on the continental divide and rocky mountain front on the west, the northeastern area defined by everything north of the mountain ranges, and the southern region encompassing the xeric pine forest mountains and sagebrush steppe.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="images/MT_Map_3_regions.png" class="img-fluid"></p>
+</div>
+</div>
+<p>We used a standardized protocol for the expert elicitation where we developed a training question, and three additional questions regarding bat survival to WNS in the three biogeographic regions of Montana. We performed a four-point elicitation, in which each expert independently gave the lowest, highest, and best point estimates for the number of bats that would die due to WNS. The fourth point corresponded to the confindence each expert associated to their generated interval and how it would capture the true value for bat deaths. We discussed the experts estimates individually their aggregated distributions. OVerall, we observed that there was a lot of variation between the experts and across regions. Although during the discussion section of the process, it was mentioned that <em>Pd</em> might have less drastic effects for bats in the west, the estimates provided by the experts still show high probabilities of bats succumbing to the disease (median aggregated probabilities shown below each Plot2 for each question). Additionally, there is a big overlap in the estimates across regions, with the west region with slightly lower probabilities for bats dying from WNS, something that was mentioned in the discussion as being associated to the ruggedness of the terrain.</p>
+<!-- Things that were mentioned a lot during the meeting was the rocky environment, ruggedness, talus slopes. Uncertainty of how the bats would behave under these different environments. Also, Riley Bernard mentioned towards the end that there is a lot not known of the little brown bat, but it is the most common one in discussion, even though it is not the one that gets captured the most. She also mentioned she understood the question as survival, instead of death, because the word succumb wasn't clear (linguistic uncertainty). -->
 </section>
-<section id="m1" class="level2">
-<h2 class="anchored" data-anchor-id="m1">M1</h2>
-<p>We incorporate covariates at the cell level but local availability and detection remain as in the null model.</p>
-<p><span class="math display">\[
-\Omega_i = [1-\psi \quad \psi(1-r) \quad \psi r]_i
-\]</span></p>
-<p>the probability of occupancy for site <span class="math inline">\(i\)</span>, <span class="math inline">\(\psi_i\)</span> is set as:</p>
-<p><span class="math display">\[
-\begin{align*}
-logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{Elevation}^2 +
-\beta_3 \cdot \text{Temp} + \beta_4 \cdot \text{Temp}^2 + \\
-\beta_5 \cdot \text{Physiographic diversity} +
-\beta_6 \cdot \text{Precipitation} + \\
-\beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
-\end{align*}
-\]</span></p>
-<p>What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)</p>
-<p><span class="math display">\[
-logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} +
-                \beta_3 \cdot \text{Physiographic diversity}
-\]</span></p>
-<p>both parameters have region-specific intercepts.</p>
+<section id="training-and-expert-calibration" class="level2">
+<h2 class="anchored" data-anchor-id="training-and-expert-calibration">Training and Expert Calibration</h2>
+<div class="cell">
+
+</div>
+<p>During our expert elicitation session, we used the first part of the meeting to explain the process to all the experts. We used presented a training question regarding the average size tip to tail for the little brown bat, <em>Myotis lucifugus</em>. Several experts noted that this is not a common measurement that they are used to thinking about, given that when capturing bats they consider forearm length. We adjusted the question to the bat measurement from tip to base of tail, and asked experts to use their knowledge on other measurements, such as forearm length, to estimate the average size of a bat measured from head to base of the tail. The reference for the true value is the <a href="https://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMACC01010">Montana Field Guide</a> which listed the length of head and body from 41-54mm, thus we used the middle value of 47.5 as the truth. Based on the expert responses, 5 out of the 9 experts captured this true value within the intervals they provided, with varying degrees of confidence. Using the experts’ confidence, we calculated the expected number of experts that would have captured the true value for bat size within the interval they provided (6.45).</p>
 </section>
-<section id="m2" class="level2">
-<h2 class="anchored" data-anchor-id="m2">M2</h2>
-<p>In this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.</p>
-<p>Then, for each site <span class="math inline">\(j\)</span> within a cell <span class="math inline">\(i\)</span>, the probability for local availability depends on the site type, starting date, and duration.</p>
-<p><span class="math display">\[
-\Theta_{i,j} = \begin{bmatrix}
-         1 &amp; 0 &amp; 0 \\
-         1-\theta_2 &amp; \theta_2 &amp; 0 \\
-         \theta_{31} &amp; \theta_{32} &amp; \theta_{33}
-         \end{bmatrix}_{i,j}
-\]</span></p>
-<p><span class="math display">\[
-logit(\theta) = \beta_0 + \beta_1 \cdot \text{SiteType} + \beta_2 \cdot \text{date} +
-                \beta_3 \cdot \text{date}^2 + \beta_4 \cdot \text{duration}
-\]</span></p>
+<section id="training-question" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="training-question">Training Question</h2>
+<p>What is the average size of the little brown bat (Myotis lucifugus)? If you were to measure 100 adult bats, tip-to- base of tail, at a site in the center of their range, what would the average length be in millimeters?</p>
+<section id="plot-1" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1">Plot 1</h3>
+<section id="plot-of-individual-responses" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.
+ℹ Please use the `linewidth` argument instead.</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/Plot1-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2">Plot 2</h3>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/Plot2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. The vertical dashed line indicates the true answer based on the literature. At the bottom of the figure, the black dot represents the overall mean (57.302) for the responses, and the grey bar shows the 95% confidence interval (42.25, 72.525).</p>
+<!-- ### Plot 3 -->
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+</section>
+</section>
+</section>
+<section id="question-1" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="question-1">Question 1</h2>
+<p>Consider the Northeast (NE) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by <em>Myotis lucifugus</em>, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?</p>
+<div class="cell">
+
+</div>
+<section id="plot-1-1" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1-1">Plot 1</h3>
+<section id="plot-of-individual-responses-1" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses-1">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2-1" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2-1">Plot 2</h3>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response-1" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response-1">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.786) for the responses, and the grey bar shows the 95% confidence interval (0.457, 0.94).</p>
+</section>
+</section>
+</section>
+<section id="question-2" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="question-2">Question 2</h2>
+<p>Consider the South (S) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by <em>Myotis lucifugus</em>, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?</p>
+<div class="cell">
+
+</div>
+<section id="plot-1-2" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1-2">Plot 1</h3>
+<section id="plot-of-individual-responses-2" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses-2">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2-2" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2-2">Plot 2</h3>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response-2" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response-2">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.758) for the responses, and the grey bar shows the 95% confidence interval (0.425, 0.929).</p>
+</section>
+</section>
+</section>
+<section id="question-3" class="level2 tabset tabset-fade">
+<h2 class="tabset tabset-fade anchored" data-anchor-id="question-3">Question 3</h2>
+<p>Consider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by <em>Myotis lucifugus</em>, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?</p>
+<div class="cell">
+
+</div>
+<section id="plot-1-3" class="level3">
+<h3 class="anchored" data-anchor-id="plot-1-3">Plot 1</h3>
+<section id="plot-of-individual-responses-3" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-responses-3">Plot of individual responses</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="plot-2-3" class="level3">
+<h3 class="anchored" data-anchor-id="plot-2-3">Plot 2</h3>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<section id="plot-of-individual-distributions-and-mean-aggregated-response-3" class="level4">
+<h4 class="anchored" data-anchor-id="plot-of-individual-distributions-and-mean-aggregated-response-3">Plot of individual distributions and mean aggregated response</h4>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="expert_elicitation_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Each expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.717) for the responses, and the grey bar shows the 95% confidence interval (0.379, 0.924).</p>
 
 
+</section>
 </section>
 </section>
 

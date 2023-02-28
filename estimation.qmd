@@ -7,9 +7,15 @@ html:
     code-summary: "Show the code"
 ---
 
-Using bat call data provided by the state of Montana, we fit a set of multistate multiscale occupancy models to assess the effects of environmental covariates on the probability of bat occupancy. These models are multistate because they consider different levels of bat activity (no bats, few bats, many bats), and multi-scale since each sampled grid cell had multiple sites sampled over a varying number of nights. 
+We fitted a series of multistate multiscale occupancy models to bat call data provided by the state of Montana. The data provided was not species-specific but was associated to a frequency of bat calls known to be susceptible to white nose syndrome. These models allowed us to evaluate the impact of environmental covariates on the likelihood of bat occupancy at multiple abundance levels. In this context, multistate refers to three levels of bat activity: no bats, few bats, and many bats. On the other hand, multiscale refers to the fact that each grid cell that was sampled had multiple sites sampled over a certain number of nights.
+
+The multistate aspect of the models allows us to understand not just if bats are present, but also how many bats are present, without fitting an abundance model. We were able to consider several variables that might affect the likelihood of bat occupancy, such as temperature, humidity, forest cover, and elevation, following the regional model published by NABat.
+
+Overall, our analysis using these multistate multiscale occupancy models has allowed us to gain a base understanding of the factors affecting bat occupancy in Montana, which we can use to generate base predictive models that incorporate different management strategies that support and protect bat populations in the state.
 
 # Model descriptions 
+
+We fitted three different models: a null model with no covariates to serve as a base comparison, a model with covariates affecting occupancy states only, and a third model with covariates affecting occupancy and detection. Mathematical descriptions for the three models are found below and the code used to fit these models is in the following [script](https://github.com/javirudolph/montanaBats/blob/main/scripts/estimation_singleseasonMSMS_batcall_dat.R). Data is not provided but can be requested through the state of Montana library.
 
 ## Null multi-state multi-scale model 
 
