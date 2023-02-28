@@ -228,6 +228,7 @@ for(i in 1:ncells){
 }
 
 # There is variation in the number of nights that microphones are recording for each cell or site
+# to make it faster, have the model estimate only for when there is data, and not run NA cycles
 nsurveys <- array(NA, dim = c(ncells, max_nsites))
 for(i in 1:ncells){
   for(j in 1:max_nsites){
