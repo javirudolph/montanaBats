@@ -1,5 +1,61 @@
 [
   {
+    "objectID": "old.html",
+    "href": "old.html",
+    "title": "Old",
+    "section": "",
+    "text": "I created this file back in August when I was trying to figure out what we were doing and what data was out there. Specifically, we were trying to see if there were any available models for occupancy, for which we could use their results as a starting point to generate predictions."
+  },
+  {
+    "objectID": "old.html#summary",
+    "href": "old.html#summary",
+    "title": "Old",
+    "section": "Summary",
+    "text": "Summary\n\nData\nMist netting and acoustic data collected from 13 different bat species. Use observations collected in the summer (Jun-Sep) for years 2008, 2009, 2010. They assume no false positives, and that every detection indicate presence. Analysis focused on 8 species (EPFU, LANO, LACI, MYCA, MYCI, MYEV, MYLU, and MYVO.) They used the geographical coordinates associated with each record location (bat) to associate with NABat grids. Covariates from Montana Natural Heritage Program at 90x90meter resolution, so they averaged within a grid cell. These covariates are: - forest percent cover (log-transformend) - elevation - ruggedness - average degree days For detection probabilities, the covariates used: - detection method (mist netting or acoustic) - date - weather covariates (min temp, daily precipitation)\n\n\nModel\nProbability of occupancy modeled using logit link using the associated coefficients, and the covariates for occupancy mentioned above (forest, elev, rugg, degreedays), for \\(i\\) sites and \\(k\\) species.\n\\[\nlogit(\\psi_{ik}) = \\mathbf{X_i} \\mathbf{\\beta_k}\n\\]\n\nThey also included a hierarchy for each fixed effect, so that for each covariate, the coefficients across the species come from a common normal distribution (‘community-level prior distribution’)\nSpatial autocorrelation by incorporating spatial random effects in the occupancy process. Intrinsic conditionally autoregressive (ICAR) spatial correlation structure.\n\n\\[\nlogit(\\psi_{ik}) = \\mathbf{X_i} \\mathbf{\\beta_k} + \\mathbf{\\eta_k}\n\\]\n\n\nLoad the shapefiles and metadata\n\n\n\nWe can explore the data we just loaded:\n\n\nSimple feature collection with 6 features and 49 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: -1203000 ymin: 2466000 xmax: -623000 ymax: 2486000\nProjected CRS: Albers\n# A tibble: 6 × 50\n  CONUS_10KM EPFU_lower LACI_…¹ LANO_…² MYCI_…³ MYEV_…⁴ MYLU_…⁵ MYVO_…⁶ MYCA_l…⁷\n       <int>      <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>    <dbl>\n1     101567     0.640   0.919    0.792  0.625    0.504   0.782  0.461  -9.99e+2\n2     101568     0.327   0.852    0.711  0.691    0.269   0.818  0.228  -9.99e+2\n3     101569     0.553   0.864    0.792  0.817    0.425   0.811  0.353  -9.99e+2\n4     101570     0.483   0.870    0.770  0.791    0.362   0.816  0.287  -9.99e+2\n5     101571     0.295   0.857    0.699  0.688    0.220   0.817  0.181  -9.99e+2\n6     101977     0.0145  0.0754   0.177  0.0566   0.237   0.487  0.0488  3.02e-3\n# … with 41 more variables: EPFU_mean <dbl>, LACI_mean <dbl>, LANO_mean <dbl>,\n#   MYCI_mean <dbl>, MYEV_mean <dbl>, MYLU_mean <dbl>, MYVO_mean <dbl>,\n#   MYCA_mean <dbl>, EPFU_upper <dbl>, LACI_upper <dbl>, LANO_upper <dbl>,\n#   MYCI_upper <dbl>, MYEV_upper <dbl>, MYLU_upper <dbl>, MYVO_upper <dbl>,\n#   MYCA_upper <dbl>, EPFU_width <dbl>, LACI_width <dbl>, LANO_width <dbl>,\n#   MYCI_width <dbl>, MYEV_width <dbl>, MYLU_width <dbl>, MYVO_width <dbl>,\n#   MYCA_width <dbl>, J1_lower <dbl>, J2_lower <dbl>, J3_lower <dbl>, …\n\n\n\n\nSome of the variables explained:\n\nCONUS_10KM: NABat grid cell ID for cells in the state of Montana\nThe variables with ’_lower’ correspond to the lower bound of the posterior 95% interval for occurrence for different bat species\nSimilarly, ’_mean’ is the posterior mean occurrence probability\n’_upper’ is the upper bound\n’_width’ is the 95% posterior interval width for probability of occurrence\nJ1-J4 are different groups of bats:\n\nJ1 - all eight species occurence\nJ2 - EPFU and all myotis\nJ3 - EPFU and MYLU\nJ4 - all myotis\n\n\nWe also have a geometry list column here, so we can plot the Montana grids using this object.\nWe can visualize different species by changing the fill argument to the different variables. In this case, we look at the mean probability of occupancy and 95% CI width for MYLU.\n\n\n\n\n\nOne of their results is that MYLU has high predicted occupancy probabilities across the state, with no clear or strong patterns.\nThe shared resources for this Phase 1 did not include data or scripts, just the maps for the predictions"
+  },
+  {
+    "objectID": "old.html#summary-1",
+    "href": "old.html#summary-1",
+    "title": "Old",
+    "section": "Summary",
+    "text": "Summary\nPhase 2 focused on analyzing acoustic data to model bat activity, and to avoid misidentification, they focused on overall bat activity (total number of bat calls). I think this work also used data from detectors placed for specific projects, and so not a probabilistic sampling design of Montana. Data from April to October since that’s when the bats are most active, and at least 15 nights for a detector.\n\nModel\nThe number of bat calls in a night modeled as a Poisson variable (\\(y_i\\), where \\(i\\) is one night at a specific detector), so use a generalized linear model to describe this and associated covariates. They model here detector years (\\(j\\)), which I don’t fully understand. The report mentions it groups observations if they were collected at the same detector during the same year. Anyways, the glm goes as follows\n\\[\n\\text{bat calls per night - } y_i \\sim Poisson(\\lambda_i)\n\\] log link to associate the mean (\\(\\lambda\\)) parameter,\n\\[\n\\log(\\lambda_i) = \\mathbf{x}_i\\mathbf{\\alpha}_{j[i]} + \\mathbf{w}_i\\mathbf{\\beta}_{j[i]}+\\epsilon_i\n\\] where the first part is for the weather covariates (air temp, wind speed, humidity, plus the intercept so \\(\\alpha\\) length is 4), the second is for a trend over time (using thin plate regression splines, is this a gam?), and the third for the error term for each night. The second part for the trend, \\(w\\) is a spline design matrix for julian date (this matrix has 10 columns, and thus length of \\(\\beta\\) is 10). Coefficients (\\(\\alpha \\text{ and } \\beta\\)) could vary across detector years (or just years? why use detector years?). They also model each batch of coefficients (each batch is a year) with normal distributions. To include variation, they use a hierarchical framework and have the coefficients follow normal distributions: \\[\n\\alpha_{jk} \\sim \\mathit{Normal}(\\mu_{\\alpha k}, \\sigma_{\\alpha k}^2)\n\\]\n\n\nResults\nThe zipfolder had data and scripts, and I was able to run the model to get the results. I have stored those in the same shapefiles directory, but these are not on github due to size. For the \\(alpha\\) coefficients (\\(\\alpha_{jk} \\sim \\mathit{Normal}(\\mu_{\\alpha k}, \\sigma_{\\alpha k}^2)\\)) overall intercept it 3, and posterior mean for \\(\\sigma\\) is 2.25, air temp has positive relationship with nightly number of calls. Humidity and wind speed with negative relationship. Figure 3 in the report shows more details, which I reproduced below.\n\nShared data\nI ran this model using the code provided by Kathi, but it is not on Github because of size.\n\n\n\nQuick look at the data\n\n\n\n\n\nThese plots show the number of observations (total nights) for each of these sites, and the three habitat covariates they had available.\n\n\n\n\n\nThese are the nightly covariates they used in the model, and the ones associated to the alpha coefficients. They didn’t use the environmental covariates because there was not enough variation in those.\n\n\n\n\n\nThese are the parameters for the normal distributions that describe the coefficients for all the covariates. After running the model, I used the available code to reproduce the figure shown in the report."
+  },
+  {
+    "objectID": "old.html#summary-2",
+    "href": "old.html#summary-2",
+    "title": "Old",
+    "section": "Summary",
+    "text": "Summary\nThis part of the work focuses on evaluating sampling effort and design, it is a power analysis. What is relevant to us, is that they simulate data for bat occupancy in Montana using the coefficients from Phase 1. I only got the report associated to this work, but no data or scripts. This report cites the data release and the report mentioned in Phase 1 to inform the detection and occupancy parameters in all their simulations.\nThey mention here a package: DynOccuPow by Banner et al 2019 to generate occupancy datasets but I haven’t had a chance to explore it.\n\nSingle-season model\nTo simulate these, it is straightforward using the covariates mentioned in Phase 1, although we don’t have the data for those covariates. So a site \\(i\\) is either occupied or not with probability \\(\\psi_i\\) following: \\[\nZ_i \\sim \\text{Bernoulli}(\\psi_i)\n\\]\nand, \\[\n\\text{logit}(\\psi_i) = \\beta_0 + \\beta_1\\log \\text{_Forest}_i + \\beta_2\\text{Ruggedness}_i + \\beta_3\\text{Elevation}_i + \\beta_4\\text{DegreeDays}_i\n\\] In the report they mention that for MYLU, these coefficients are: \\(\\beta_0 = 2, \\beta_1 = 0, \\beta_2 = -0.25, \\beta_3 = 1, \\beta_4 = 2\\) and a constant detection probability of 0.378 and generated for visits \\(j = 1, ..., J\\): \\[\n[Y_{ij}|Z_i=1]\\sim\\text{Bernoulli}(p_{ij})\n\\] with \\(logit(p_{ij}) = \\alpha_0\\) and \\(\\alpha_0 = -0.5\\)\n\nMulti-season model\nsimulated data for \\(t = 1,2,3\\) years, and data for the first year was simulated following the single-season model described above.For subsequent years, occupancy was generated based on colonization and survival rates given the occupancy of the previous year. So, occupancy states \\(Z_{i,t}\\) for \\(t=2,3\\) are \\(\\text{Bernoulli}(\\psi_{i,t})\\) with:\n\\[\n\\psi_{i,t} = z_{i,t-1}\\phi_{t-1} + (1- z_{i,t-1})\\gamma_{t-1}\n\\] which means cells that were occupied in the previous year remain occupied with probability \\(\\phi\\) and cells that were empty the previous year get occupied with probabilty \\(\\gamma\\). Values used here: \\(\\gamma = 0.1\\) representing low colonization rate, and used values of \\(\\phi_1 = 0.9\\) and declines with \\(\\phi_2 = 0.9 \\times d\\) with \\(d = (0.975, 0.95, 0.9)\\) to simulate occupancy declines in 15, 20, and 25%. For detections, they used \\(\\alpha_0 = -0.8\\) which gave a detection probability of 0.310, constant.\n\n\n\nActivity model\nThis one uses the model and coefficients from Phase 2 and generates data."
+  },
+  {
+    "objectID": "old.html#overall",
+    "href": "old.html#overall",
+    "title": "Old",
+    "section": "Overall",
+    "text": "Overall\nThis workis mostly to guide sampling in the future. We could follow the way they have generated the data, but I don’t think we have any of the covariates data they used in Phase 1."
+  },
+  {
+    "objectID": "old.html#map",
+    "href": "old.html#map",
+    "title": "Old",
+    "section": "Map",
+    "text": "Map\nThe map and covariates are available for the whole continental US. I am just restricting to Montana here:"
+  },
+  {
+    "objectID": "old.html#covariates",
+    "href": "old.html#covariates",
+    "title": "Old",
+    "section": "Covariates",
+    "text": "Covariates\nAvailable covariates, and the ones that were used in the ecological model described in the report:\n\n\n\n\n\nFrom the same page, we have predictions for mylu occupancy\n\n\n\nFocusing on Montana\n\n\nJoining, by = \"grts\"\n\n\n\n2010201120122013201420152016201720182019"
+  },
+  {
+    "objectID": "old.html#mylu-specific-predictions",
+    "href": "old.html#mylu-specific-predictions",
+    "title": "Old",
+    "section": "MYLU specific predictions",
+    "text": "MYLU specific predictions\nhttps://www.sciencebase.gov/catalog/item/6046ab46d34eb120311a44ba saved as the ‘rangewidesummer’ zip download and sent to datafiles folder. There is a .xml file for metadata, just hard to read it and don’t know how else to open. Just getting info from when I open in the browser. It says this is from the NABat acoustic database. The missing rows of data show up as empty in the map, not sure what these are in the first place. This is shapefiles, and there is no report associated, but there are several covariates for each cell: distance from wind farms, forest cover, water cover, elevation, ruggedness, precipitation, temperature."
+  },
+  {
     "objectID": "estimation.html",
     "href": "estimation.html",
     "title": "Estimation",
@@ -26,6 +82,181 @@
     "title": "Estimation",
     "section": "M2",
     "text": "M2\nIn this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.\nThen, for each site \\(j\\) within a cell \\(i\\), the probability for local availability depends on the site type, starting date, and duration (number of nights recorded for a given site).\n\\[\n\\Theta_{i,j} = \\begin{bmatrix}\n         1 & 0 & 0 \\\\\n         1-\\theta_2 & \\theta_2 & 0 \\\\\n         \\theta_{31} & \\theta_{32} & \\theta_{33}\n         \\end{bmatrix}_{i,j}\n\\]\n\\[\nlogit(\\theta) = \\beta_0 + \\beta_1 \\cdot \\text{SiteType} + \\beta_2 \\cdot \\text{date} +\n                \\beta_3 \\cdot \\text{date}^2 + \\beta_4 \\cdot \\text{duration}\n\\]"
+  },
+  {
+    "objectID": "estimation.html#covariates-at-the-grid-level",
+    "href": "estimation.html#covariates-at-the-grid-level",
+    "title": "Estimation",
+    "section": "Covariates at the grid level",
+    "text": "Covariates at the grid level\nPlot with the estimates and error bars for each of the variables on each of the parameters to see how they compare across the two models that include them."
+  },
+  {
+    "objectID": "model.html",
+    "href": "model.html",
+    "title": "Model",
+    "section": "",
+    "text": "We consider a basic dynamic model with a Markovian structure, in which the state of each year is dependent on the state of the previous year. Transition probabilities (the probability of a site going from one state to another, or remaining in the same state the following year) are determined as functions of colonization and survival rates.\nWe start by determining the initial state for each site \\(i\\), which follows a multinomial distribution:\n\\[\nz_{i,1} \\sim Categorical(\\Omega_i)\n\\]\nwhere \\(\\Omega_i\\) is the state vector, with the probabilities of each site \\(i\\) being in one of the states (\\(1,2,3\\)) on the first year (\\(t=1\\)), given by:\n\\[\n\\Omega_i = [\\phi_1 \\quad \\phi_2 \\quad \\phi_3]\n\\] The probability of a site being empty or unoccupied (state \\(1\\)) the first year is given by \\(\\phi_1\\), the probability of site \\(i\\) having a few bats or many bats the first year is given by \\(\\phi_2\\) and \\(\\phi_3\\) respectively, where the subscript indicates the state. Since the probabilities have to add up to 1, we can write the state vector probabilities in terms of one another, we reparameterize to:\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\] where \\(\\psi\\) is the probability of a site being occupied and \\(r\\) is the probability of an occupied site having many bats, thus the probability that a site is occupied with a few bats (\\(\\psi(1-r)\\)) is equivalent to the probability that a sites is occupied (\\(\\psi\\)) AND it is not occupied by many bats (\\(1-r\\)).\nThe state of each site \\(i\\) in the following years (\\(t = 2 \\dots T\\)) is given by:\n\\[\nz_{i,t}|z_{i,t-1} \\sim Categorical(\\Phi_{z{(t-1)}, z{(t)}, i, t})\n\\] where the transition matrix determines the probabilities of a site going from one state to another, or remaining in the same state, depending on the state it was in on the previous year:\n\\[\n\\Phi_{z{(t-1)}, z{(t)}, i,t} =  \\begin{bmatrix}\n                                \\pi_{11} & \\pi_{12} & \\pi_{13} \\\\\n                                \\pi_{21} & \\pi_{22} & \\pi_{23} \\\\\n                                \\pi_{31} & \\pi_{32} & \\pi_{33}\n                                \\end{bmatrix}_{i,t}\n\\] we can read \\(\\pi_{n,m,i,t}\\) as the probability that site \\(i\\) transitions from state \\(n\\) in year \\(t-1\\) to state \\(m\\) in year \\(t\\). We reparameterize this transition matrix in terms of colonization (\\(\\gamma\\)) and persistence (\\(\\phi\\)), plus growth \\(G\\) or decline \\(D\\) when moving between the states of few and many bats.\n\\[\n\\Phi_{z{(t-1)}, z{(t)}} =  \\begin{bmatrix}\n                                1-\\gamma & \\gamma & 0 \\\\\n                                1-\\phi_1 & \\phi_1(1-G) &  \\phi_1G\\\\\n                                1-\\phi_2 & \\phi_2D & \\phi_2(1 - D)\n                                \\end{bmatrix}\n\\]\nBoth the initial state vector \\(\\Omega_i\\) and the transition matrix \\(\\Phi\\) can be reparameterized in order to have these probabilities in terms of environmental covariates, which can then be modified by different management actions.\n\n\n\nInitially, I am only using covariates that NABAt used for their report, where the data release is found here, and the report here. Descriptions on how these covariates were obtained and aggregated at the cell level are found in the report. Briefly,\n\nPhysiographic diversity on page 8 of the report - it’s a measure of landscape complexity: ruggedness source\nEcoregions could be very useful as they describe habitat features descriptions for ecoregions are here and the paper\n\nin the report they mention these can be used to account for spatial autocorrelation seems like in their model they use these as the intercept\n\nkarst - grid cells that intersect karst polygons get a 1, source is this paper karst indicator was included to capture the effect of caves\nriverlake variable is a 1 if the grid intersects rivers or shorelines\nFor detection-level covariates they extracted the data from here\n\nThese depend on the specific night and where not provided in the data release\n\n\nBased on the MYLU ecological model presented in the report, I included the following covariates as predictors for the initial state occupancy:\nWith state vector,\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\]\nthe probability of occupancy for site \\(i\\), \\(\\psi_i\\) is set as:\n\\[\n\\begin{align*}\nlogit(\\psi_i) = \\beta_0 + \\beta_1 \\cdot \\text{Elevation} + \\beta_2 \\cdot \\text{Elevation}^2 +\n\\beta_3 \\cdot \\text{Temp} + \\beta_4 \\cdot \\text{Temp}^2 + \\\\\n\\beta_5 \\cdot \\text{Physiographic diversity} +\n\\beta_6 \\cdot \\text{Precipitation} + \\\\\n\\beta_7 \\cdot \\text{Percent Forest} + \\beta_8 \\cdot \\text{Percent Wetlands}\n\\end{align*}\n\\]\nWhat we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)\n\\[\nlogit(r_i) = \\beta_0 + \\beta_1 \\cdot \\text{karst} + \\beta_2 \\cdot \\text{Percent Forest} +\n                \\beta_3 \\cdot \\text{Physiographic diversity}\n\\] For both parameters, I included the ecoregion with the intercept, so we have region-specific intercepts"
+  },
+  {
+    "objectID": "alternatives.html",
+    "href": "alternatives.html",
+    "title": "Management Strategies - Alternatives",
+    "section": "",
+    "text": "Chemical and mechanical treatment of known hibernaculums\n\n(e.g., Chitosan applied to bats, UV, PEG - apply to surface)\nTreatable caves: Azure, Mystery, Little Ice\n\nMaintain optimal microhabitat in hibernacula\nApply probiotics on bats in the hibernaculum\nApply probiotics on ats in the bat houses and in the landscape\n\n\n\n\n\nImprove quality of water sources near roosts\n\n(e.g., increase access, structural integrity of stock tanks, bat friendly, availability of water for entire season)\n\nRelease pheromones for insect lures to provide efficient foraging opportunities\nInsect lures before fall swarming to provide efficient foraging opportunities\nInsect lures during spring to provide efficient foraging opportunities\nIncrease water availability near hibernacula to prevent distress from WNS induced dehydration\nIncrease foraging opportunities through habitat management near hibernacula to prevent distress from WNS induced dehydration\nVaccinate bats in hibernacula\nVaccinate bats in bat houses and landscape\n\n\n\n\n\nMinimize research capture of bats during late summer and fall to reduce interstate and intrastate transmission\nRestrict human access to bat caves"
+  },
+  {
+    "objectID": "alternatives.html#maintain-health-of-riparian-forests",
+    "href": "alternatives.html#maintain-health-of-riparian-forests",
+    "title": "Management Strategies - Alternatives",
+    "section": "Maintain health of riparian forests",
+    "text": "Maintain health of riparian forests\n\nIncrease age and stand diversity\nRemove invasive like Russian olives, Tamarisk\nIncrease recruitment of cottonwood (excellent roost trees) trees by allowing flooding, promoting natural and established artificial dams\nPromote regeneration of riparian forests by fencing\nPromote regeneration of riparian forests by livestock management"
+  },
+  {
+    "objectID": "alternatives.html#water-sources",
+    "href": "alternatives.html#water-sources",
+    "title": "Management Strategies - Alternatives",
+    "section": "Water sources",
+    "text": "Water sources\n\nProvide consistent water sources during dry season in known dry areas through following actions based on location:\n\nIncrease stock reservoirs\nPromote beaver dams through relocation\nBat friendly stock tanks\nRetrofit wildlife friendly bat ramps in stock tanks"
+  },
+  {
+    "objectID": "alternatives.html#increase-forest-diversity",
+    "href": "alternatives.html#increase-forest-diversity",
+    "title": "Management Strategies - Alternatives",
+    "section": "Increase forest diversity",
+    "text": "Increase forest diversity\n\nMaintain snags> 20 inches in diameter\nRestrict logging between May-July to prevent maternity roosts disturbance\nEncourage stand diversity (age and habitat type) by following ways:\nEncourage young seral stages in public lands\nEncourage young seral stages in private lands (family forest program USDA)\nDesign projects to promote large trees and old growth forests\nEncourage forest thinning and understory removal by promoting multiple benefits (prevent fire fuel, insect outbreaks etc) - Restore native habitat in burnt forested regions within a reasonable timeframe"
+  },
+  {
+    "objectID": "alternatives.html#talus-and-rocky-outcrop-management",
+    "href": "alternatives.html#talus-and-rocky-outcrop-management",
+    "title": "Management Strategies - Alternatives",
+    "section": "Talus and rocky outcrop management",
+    "text": "Talus and rocky outcrop management\n\nPrevent destruction of talus and rocky-outcrop from anthropogenic development"
+  },
+  {
+    "objectID": "alternatives.html#protection-of-aggregation-of-bats-in-maternity-season",
+    "href": "alternatives.html#protection-of-aggregation-of-bats-in-maternity-season",
+    "title": "Management Strategies - Alternatives",
+    "section": "Protection of aggregation of bats in maternity season",
+    "text": "Protection of aggregation of bats in maternity season\n\nInsect lures before fall swarming to provide efficient foraging opportunities\nInsect lures during spring to provide efficient foraging opportunities\nMicroclimate controlled bat boxes available in spring\nChange project timing around maternity colonies to prevent disturbance\nOutreach against maternity colony destructions\n\nFunding program for rehousing maternity colonies (building bat boxes etc)\nEncourage Montana Wildlife Control operators to take NWCOA bat standard certification\n\nMaintain and upkeep known maternity roosts (unused buildings/mines etc)\nOutreach to MDT against destruction of maternity colony under bridges\n\nState, federal, and tribal governments should use no net loss approach for agency buildings by putting alternate roosts"
+  },
+  {
+    "objectID": "alternatives.html#citizen-related",
+    "href": "alternatives.html#citizen-related",
+    "title": "Management Strategies - Alternatives",
+    "section": "Citizen related",
+    "text": "Citizen related\n\nActive provisions of alternative roosting sites in important areas through following ways:\n\nMicroclimate controlled bat boxes\nLarger bat boxes to allow for a range of temperature\nGuide citizens about location and type of the bat boxes\n\nMaintain and create (when needed) bat access in caves and mines through structural reinforcement"
+  },
+  {
+    "objectID": "toymodel.html#where-we-are",
+    "href": "toymodel.html#where-we-are",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Where we are:",
+    "text": "Where we are:\n\nThe current approach for NABat data has been focused on species-specific occupancy models\n\nOur focus is not only on occupancy, but also levels of activity\nIncorporating Pd effects\nIncluding environmental change over time\n\nConsidering Pd susceptible species to work with levels of activity and not just occupancy\n\nworkaround for species identifiability issues\n\nBuilding a predictive model that incorporates bat and Pd dynamics over time\n\nThe effects of WNS/Pd can show up in decreases of bat activity\nBuilding a multistate model based on activity levels\n\nThis model will help us understand how potential management actions will have an effect on bat populations\nAs we evaluate objectives and tradeoffs for different management actions, we want to account for Pd spread over time\n\nA dynamic model is important when the environment and disease transmission are changing"
+  },
+  {
+    "objectID": "toymodel.html#model-description-cont.",
+    "href": "toymodel.html#model-description-cont.",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Model description cont.",
+    "text": "Model description cont.\nWe consider a simple dynamic model with potential occupancy states for each site \\(i\\): unoccupied, few bats, many bats. The probability of each site \\(i\\) being in one of those occupancy states at time \\(t\\) is given by a combination of the state of the site in the last year \\(t-1\\) and some environmental covariates.\nWith \\(z_i,t\\) being the state of site \\(i\\) at time \\(t\\), drawn from a multinomial distribution with a vector of probabilities for each state. Given the dependency on the state of the previous year, we define the state of sites in the first year separately as:\n\\[\nz_{i,1} \\sim \\text{Categorical}(\\Omega_i)\n\\] The initial state vector (\\(\\Omega_i\\)) gives the probability of a site \\(i\\) being in one of the three states: unoccupied (coded as 1), few bats (coded as 2), many bats (coded at 3), and is a combination of the probability of a site being occupied (\\(\\psi\\)) and the probability that an occupied site is occupied by many bats (\\(r\\)).\n\\[\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\] For us to relate these two probabilities (\\(\\psi\\) and \\(r\\)) to covariates, we use a logit link as follows:\n\\[\n\\text{logit}(\\psi) = \\beta_0 + \\beta_1 ForestCover\n\\\\\n\\text{logit}(r) = \\alpha_0 + \\alpha_1 CaveDensity\n\\]\nIn this simple example, we have only added one covariate to each probability. Therefore, we establish that the probability of a site being occupied by bats in the first year is a function of percent forest cover, and the probability that those occupied sites are occupied by many bats is a function of cave density.\nThe state of each site \\(i\\) in the following years (\\(t = 2 \\dots T\\)) is given by:\n\\[\nz_{i,t}|z_{i,t-1} \\sim Categorical(\\Phi_{z{(t-1)}, z{(t)}, i, t})\n\\] where the transition matrix (\\(\\Phi\\)) determines the probabilities of a site going from one state to another, or remaining in the same state, depending on covariates and the state at time \\(t-1\\). We have parameterized the transition matrix in terms of colonization, persistence, growth, and decline:\n\\[\n\\Phi_{z{(t-1)}, z{(t)}, i,t} =  \\begin{bmatrix}\n                                1-\\gamma & \\gamma & 0 \\\\\n                                1-\\phi_1 & \\phi_1(1-G) &  \\phi_1G\\\\\n                                1-\\phi_2 & \\phi_2D & \\phi_2(1 - D)\n                                \\end{bmatrix}_{i,t}\n\\] Where \\(\\gamma\\) parameters are state specific. This means \\(\\gamma\\) is the probability of an empty site at time \\(t-1\\) being colonized by few bats at time \\(t\\). We assume empty sites cannot be colonized by many bats in one time step. Persistence (\\(\\phi\\)) describes the probability of a site staying in the same state from one year to another. Growth and decline probabilities are shown by \\(G\\) and \\(D\\).\nFor us to relate the rates in the transition matrix to covariates and management actions, we use a logit-link."
+  },
+  {
+    "objectID": "toymodel.html#colonization-persistence-growth-and-decline",
+    "href": "toymodel.html#colonization-persistence-growth-and-decline",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Colonization, persistence, growth, and decline",
+    "text": "Colonization, persistence, growth, and decline\nColonization\nWe define colonization as the process of going from no bats (unoccupied site) to having few bats (\\(\\gamma\\)) in the next year. For simplicity, in this simulation we assume that the only factor influencing colonization is forest cover.\n\\[\n\\text{logit}(\\gamma) = b_0 + b_1Forest\n\\]\nPersistence\nPersistence is the probability that an occupied site continues to be occupied the following year. In our model, the probability that a site occupied with few bats continues to be occupied the next year is given by \\(\\phi_1\\). And the probability that such a site continues to be occupied, but also sees a growth (\\(G\\)) in the bat population is given by \\(\\phi_1 G\\).\nPersistence will be influenced by presence of Pd or WNS, but also by maintenance of forest cover and other environmental variables. For simplicity we only include forest cover and Pd.\n\\[\n\\text{logit}(\\phi) = a_0 + a_1Forest - a_2Pd\n\\] #### Growth and decline\nWe think of variables directly affecting population growth as those related to improved winter survival and recruitment, such as access to water and supplemental feeding.\n\\[\n\\text{logit}(G) = m_0 + m_1Water + m_2Feeding\n\\] In the case of declines, we can associate these to disturbances and disease:\n\\[\n\\text{logit}(D) = n_0 + n_1Disturb + n_2Pd\n\\]\nTransition matrix\nJust as a reminder:\n\\[\n\\Phi_{z{(t-1)}, z{(t)}, i,t} =  \\begin{bmatrix}\n                                1-\\gamma & \\gamma & 0 \\\\\n                                1-\\phi_1 & \\phi_1(1-G) &  \\phi_1G\\\\\n                                1-\\phi_2 & \\phi_2D & \\phi_2(1 - D)\n                                \\end{bmatrix}_{i,t}\n\\]"
+  },
+  {
+    "objectID": "toymodel.html#setting-up-simulation",
+    "href": "toymodel.html#setting-up-simulation",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Setting up simulation",
+    "text": "Setting up simulation\nWe start by generating a grid of 100 sites, and simulating covariates for each of the grids.\n\nForest + CavesPd + DisturbOthers"
+  },
+  {
+    "objectID": "toymodel.html#initial-state-t1",
+    "href": "toymodel.html#initial-state-t1",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Initial state (\\(t=1\\))",
+    "text": "Initial state (\\(t=1\\))\nWe estimate first year occupancy as a function of forest cover and cave density:\n\n\\(t=1\\) occupancyEquations\n\n\n\n\n\n\n\nThis draw shows that 35 sites are unoccupied, 15 have a few bats, and 50 have many bats in the first year (\\(t=1\\)).\n\n\nInitial state for each site given by the probability of a site being occupied, and if occupied having many bats: \\[\nz_{i,1} \\sim \\text{Categorical}(\\Omega_i)\n\\\\\n\\Omega_i = [1-\\psi \\quad \\psi(1-r) \\quad \\psi r]_i\n\\]\nThese probabilities related to the forest cover and cave covariates\n\\[\n\\text{logit}(\\psi) = \\beta_0 + \\beta_1 ForestCover\n\\\\\n\\text{logit}(r) = \\alpha_0 + \\alpha_1 CaveDensity\n\\]"
+  },
+  {
+    "objectID": "toymodel.html#years-t2dots-t",
+    "href": "toymodel.html#years-t2dots-t",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Years \\(t=2\\dots T\\)",
+    "text": "Years \\(t=2\\dots T\\)\nGenerating transition probabilities\n\nMatrixColonizationPersistenceGrowthDecline\n\n\n\\[\n\\Phi_{z{(t-1)}, z{(t)}, i} =  \\begin{bmatrix}\n                                1-\\gamma & \\gamma & 0 \\\\\n                                1-\\phi_1 & \\phi_1(1-G) &  \\phi_1G\\\\\n                                1-\\phi_2 & \\phi_2D & \\phi_2(1 - D)\n                                \\end{bmatrix}_{i}\n\\]\n\n\n\n\n\n\n# Get gamma\n\nbset <- c(b0 = 0.2, # intercept\n          b1 = 1.2 # effect of forest\n          )\n\nlogitgamma <- bset[1] + bset[2]*simdf$forest\n\n# Gamma as the probability of an unoccupied site to become occupied\ngammaparam <- inv_logit(logitgamma)\nhist(gammaparam)\n\n\n\n\n\n\nFor simplicity in this toy model, we are setting persistence for few bats and many bats the same.\n\n# Going to persistence \n# set coefficients\n# For now and simplicity, we make persistence the same for few bats and many bats.\naset1 <- c(a0 = 0.1, # intercept\n           a1 = 0.8, # forest\n           a2 = -0.5 # Pd\n           )\n\naset2 <- c(a0 = 0.1, # intercept\n           a1 = 0.8, # forest\n           a2 = -0.5 # Pd\n           )\n\nlogitphi <- function(aset, forest, pd){\n  logitfi <- aset[1] + aset[2]*forest + aset[3]*pd\n  phi <- inv_logit(logitfi)\n  return(phi)\n}\n\nphi1 <- logitphi(aset1, simdf$forest, simdf$Pd)\nphi2 <- logitphi(aset2, simdf$forest, simdf$Pd)\n\n\nhist(phi1)\n\n\n\nhist(phi2)\n\n\n\n\n\n\n\n# Growth \nmset <- c(m0 = 0.1, # intercept\n           m1 = 0.2, # water\n           m2 = 0.3 # feeding associated to insect lures\n           )\n\n\nlogitgrowth <- mset[1] + mset[2]*simdf$water + mset[3]*simdf$feeding\nG <- inv_logit(logitgrowth)\nhist(G)\n\n\n\n\n\n\n\n# Decline\nnset <- c(n0 = 0.1, # intercept\n           n1 = 0.4, # Disturbance\n           n2 = 0.3 # Pd\n           )\n\nlogitdecline <- nset[1] + nset[2]*simdf$disturb + nset[3]*simdf$Pd\nD <- inv_logit(logitdecline)\nhist(D)"
+  },
+  {
+    "objectID": "toymodel.html#years-t2dots-t-cont.",
+    "href": "toymodel.html#years-t2dots-t-cont.",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Years \\(t=2\\dots T\\) cont.",
+    "text": "Years \\(t=2\\dots T\\) cont."
+  },
+  {
+    "objectID": "toymodel.html#trend",
+    "href": "toymodel.html#trend",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Trend",
+    "text": "Trend"
+  },
+  {
+    "objectID": "toymodel.html#dynamic-pd",
+    "href": "toymodel.html#dynamic-pd",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Dynamic Pd",
+    "text": "Dynamic Pd\n\n\nTransition matrix is the same across years, but different for each site:\n\\[\n\\Phi_{z{(t-1)}, z{(t)}, i} =  \\begin{bmatrix}\n                                1-\\gamma & \\gamma & 0 \\\\\n                                1-\\phi_1 & \\phi_1(1-G) &  \\phi_1G\\\\\n                                1-\\phi_2 & \\phi_2D & \\phi_2(1 - D)\n                                \\end{bmatrix}_{i}\n\\]"
+  },
+  {
+    "objectID": "toymodel.html#dynamic-pd-cont.",
+    "href": "toymodel.html#dynamic-pd-cont.",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Dynamic Pd cont.",
+    "text": "Dynamic Pd cont.\n\nPd SpreadPhi & DStatic Phi & DBats OccStatic Pd"
+  },
+  {
+    "objectID": "toymodel.html#trend-comparison",
+    "href": "toymodel.html#trend-comparison",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Trend Comparison",
+    "text": "Trend Comparison\n\nStatic PdDynamic Pd"
+  },
+  {
+    "objectID": "toymodel.html#nabat-model",
+    "href": "toymodel.html#nabat-model",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "NABat model",
+    "text": "NABat model\n\nInfoModelCaveats\n\n\n\nWe are using the covariates and occupancy predictions and trends developed by NABat.\nWith the associated report here.\n\nWe used the ecological model described in the NABat report to calculate grid-cell level occupancy following the ecological model used for MYLU (pg 100 of the report), and coefficients estimated from Figure C1 (pg 195).\n\n\n\n\nThe occupancy of a grid \\(i\\) is given by\n\\[\nz_i \\sim \\text{Bernoulli}(\\psi_i)\n\\]\nwhere the probability of MYLU occurring at site \\(i\\) (\\(\\psi_i\\)) is modeled as a function of the specific grid-cell covariates using a logit link:\n\\[\nlogit(\\psi_i) = \\beta_0 + \\beta_1(elevation) + \\beta_2({elevation}^2) + \\beta_3(temp) + \\beta_4({temp}^2) + \\beta_5(physio\\_div) + \\beta_6(precip) + \\beta_7(p\\_forest) + \\beta_8(p\\_wetlands)\n\\]\n\n\n\nThere are two more covariates: ‘karst’ and ‘distance to mines’, but the appendix says these are only for the east, so I didn’t include here.\nThe intercept should include ecoregion data, which is not included here.\nI couldn’t find information on winter-to-summer connectivity, thus did not include here."
+  },
+  {
+    "objectID": "toymodel.html#coefficients",
+    "href": "toymodel.html#coefficients",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Coefficients",
+    "text": "Coefficients\n\nOriginalEstimate from image"
+  },
+  {
+    "objectID": "toymodel.html#quick-predictions",
+    "href": "toymodel.html#quick-predictions",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "Quick Predictions",
+    "text": "Quick Predictions\n\nSimulationOriginal NABatDiscrepancies\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTo simulate our prediction we only used mean values for coefficients from the image, did not include the standard errors.\nIntercepts and winter-to-summer connectivity are not included because I couldn’t find data.\nWhen we showed this to folks in Montana, they mentioned that predictions were made with data pre 2020\n\nNew data has not been submitted to NABat\n\nAt this time, we have the call data for MT for years 2020-2021"
+  },
+  {
+    "objectID": "toymodel.html#whats-next",
+    "href": "toymodel.html#whats-next",
+    "title": "Dynamic Multistate Conditional Model Simulation",
+    "section": "What’s next?",
+    "text": "What’s next?\n\nUse Montana-specific data to parameterize our model\nDetermine covariates to include in the model\n\nThere are additional covariates necessary for management\n\nLink management strategies to covariates\n\nStill sorting through strategies and how to include them\n\nSetting up model to incorporate change in Pd and WNS over time\n\nDynamic Multistate Conditional model\nAlso for treatment or management that is year-specific\n\nLink this model to monitoring data for yearly updates\nBuild a dynamic table of treatments for user interaction\n\nfilter through potential treatments according to objectives and location\n\nCreate a self-guided SDM process that is available to any user\n\noutcomes are used for filtering table of treatments\noutcomes and selected treatments for use in a toy model\nguide management strategies"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "montanaBats: decision analysis project",
+    "section": "",
+    "text": "This site has been developed to organize information regarding the management of bats in the state of Montana as a response to the effects of White Nose Syndrome.\n\nAny questions about this site or code please contact Javi Rudolph: frudolph at usgs dot gov"
   },
   {
     "objectID": "jurisdictions.html",
@@ -88,41 +319,27 @@
     "href": "expert_elicitation.html#training-question",
     "title": "Expert Elicitation",
     "section": "Training Question",
-    "text": "Training Question\nWhat is the average size of the little brown bat (Myotis lucifugus)? If you were to measure 100 adult bats, tip-to- base of tail, at a site in the center of their range, what would the average length be in millimeters?\n\nPlot 1\n\nPlot of individual responses\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nWarning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.\nℹ Please use the `linewidth` argument instead.\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. The vertical dashed line indicates the true answer based on the literature. At the bottom of the figure, the black dot represents the overall mean (57.302) for the responses, and the grey bar shows the 95% confidence interval (42.25, 72.525)."
+    "text": "Training Question\nWhat is the average size of the little brown bat (Myotis lucifugus)? If you were to measure 100 adult bats, tip-to- base of tail, at a site in the center of their range, what would the average length be in millimeters?\n\nPlot 1\n\nPlot of individual responses\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nWarning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.\nℹ Please use the `linewidth` argument instead.\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. The vertical dashed line indicates the true answer based on the literature. At the bottom of the figure, the black dot represents the overall mean (57.217) for the responses, and the grey bar shows the 95% confidence interval (42.161, 72.482)."
   },
   {
     "objectID": "expert_elicitation.html#question-1",
     "href": "expert_elicitation.html#question-1",
     "title": "Expert Elicitation",
     "section": "Question 1",
-    "text": "Question 1\nConsider the Northeast (NE) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.786) for the responses, and the grey bar shows the 95% confidence interval (0.457, 0.94)."
+    "text": "Question 1\nConsider the Northeast (NE) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.788) for the responses, and the grey bar shows the 95% confidence interval (0.451, 0.94)."
   },
   {
     "objectID": "expert_elicitation.html#question-2",
     "href": "expert_elicitation.html#question-2",
     "title": "Expert Elicitation",
     "section": "Question 2",
-    "text": "Question 2\nConsider the South (S) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.758) for the responses, and the grey bar shows the 95% confidence interval (0.425, 0.929)."
+    "text": "Question 2\nConsider the South (S) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.758) for the responses, and the grey bar shows the 95% confidence interval (0.426, 0.928)."
   },
   {
     "objectID": "expert_elicitation.html#question-3",
     "href": "expert_elicitation.html#question-3",
     "title": "Expert Elicitation",
     "section": "Question 3",
-    "text": "Question 3\nConsider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.717) for the responses, and the grey bar shows the 95% confidence interval (0.379, 0.924)."
-  },
-  {
-    "objectID": "estimation.html#model-comparison",
-    "href": "estimation.html#model-comparison",
-    "title": "Estimation",
-    "section": "Model comparison",
-    "text": "Model comparison\nEvaluating the three models based on general metrics like BIC, etc."
-  },
-  {
-    "objectID": "estimation.html#covariates-at-the-grid-level",
-    "href": "estimation.html#covariates-at-the-grid-level",
-    "title": "Estimation",
-    "section": "Covariates at the grid level",
-    "text": "Covariates at the grid level\nPlot with the estimates and error bars for each of the variables on each of the parameters to see how they compare across the two models that include them."
+    "text": "Question 3\nConsider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.717) for the responses, and the grey bar shows the 95% confidence interval (0.36, 0.926)."
   }
 ]
