@@ -70,7 +70,6 @@ states_col <- brewer_pal(palette = "BuPu")(3)
 For now, these parameters are not informed by the data model, they are just to build the structure of the simulation. We set the parameters $psi$ and $r$ to generate the occupancy state in the first year for each grid cell. 
 
 ```{r set_params}
-#| code-fold: false
 
 ## CELL LEVEL --------
 ncells <- length(unique(mt_covariates$GRTS_ID))

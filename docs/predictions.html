@@ -285,6 +285,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 class="anchored" data-anchor-id="parameters">Parameters</h2>
 <p>For now, these parameters are not informed by the data model, they are just to build the structure of the simulation. We set the parameters <span class="math inline">\(psi\)</span> and <span class="math inline">\(r\)</span> to generate the occupancy state in the first year for each grid cell.</p>
 <div class="cell">
+<details>
+<summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## CELL LEVEL --------</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>ncells <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(mt_covariates<span class="sc">$</span>GRTS_ID))</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>nregions <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(mt_covariates<span class="sc">$</span>eco3_name))</span>
@@ -329,6 +331,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>psi <span class="ot">&lt;-</span> scaled_covariates<span class="sc">$</span>psi</span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> scaled_covariates<span class="sc">$</span>r</span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>Omega <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">-</span>psi, psi<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>r), psi<span class="sc">*</span>r), <span class="at">ncol =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
 <section id="y1-predictions" class="level2 page-columns page-full">
