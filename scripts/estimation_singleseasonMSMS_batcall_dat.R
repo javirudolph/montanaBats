@@ -357,6 +357,7 @@ out_null_msms <- jags(batdata, inits, params, "jags_txt/null_msms.txt", n.adapt 
              n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 # par(mfrow = c(3,3))  # ~~~ no longer needed
 # traceplot(out_null_msms)
+saveRDS(out_null_msms, file = "modelouts/out_null_msms.RDS")
 print(out_null_msms, 3)
 
 diagPlot(out_null_msms)
@@ -507,6 +508,7 @@ out_M1_msms <- jags(batdata, inits, params, "jags_txt/M1_msms.txt", n.adapt = na
                       n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 # par(mfrow = c(3,3))  # ~~~ no longer needed
 # traceplot(out_M1_msms)
+saveRDS(out_M1_msms, file = "modelouts/out_M1_msms.RDS")
 print(out_M1_msms, 3)
 
 diagPlot(out_M1_msms)
@@ -732,31 +734,11 @@ out_M2_msms <- jags(batdata, inits, params, "jags_txt/M2_msms.txt", n.adapt = na
                     n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel = TRUE)
 # par(mfrow = c(3,3))  # ~~~ no longer needed
 # traceplot(out_M2_msms)
+saveRDS(out_M2_msms, file = "modelouts/out_M2_msms.RDS")
 print(out_M2_msms, 3)
 
 diagPlot(out_M2_msms)
 
-
-### To do on the next steps:
-#1. Create a dataframe with the output of these models to compare
-# 1.b I want the model algebra in a table together so that I can see exactly what I was comparing
-# Which parameters are the ones we are interested in keeping track of right now?
-# Because we are using the multiscale component to get a better estimation of the effects of
-# environmental covariates by using the site specific covariates, but we are not truly interested in the site
-# since the effects and management would probably take place at the cell level anyways
-
-# I personally want to see this model comparison because it doesn't seem that by incorporating these
-# the multiscale and such we get such differences
-# Paper number 1 is the model comparison and use of these models to generate predictions on alternatives
-# for the management
-
-# Paper number 2 is the dynamic model. Again, we can do the null and one that incorporates covariates
-# set up the structure for future years of data where we can estimate this correctly. 
-# the importance of the dynamic component is that it would allow to incorporate real time pathogen info
-
-# clean this model and write the output on a table. 
-# Compare with the deviance
-# 
 
 
 
