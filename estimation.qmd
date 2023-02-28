@@ -119,10 +119,6 @@ Our primary objective in fitting these models was to derive estimates of the inf
 
 The estimated effects of these covariates on grid-level occupancy provide valuable information for the decision-making processes related to bat conservation and management. For instance, if our analysis reveals that bat occupancy is positively associated with a specific type of region or temperature range, management actions can be taken to promote those factors in areas where bat populations are at risk.
 
-## Model comparison 
-
-Evaluating the three models based on general metrics like BIC, etc. 
-
 
 ## Covariates at the grid level 
 
