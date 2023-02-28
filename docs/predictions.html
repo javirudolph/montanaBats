@@ -246,7 +246,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content page-columns page-full" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
@@ -265,7 +265,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </header>
 
-<section id="overview" class="level1">
+<section id="overview" class="level1 page-columns page-full">
 <h1>Overview</h1>
 <p>We are generating predictions at the grid cell scale (10x10km) using a set of covariates from the latest NABat report. We are focusing on the state of Montana, and incorporating different jurisdictions that may or may not implement all management actions.</p>
 <div class="cell">
@@ -295,38 +295,43 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>alpha.lr <span class="ot">&lt;-</span> <span class="fu">runif</span>(nregions, <span class="dv">0</span>, <span class="dv">2</span>)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Coefficients</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>beta.lpsi <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">8</span>)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>beta.lr <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">3</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># beta.lpsi &lt;- rnorm(8)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># beta.lr &lt;- rnorm(3)</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># build the parameters psi and r based on covariates</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>mt_covariates <span class="sc">%&gt;%</span> </span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(GRTS_ID,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">elev =</span> <span class="fu">center_scale</span>(DEM_max),</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">forest =</span> <span class="fu">center_scale</span>(p_forest),</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">temp =</span> <span class="fu">center_scale</span>(mean_temp),</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">precip =</span> <span class="fu">center_scale</span>(precip),</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">wetlands =</span> <span class="fu">center_scale</span>(p_wetland),</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>            <span class="at">physdiv =</span> <span class="fu">center_scale</span>(physio_div),</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">karst =</span> karst,</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">region =</span> <span class="fu">as.numeric</span>(<span class="fu">as.factor</span>(eco3_name))) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lpsi =</span> alpha.lpsi[<span class="fu">as.numeric</span>(region)] <span class="sc">+</span> beta.lpsi[<span class="dv">1</span>] <span class="sc">*</span> elev <span class="sc">+</span> beta.lpsi[<span class="dv">2</span>] <span class="sc">*</span> elev<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>           beta.lpsi[<span class="dv">3</span>] <span class="sc">*</span> temp <span class="sc">+</span> beta.lpsi[<span class="dv">4</span>] <span class="sc">*</span> temp<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> beta.lpsi[<span class="dv">5</span>] <span class="sc">*</span> physdiv <span class="sc">+</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>           beta.lpsi[<span class="dv">6</span>] <span class="sc">*</span> precip <span class="sc">+</span> beta.lpsi[<span class="dv">7</span>] <span class="sc">*</span> forest <span class="sc">+</span> beta.lpsi[<span class="dv">8</span>] <span class="sc">*</span> wetlands,</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>         <span class="at">psi =</span> <span class="fu">exp</span>(lpsi)<span class="sc">/</span>(<span class="dv">1</span><span class="sc">+</span><span class="fu">exp</span>(lpsi)),</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>         <span class="at">lr =</span> alpha.lr[<span class="fu">as.numeric</span>(region)] <span class="sc">+</span> beta.lr[<span class="dv">1</span>] <span class="sc">*</span> karst <span class="sc">+</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>           beta.lr[<span class="dv">2</span>] <span class="sc">*</span> forest <span class="sc">+</span> beta.lr[<span class="dv">3</span>] <span class="sc">*</span> physdiv,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>         <span class="at">r =</span> <span class="fu">exp</span>(lr)<span class="sc">/</span>(<span class="dv">1</span><span class="sc">+</span><span class="fu">exp</span>(lr))) <span class="ot">-&gt;</span> scaled_covariates</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>psi <span class="ot">&lt;-</span> scaled_covariates<span class="sc">$</span>psi</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> scaled_covariates<span class="sc">$</span>r</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Omega <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">-</span>psi, psi<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>r), psi<span class="sc">*</span>r), <span class="at">ncol =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>model_coefficients_psi_r <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="at">file =</span> <span class="st">"modelouts/model_coefficients_psi_r.RDS"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(model <span class="sc">==</span> <span class="st">"M2"</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>beta.lpsi <span class="ot">&lt;-</span> model_coefficients_psi_r <span class="sc">%&gt;%</span> <span class="fu">filter</span>(coeff <span class="sc">==</span> <span class="st">"psi"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(means)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>beta.lr <span class="ot">&lt;-</span> model_coefficients_psi_r <span class="sc">%&gt;%</span> <span class="fu">filter</span>(coeff <span class="sc">==</span> <span class="st">"r"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(means)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># build the parameters psi and r based on covariates</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>mt_covariates <span class="sc">%&gt;%</span> </span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(GRTS_ID,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>            <span class="at">elev =</span> <span class="fu">center_scale</span>(DEM_max),</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">forest =</span> <span class="fu">center_scale</span>(p_forest),</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">temp =</span> <span class="fu">center_scale</span>(mean_temp),</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>            <span class="at">precip =</span> <span class="fu">center_scale</span>(precip),</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            <span class="at">wetlands =</span> <span class="fu">center_scale</span>(p_wetland),</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>            <span class="at">physdiv =</span> <span class="fu">center_scale</span>(physio_div),</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>            <span class="at">karst =</span> karst,</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            <span class="at">region =</span> <span class="fu">as.numeric</span>(<span class="fu">as.factor</span>(eco3_name))) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lpsi =</span> alpha.lpsi[<span class="fu">as.numeric</span>(region)] <span class="sc">+</span> beta.lpsi[<span class="dv">1</span>] <span class="sc">*</span> elev <span class="sc">+</span> beta.lpsi[<span class="dv">2</span>] <span class="sc">*</span> elev<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>           beta.lpsi[<span class="dv">3</span>] <span class="sc">*</span> temp <span class="sc">+</span> beta.lpsi[<span class="dv">4</span>] <span class="sc">*</span> temp<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> beta.lpsi[<span class="dv">5</span>] <span class="sc">*</span> physdiv <span class="sc">+</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>           beta.lpsi[<span class="dv">6</span>] <span class="sc">*</span> precip <span class="sc">+</span> beta.lpsi[<span class="dv">7</span>] <span class="sc">*</span> forest <span class="sc">+</span> beta.lpsi[<span class="dv">8</span>] <span class="sc">*</span> wetlands,</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>         <span class="at">psi =</span> <span class="fu">exp</span>(lpsi)<span class="sc">/</span>(<span class="dv">1</span><span class="sc">+</span><span class="fu">exp</span>(lpsi)),</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>         <span class="at">lr =</span> alpha.lr[<span class="fu">as.numeric</span>(region)] <span class="sc">+</span> beta.lr[<span class="dv">1</span>] <span class="sc">*</span> karst <span class="sc">+</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>           beta.lr[<span class="dv">2</span>] <span class="sc">*</span> forest <span class="sc">+</span> beta.lr[<span class="dv">3</span>] <span class="sc">*</span> physdiv,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>         <span class="at">r =</span> <span class="fu">exp</span>(lr)<span class="sc">/</span>(<span class="dv">1</span><span class="sc">+</span><span class="fu">exp</span>(lr))) <span class="ot">-&gt;</span> scaled_covariates</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>psi <span class="ot">&lt;-</span> scaled_covariates<span class="sc">$</span>psi</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> scaled_covariates<span class="sc">$</span>r</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>Omega <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">-</span>psi, psi<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>r), psi<span class="sc">*</span>r), <span class="at">ncol =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="y1-predictions" class="level2">
+<section id="y1-predictions" class="level2 page-columns page-full">
 <h2 class="anchored" data-anchor-id="y1-predictions">Y1 predictions</h2>
 <div class="cell">
 <details>
@@ -361,8 +366,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 <div class="cell">
-<details>
-<summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define transition probability matrix (Phi)</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># for now, just using the same matrix for all sites and all years</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming no changes and no management</span></span>
@@ -372,50 +375,50 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>phi1 <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>G <span class="ot">&lt;-</span> <span class="fl">0.01</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>phi2 <span class="ot">&lt;-</span> <span class="fl">0.3</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>Phi <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">-</span>gamma1, gamma1<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>gamma2), gamma1<span class="sc">*</span>gamma2,</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                <span class="dv">1</span><span class="sc">-</span>phi1, phi1<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>G), phi1<span class="sc">*</span>G,</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                <span class="dv">1</span><span class="sc">-</span>phi2, phi2<span class="sc">*</span>D, phi2<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>D)), <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># fill the next years</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(t <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>nyears){</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>ncells){</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    draw1 <span class="ot">&lt;-</span> <span class="fu">rmultinom</span>(<span class="dv">1</span>,<span class="dv">1</span>,Phi[z[i,t<span class="dv">-1</span>],])</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    z[i,t] <span class="ot">&lt;-</span> <span class="fu">which</span>(draw1 <span class="sc">==</span> <span class="dv">1</span>)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(z) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(grid_geometry, .) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(., <span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"V"</span>), <span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"yms"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">str_remove</span>(year, <span class="st">"V"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yms =</span> <span class="fu">as.factor</span>(yms)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yms_txt =</span> <span class="fu">case_when</span>(</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    yms <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"no bats"</span>,</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    yms <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"few bats"</span>,</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    yms <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="st">"many bats"</span></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yms =</span> <span class="fu">factor</span>(yms, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"no bats"</span>, <span class="st">"few bats"</span>, <span class="st">"many bats"</span>))) <span class="ot">-&gt;</span> yms_prediction</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="fl">0.5</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<div class="no-row-height column-margin column-container"><div class="">
+<p><span class="math display">\[
+\Phi_{z{(t-1)}, z{(t)}} =  \begin{bmatrix}
+                                1-\gamma_1 &amp; \gamma_2 &amp; 0 \\
+                                1-\phi_1 &amp; \phi_1(1-G) &amp;  \phi_1G\\
+                                1-\phi_2 &amp; \phi_2D &amp; \phi_2(1 - D)
+                                \end{bmatrix}
+\]</span></p>
+</div></div><div class="cell">
+<details>
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Phi <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">-</span>gamma1, gamma1<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>gamma2), gamma1<span class="sc">*</span>gamma2,</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                <span class="dv">1</span><span class="sc">-</span>phi1, phi1<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>G), phi1<span class="sc">*</span>G,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                <span class="dv">1</span><span class="sc">-</span>phi2, phi2<span class="sc">*</span>D, phi2<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>D)), <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># fill the next years</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(t <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>nyears){</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>ncells){</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    draw1 <span class="ot">&lt;-</span> <span class="fu">rmultinom</span>(<span class="dv">1</span>,<span class="dv">1</span>,Phi[z[i,t<span class="dv">-1</span>],])</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    z[i,t] <span class="ot">&lt;-</span> <span class="fu">which</span>(draw1 <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(z) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(grid_geometry, .) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(., <span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"V"</span>), <span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"yms"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">str_remove</span>(year, <span class="st">"V"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(yms = as.factor(yms)) %&gt;% </span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yms_txt =</span> <span class="fu">case_when</span>(</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    yms <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"no bats"</span>,</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    yms <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"few bats"</span>,</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    yms <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="st">"many bats"</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yms_txt =</span> <span class="fu">factor</span>(yms_txt, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"no bats"</span>, <span class="st">"few bats"</span>, <span class="st">"many bats"</span>))) <span class="ot">-&gt;</span> yms_prediction</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
 <section id="years-2t" class="level2">
 <h2 class="anchored" data-anchor-id="years-2t">Years 2…t</h2>
 <div class="cell">
-<details>
-<summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>plotlist_years <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>nyears){</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  plotlist_years[[i]] <span class="ot">&lt;-</span> yms_prediction <span class="sc">%&gt;%</span> </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(year <span class="sc">==</span> i) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> yms_txt)) <span class="sc">+</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> states_col) <span class="sc">+</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">fill =</span> <span class="st">""</span>, <span class="at">title =</span> <span class="fu">paste0</span>(<span class="st">"Y"</span>, i))</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+
 </div>
 <div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Y1</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Y2</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Y3</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Y4</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-5" role="tab" aria-controls="tabset-1-5" aria-selected="false">Y5</a></li></ul>
@@ -423,35 +426,35 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="predictions_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+<p><img src="predictions_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="predictions_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+<p><img src="predictions_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="predictions_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+<p><img src="predictions_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
 <div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="predictions_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+<p><img src="predictions_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>
 <div id="tabset-1-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-5-tab">
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="predictions_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+<p><img src="predictions_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </div>

@@ -82,10 +82,15 @@ alpha.lpsi <- runif(nregions, 0, 2)
 alpha.lr <- runif(nregions, 0, 2)
 
 # Coefficients
-beta.lpsi <- rnorm(8)
-beta.lr <- rnorm(3)
+# beta.lpsi <- rnorm(8)
+# beta.lr <- rnorm(3)
 
 
+model_coefficients_psi_r <- readRDS(file = "modelouts/model_coefficients_psi_r.RDS") %>% 
+  filter(model == "M2")
+
+beta.lpsi <- model_coefficients_psi_r %>% filter(coeff == "psi") %>% pull(means)
+beta.lr <- model_coefficients_psi_r %>% filter(coeff == "r") %>% pull(means)
 
 # build the parameters psi and r based on covariates
 mt_covariates %>% 
@@ -144,6 +149,8 @@ plotY1
 ```
 
 ```{r}
+#| code-fold: false
+
 # Define transition probability matrix (Phi)
 # for now, just using the same matrix for all sites and all years
 # Assuming no changes and no management
@@ -154,6 +161,21 @@ phi1 <- 0.5
 G <- 0.01
 phi2 <- 0.3
 D <- 0.5
+
+```
+
+:::{.column-margin}
+$$
+\Phi_{z{(t-1)}, z{(t)}} =  \begin{bmatrix}
+                                1-\gamma_1 & \gamma_2 & 0 \\
+                                1-\phi_1 & \phi_1(1-G) &  \phi_1G\\
+                                1-\phi_2 & \phi_2D & \phi_2(1 - D)
+                                \end{bmatrix}
+$$
+:::
+
+
+```{r}
 
 Phi <- matrix(c(1-gamma1, gamma1*(1-gamma2), gamma1*gamma2,
                 1-phi1, phi1*(1-G), phi1*G,
@@ -171,19 +193,20 @@ as.data.frame(z) %>%
   cbind(grid_geometry, .) %>% 
   pivot_longer(., cols = starts_with("V"), names_to = "year", values_to = "yms") %>% 
   mutate(year = str_remove(year, "V")) %>% 
-  mutate(yms = as.factor(yms)) %>% 
+  # mutate(yms = as.factor(yms)) %>% 
   mutate(yms_txt = case_when(
     yms == 1 ~ "no bats",
     yms == 2 ~ "few bats",
     yms == 3 ~ "many bats"
   )) %>% 
-  mutate(yms = factor(yms, levels = c("no bats", "few bats", "many bats"))) -> yms_prediction
+  mutate(yms_txt = factor(yms_txt, levels = c("no bats", "few bats", "many bats"))) -> yms_prediction
 ```
 
 
 ## Years 2...t
 
 ```{r}
+#| echo: false
 plotlist_years <- list()
 
 for(i in 1:nyears){

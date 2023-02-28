@@ -47,7 +47,8 @@ m2_betas_psi <- tibble(
 )
 
 
-betas_psi_df <- bind_rows(m1_betas_psi, m2_betas_psi)
+betas_psi_df <- bind_rows(m1_betas_psi, m2_betas_psi) %>% 
+  mutate(coeff = "psi")
 
 betas_psi_df %>% 
   ggplot(., aes(x = means, y = covar, color = model)) +
@@ -73,7 +74,8 @@ m2_betas_r <- tibble(
 )
 
 
-betas_r_df <- bind_rows(m1_betas_r, m2_betas_r)
+betas_r_df <- bind_rows(m1_betas_r, m2_betas_r) %>% 
+  mutate(coeff = "r")
 
 betas_r_df %>% 
   ggplot(., aes(x = means, y = covar, color = model)) +
@@ -84,7 +86,9 @@ betas_r_df %>%
 
 plot_grid(psi_fig + theme(legend.position = "none"), r_fig, rel_widths = c(0.85, 1))
 
+model_coefficients_psi_r <- bind_rows(betas_psi_df, betas_r_df)
 
+saveRDS(model_coefficients_psi_r, file = "modelouts/model_coefficients_psi_r.RDS")
 
 # Make Montana map with medians for bat calls for each of the cells sampled
 # compare that map to a prediction using the model for all of montana
