@@ -179,7 +179,11 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#m1" id="toc-m1" class="nav-link" data-scroll-target="#m1">M1</a></li>
   <li><a href="#m2" id="toc-m2" class="nav-link" data-scroll-target="#m2">M2</a></li>
   </ul></li>
-  <li><a href="#model-outcomes" id="toc-model-outcomes" class="nav-link" data-scroll-target="#model-outcomes">Model outcomes</a></li>
+  <li><a href="#model-outcomes" id="toc-model-outcomes" class="nav-link" data-scroll-target="#model-outcomes">Model outcomes</a>
+  <ul class="collapse">
+  <li><a href="#model-comparison" id="toc-model-comparison" class="nav-link" data-scroll-target="#model-comparison">Model comparison</a></li>
+  <li><a href="#covariates-at-the-grid-level" id="toc-covariates-at-the-grid-level" class="nav-link" data-scroll-target="#covariates-at-the-grid-level">Covariates at the grid level</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -284,8 +288,18 @@ logit(\theta) = \beta_0 + \beta_1 \cdot \text{SiteType} + \beta_2 \cdot \text{da
 </section>
 <section id="model-outcomes" class="level1">
 <h1>Model outcomes</h1>
+<p>Our primary objective in fitting these models was to derive estimates of the influence of various covariates on the occupancy state of grids. By using bat call data and incorporating environmental variables, we were able to identify the factors that influence bat occupancy across Montana and we can now use these to generate predictive models and incorporate management actions.</p>
+<p>The estimated effects of these covariates on grid-level occupancy provide valuable information for the decision-making processes related to bat conservation and management. For instance, if our analysis reveals that bat occupancy is positively associated with a specific type of region or temperature range, management actions can be taken to promote those factors in areas where bat populations are at risk.</p>
+<section id="model-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="model-comparison">Model comparison</h2>
+<p>Evaluating the three models based on general metrics like BIC, etc.</p>
+</section>
+<section id="covariates-at-the-grid-level" class="level2">
+<h2 class="anchored" data-anchor-id="covariates-at-the-grid-level">Covariates at the grid level</h2>
+<p>Plot with the estimates and error bars for each of the variables on each of the parameters to see how they compare across the two models that include them.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

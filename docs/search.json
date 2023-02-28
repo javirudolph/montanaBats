@@ -110,5 +110,19 @@
     "title": "Expert Elicitation",
     "section": "Question 3",
     "text": "Question 3\nConsider the West (W) region of Montana, as was shown in the map. In a randomly selected 5 by 5 mile grid cell of suitable habitat occupied by Myotis lucifugus, you randomly select 100 naive bats (i.e., they have not yet been exposed to Pd), how many of them would you expect to eventually succumb to white nose syndrome?\n\n\n\n\nPlot 1\n\nPlot of individual responses\n\n\n\n\n\n\n\n\nPlot 2\n\n\n\n\n\n\n\nPlot of individual distributions and mean aggregated response\n\n\n\n\n\nEach expert’s response corresponds to a dashed colored line. The mean aggregate response is shown by the black curve. At the bottom of the figure, the black dot represents the median (0.717) for the responses, and the grey bar shows the 95% confidence interval (0.379, 0.924)."
+  },
+  {
+    "objectID": "estimation.html#model-comparison",
+    "href": "estimation.html#model-comparison",
+    "title": "Estimation",
+    "section": "Model comparison",
+    "text": "Model comparison\nEvaluating the three models based on general metrics like BIC, etc."
+  },
+  {
+    "objectID": "estimation.html#covariates-at-the-grid-level",
+    "href": "estimation.html#covariates-at-the-grid-level",
+    "title": "Estimation",
+    "section": "Covariates at the grid level",
+    "text": "Covariates at the grid level\nPlot with the estimates and error bars for each of the variables on each of the parameters to see how they compare across the two models that include them."
   }
 ]
