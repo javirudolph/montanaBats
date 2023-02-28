@@ -30,14 +30,14 @@ $$
 \Omega = [1-\psi \quad \psi(1-r) \quad \psi r]
 $$
 
-where $\psi$ is the probability that a grid cell is occupied by bats, and if occupied, $r$ is the probability that it will be occupied by many bats. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.  
+where $\psi$ is the probability that a grid cell is occupied by bats, and **if** occupied, $r$ is the probability that it will be occupied by *many bats*. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.  
 
 We incorporate the multi-scale component into this model by considering local availability as follows:
 
 $$
 a_{i,j} \sim \text{Categorical}[\Theta]
 $$
-The matrix $\Theta$ gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows: 
+The matrix $\Theta$ gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows, where each row in the matrix is the true state of the grid, and the columns represent the local availability for a site within the grid: 
 
 $$
 \Theta = \begin{bmatrix}
@@ -52,7 +52,7 @@ $$
 y_{i,j,k} \sim \text{Categorical}(detP)
 $$
 
-Where $detP$ is given by: 
+Where $detP$ is given by the matrix below. Each row is the true local availability for a site $j$, and the columns correspond to the observed state in each site during a survey: 
 
 
 $$
@@ -84,21 +84,21 @@ logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{E
 \end{align*}
 $$
 
-What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)
+What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity), thus the probability of a grid cell having *many bats* ($r$) is given by:
 
 $$
 logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} + 
                 \beta_3 \cdot \text{Physiographic diversity}
 $$
 
-both parameters have region-specific intercepts. 
+both parameters have region-specific intercepts.  
 
 
 ## M2 
 
 In this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.
 
-Then, for each site $j$ within a cell $i$, the probability for local availability depends on the site type, starting date, and duration. 
+Then, for each site $j$ within a cell $i$, the probability for local availability depends on the site type, starting date, and duration (number of nights recorded for a given site). 
 
 $$
 \Theta_{i,j} = \begin{bmatrix}
@@ -113,7 +113,20 @@ logit(\theta) = \beta_0 + \beta_1 \cdot \text{SiteType} + \beta_2 \cdot \text{da
                 \beta_3 \cdot \text{date}^2 + \beta_4 \cdot \text{duration}
 $$
 
+# Model outcomes 
 
+Our primary objective in fitting these models was to derive estimates of the influence of various covariates on the occupancy state of grids. By using bat call data and incorporating environmental variables, we were able to identify the factors that influence bat occupancy across Montana and we can now use these to generate predictive models and incorporate management actions.
+
+The estimated effects of these covariates on grid-level occupancy provide valuable information for the decision-making processes related to bat conservation and management. For instance, if our analysis reveals that bat occupancy is positively associated with a specific type of region or temperature range, management actions can be taken to promote those factors in areas where bat populations are at risk.
+
+## Model comparison 
+
+Evaluating the three models based on general metrics like BIC, etc. 
+
+
+## Covariates at the grid level 
+
+Plot with the estimates and error bars for each of the variables on each of the parameters to see how they compare across the two models that include them. 
 
 
 

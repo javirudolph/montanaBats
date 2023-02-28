@@ -179,6 +179,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#m1" id="toc-m1" class="nav-link" data-scroll-target="#m1">M1</a></li>
   <li><a href="#m2" id="toc-m2" class="nav-link" data-scroll-target="#m2">M2</a></li>
   </ul></li>
+  <li><a href="#model-outcomes" id="toc-model-outcomes" class="nav-link" data-scroll-target="#model-outcomes">Model outcomes</a></li>
   </ul>
 </nav>
     </div>
@@ -207,7 +208,7 @@ ul.task-list li input[type="checkbox"] {
 <p>Overall, our analysis using these multistate multiscale occupancy models has allowed us to gain a base understanding of the factors affecting bat occupancy in Montana, which we can use to generate base predictive models that incorporate different management strategies that support and protect bat populations in the state.</p>
 <section id="model-descriptions" class="level1">
 <h1>Model descriptions</h1>
-<p>We fitted three different models: a null model with no covariates to serve as a base comparison, a model with covariates affecting occupancy states only, and a third model with covariates affecting occupancy and detection. Mathematical descriptions for the three models are found below and the code used to fit these models is in the following <a href="https://github.com/javirudolph/montanaBats/blob/main/scripts/estimation_singleseasonMSMS_batcall_dat.R">script</a></p>
+<p>We fitted three different models: a null model with no covariates to serve as a base comparison, a model with covariates affecting occupancy states only, and a third model with covariates affecting occupancy and detection. Mathematical descriptions for the three models are found below and the code used to fit these models is in the following <a href="https://github.com/javirudolph/montanaBats/blob/main/scripts/estimation_singleseasonMSMS_batcall_dat.R">script</a>. Data is not provided but can be requested through the state of Montana library.</p>
 <section id="null-multi-state-multi-scale-model" class="level2">
 <h2 class="anchored" data-anchor-id="null-multi-state-multi-scale-model">Null multi-state multi-scale model</h2>
 <p>A grid cell <span class="math inline">\(i\)</span> is in one of the three states described (1 = no bats, 2 = few bats, 3 = many bats) given:</p>
@@ -217,11 +218,11 @@ z_i \sim \text{Categorical}(\Omega)
 <p><span class="math display">\[
 \Omega = [1-\psi \quad \psi(1-r) \quad \psi r]
 \]</span></p>
-<p>where <span class="math inline">\(\psi\)</span> is the probability that a grid cell is occupied by bats, and if occupied, <span class="math inline">\(r\)</span> is the probability that it will be occupied by many bats. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.</p>
+<p>where <span class="math inline">\(\psi\)</span> is the probability that a grid cell is occupied by bats, and <strong>if</strong> occupied, <span class="math inline">\(r\)</span> is the probability that it will be occupied by <em>many bats</em>. In this null model we assume that these probabilities are the same across all grid cells, with no influence of covariates.</p>
 <p>We incorporate the multi-scale component into this model by considering local availability as follows:</p>
 <p><span class="math display">\[
 a_{i,j} \sim \text{Categorical}[\Theta]
-\]</span> The matrix <span class="math inline">\(\Theta\)</span> gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows:</p>
+\]</span> The matrix <span class="math inline">\(\Theta\)</span> gives the probabilities of bats being locally available in each site given their occupancy at the grid cell level. The matrix of probabilities is described as follows, where each row in the matrix is the true state of the grid, and the columns represent the local availability for a site within the grid:</p>
 <p><span class="math display">\[
 \Theta = \begin{bmatrix}
          1 &amp; 0 &amp; 0 \\
@@ -232,7 +233,7 @@ a_{i,j} \sim \text{Categorical}[\Theta]
 <p><span class="math display">\[
 y_{i,j,k} \sim \text{Categorical}(detP)
 \]</span></p>
-<p>Where <span class="math inline">\(detP\)</span> is given by:</p>
+<p>Where <span class="math inline">\(detP\)</span> is given by the matrix below. Each row is the true local availability for a site <span class="math inline">\(j\)</span>, and the columns correspond to the observed state in each site during a survey:</p>
 <p><span class="math display">\[
 detP = \begin{bmatrix}
          1 &amp; 0 &amp; 0 \\
@@ -257,7 +258,7 @@ logit(\psi_i) = \beta_0 + \beta_1 \cdot \text{Elevation} + \beta_2 \cdot \text{E
 \beta_7 \cdot \text{Percent Forest} + \beta_8 \cdot \text{Percent Wetlands}
 \end{align*}
 \]</span></p>
-<p>What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity)</p>
+<p>What we think could influence whether there are only a few or many bats could be related to caves (karst), percent forest, and ruggedness (physiographic diversity), thus the probability of a grid cell having <em>many bats</em> (<span class="math inline">\(r\)</span>) is given by:</p>
 <p><span class="math display">\[
 logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent Forest} +
                 \beta_3 \cdot \text{Physiographic diversity}
@@ -267,7 +268,7 @@ logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent 
 <section id="m2" class="level2">
 <h2 class="anchored" data-anchor-id="m2">M2</h2>
 <p>In this third model, we build from M1, and now incorporate site level covariates which include the starting date for the sampling, the duration of sampling period for the site (number of nights), and the site type.</p>
-<p>Then, for each site <span class="math inline">\(j\)</span> within a cell <span class="math inline">\(i\)</span>, the probability for local availability depends on the site type, starting date, and duration.</p>
+<p>Then, for each site <span class="math inline">\(j\)</span> within a cell <span class="math inline">\(i\)</span>, the probability for local availability depends on the site type, starting date, and duration (number of nights recorded for a given site).</p>
 <p><span class="math display">\[
 \Theta_{i,j} = \begin{bmatrix}
          1 &amp; 0 &amp; 0 \\
@@ -279,9 +280,12 @@ logit(r_i) = \beta_0 + \beta_1 \cdot \text{karst} + \beta_2 \cdot \text{Percent 
 logit(\theta) = \beta_0 + \beta_1 \cdot \text{SiteType} + \beta_2 \cdot \text{date} +
                 \beta_3 \cdot \text{date}^2 + \beta_4 \cdot \text{duration}
 \]</span></p>
-
-
 </section>
+</section>
+<section id="model-outcomes" class="level1">
+<h1>Model outcomes</h1>
+
+
 </section>
 
 </main> <!-- /main -->
