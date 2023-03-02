@@ -77,8 +77,10 @@ nregions <- length(unique(mt_covariates$eco3_name))
 nyears <- 5
 
 # Giving intercepts for each ecoregion
-alpha.lpsi <- runif(nregions, 0, 2)
-alpha.lr <- runif(nregions, 0, 2)
+# Idaho batholith was not sampled in the data, so we don't have an estimate for it
+# We are changing those cells to Middle Rockies
+alpha.lpsi <- rep(0, nregions)
+alpha.lr <- rep(0, nregions)
 
 # Coefficients
 # beta.lpsi <- rnorm(8)
