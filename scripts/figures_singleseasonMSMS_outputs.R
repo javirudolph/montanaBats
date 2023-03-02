@@ -19,14 +19,46 @@ out_M2_msms <- readRDS(file = "modelouts/out_M2_msms.RDS")
 
 # Extract estimated values of psi and r for the three models and viz 
 
-# Need to figure out this ecoregion thing and how it is coded in the model
+# Regions, from lines 168-170 from the estimation script:
+# 1 = Northeast
+# 2 = Northwest
+# 3 = south
 
+# alphas for psi
 m1_alphas_psi <- tibble(
- region = c(),
+ region = c("NE", "NW", "S"),
  means = out_M1_msms$mean$alpha.lpsi,
  sds = out_M1_msms$sd$alpha.lpsi,
  model = "M1"
 )
+
+m2_alphas_psi <- tibble(
+  region = c("NE", "NW", "S"),
+  means = out_M2_msms$mean$alpha.lpsi,
+  sds = out_M2_msms$sd$alpha.lpsi,
+  model = "M2"
+)
+
+alphas_psi_df <- bind_rows(m1_alphas_psi, m2_alphas_psi) %>% 
+  mutate(coeff = "psi")
+
+# alphas for r
+m1_alphas_r <- tibble(
+  region = c("NE", "NW", "S"),
+  means = out_M1_msms$mean$alpha.lr,
+  sds = out_M1_msms$sd$alpha.lr,
+  model = "M1"
+)
+
+m2_alphas_r <- tibble(
+  region = c("NE", "NW", "S"),
+  means = out_M2_msms$mean$alpha.lr,
+  sds = out_M2_msms$sd$alpha.lr,
+  model = "M2"
+)
+
+alphas_r_df <- bind_rows(m1_alphas_r, m2_alphas_r) %>% 
+  mutate(coeff = "r")
 
 
 # Betas for psi
