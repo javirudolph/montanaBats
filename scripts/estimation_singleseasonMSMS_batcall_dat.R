@@ -165,6 +165,13 @@ mt_covariates %>%
   rename(cell = GRTS_ID) %>% 
   mutate(region = as.numeric(factor(eco3_name))) -> cell_covs
 
+# need to look at the ecoregions
+
+mt_covariates %>% 
+  filter(GRTS_ID %in% cell_list) %>% 
+  ggplot() + geom_sf(aes(fill = eco3_name))
+# not sampled is the Idaho batholith, which is present in the full montana set
+
 # standardize variables
 summary(elev <- cell_covs$DEM_max)
 elev.scaled <- standardize(elev)
@@ -179,7 +186,14 @@ wetlands.scaled <- standardize(wetlands)
 summary(physdiv <- cell_covs$physio_div)
 physdiv.scaled <- standardize(physdiv)
 karst <- cell_covs$karst
-region <- cell_covs$region
+
+region <- cell_covs$eco3_name %>% 
+  as_factor() %>% 
+  as.numeric()
+
+regionID <- cell_covs$eco3_name
+
+cbind(region, regionID)
 
 
 # Models ----------------
