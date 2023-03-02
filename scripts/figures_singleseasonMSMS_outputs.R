@@ -19,17 +19,15 @@ out_M2_msms <- readRDS(file = "modelouts/out_M2_msms.RDS")
 
 # Extract estimated values of psi and r for the three models and viz 
 
+# Need to figure out this ecoregion thing and how it is coded in the model
 
+m1_alphas_psi <- tibble(
+ region = c(),
+ means = out_M1_msms$mean$alpha.lpsi,
+ sds = out_M1_msms$sd$alpha.lpsi,
+ model = "M1"
+)
 
-psi_and_r <- bind_rows(c("psi", out_null_msms$mean$psi, out_null_msms$sd$psi))
-
-
-
-c(out_null_msms$mean$psi, out_null_msms$sd$psi)
-
-# oops, didn't track these in the models
-c(out_M1_msms$mean$psi, out_M1_msms$sd$psi)
-c(out_M2_msms$mean$psi, out_M2_msms$sd$psi)
 
 # Betas for psi
 m1_betas_psi <- tibble(
