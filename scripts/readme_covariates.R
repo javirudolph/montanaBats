@@ -52,9 +52,26 @@ juris_list <- unique(mt_jurisdictions$jurisdiction)
 jusis_list_sub <- juris_list[c(5, 7, 10, 13, 17, 18, 20)]
 focus_jurisdictions <- mt_jurisdictions %>% filter(jurisdiction %in% jusis_list_sub)
 
-mt_covariates <- st_join(mt_covs_NAD83, focus_jurisdictions, largest = TRUE)
+mt_covariates_w_jurisdictions <- st_join(mt_covs_NAD83, focus_jurisdictions, largest = TRUE)
+
+# Now we are incorporating the three regions we used for the expert elicitation
+
+three_regions_raw <- st_read("datafiles/MT_three_regions_googleEarth.kml")
+
+# make sure coordinate reference systems match
+three_regions <- st_transform(three_regions_raw, crs = st_crs(mt_covariates))
+st_crs(three_regions)
+
+# join with the covariates dataframe to assign each grid cell to one of the three regions
+
+mt_covariates <- st_join(mt_covariates_w_jurisdictions, three_regions, largest = TRUE) %>% 
+  rename(region = Name) %>% 
+  select(-Description)
 
 # CHECKS
+# Three regions
+ggplot(data = mt_covariates) + geom_sf(aes(fill = region))
+
 # ecoregions
 
 ggplot(data = mt_covariates) + geom_sf(aes(fill = eco1_name))
@@ -75,4 +92,3 @@ ggplot(data = mt_covariates) + geom_sf(aes(fill = physio_div))
 ggplot(data = mt_covariates) + geom_sf(aes(fill = dist_mines))
 
 saveRDS(mt_covariates, file = "datafiles/mt_covariates.RDS")
-
