@@ -153,24 +153,21 @@ sitecovs %>%
 
 
 ## 1c. NABat covariates ------------------------
-mt_covariates <- read_sf("datafiles/nabat_covariates/NABat_grid_covariates/NABat_grid_covariates.shp") %>%
-  filter(., admin1 == "Montana")
+mt_covariates <- readRDS("datafiles/mt_covariates.RDS")
 
 mt_covariates %>% 
   filter(GRTS_ID %in% cell_list) %>% 
   select(GRTS_ID, karst, p_forest, p_wetland, mean_temp,
-         precip, DEM_max, physio_div, dist_mines, starts_with("eco")) %>% 
+         precip, DEM_max, physio_div, dist_mines, region) %>% 
   # arrange to make sure its same order of cells as obs data
   arrange(factor(GRTS_ID, levels = cell_list)) %>% 
   rename(cell = GRTS_ID) %>% 
-  mutate(region = as.numeric(factor(eco3_name))) -> cell_covs
+  mutate(region_num = as.numeric(factor(region))) -> cell_covs
 
-# need to look at the ecoregions
-
-mt_covariates %>% 
-  filter(GRTS_ID %in% cell_list) %>% 
-  ggplot() + geom_sf(aes(fill = eco3_name))
-# not sampled is the Idaho batholith, which is present in the full montana set
+# which region is which number?
+cell_covs %>% 
+  st_drop_geometry() %>% 
+  select(region, region_num) %>% distinct() %>% arrange(region_num)
 
 # standardize variables
 summary(elev <- cell_covs$DEM_max)
@@ -186,14 +183,7 @@ wetlands.scaled <- standardize(wetlands)
 summary(physdiv <- cell_covs$physio_div)
 physdiv.scaled <- standardize(physdiv)
 karst <- cell_covs$karst
-
-region <- cell_covs$eco3_name %>% 
-  as_factor() %>% 
-  as.numeric()
-
-regionID <- cell_covs$eco3_name
-
-cbind(region, regionID)
+region <- cell_covs$region_num
 
 
 # Models ----------------
@@ -405,7 +395,7 @@ model {
   
   # Priors for parameters in the linear models of psi and r
   # Region-specific intercepts
-  for (k in 1:6){
+  for (k in 1:3){
     alpha.lpsi[k] <- logit(mean.psi[k])
     mean.psi[k] ~ dunif(0, 1)
     alpha.lr[k] <- logit(mean.r[k])
@@ -585,7 +575,7 @@ model {
   
   # Priors for parameters in the linear models of psi and r
   # Region-specific intercepts
-  for (k in 1:6){
+  for (k in 1:3){
     alpha.lpsi[k] <- logit(mean.psi[k])
     mean.psi[k] ~ dunif(0, 1)
     alpha.lr[k] <- logit(mean.r[k])
@@ -741,7 +731,7 @@ params <- c("alpha.lpsi", "alpha.lr", "beta.lpsi", "beta.lr",
             "pDet", "n.occ")
 
 # MCMC settings
-na <- 1000 ; ni <- 10000 ; nt <- 5 ; nb <- 2000 ; nc <- 3
+na <- 2000 ; ni <- 25000 ; nt <- 10 ; nb <- 5000 ; nc <- 3
 
 # Call JAGS, check convergence and summarize posteriors
 out_M2_msms <- jags(batdata, inits, params, "jags_txt/M2_msms.txt", n.adapt = na,
