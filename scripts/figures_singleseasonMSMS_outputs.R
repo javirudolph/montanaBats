@@ -24,101 +24,80 @@ out_M2_msms <- readRDS(file = "modelouts/out_M2_msms.RDS")
 # 2 = Northwest
 # 3 = south
 
-# alphas for psi
-m1_alphas_psi <- tibble(
- region = c("NE", "NW", "S"),
- means = out_M1_msms$mean$alpha.lpsi,
- sds = out_M1_msms$sd$alpha.lpsi,
- model = "M1"
-)
 
-m2_alphas_psi <- tibble(
-  region = c("NE", "NW", "S"),
-  means = out_M2_msms$mean$alpha.lpsi,
-  sds = out_M2_msms$sd$alpha.lpsi,
-  model = "M2"
-)
-
-alphas_psi_df <- bind_rows(m1_alphas_psi, m2_alphas_psi) %>% 
-  mutate(coeff = "psi")
-
-# alphas for r
-m1_alphas_r <- tibble(
-  region = c("NE", "NW", "S"),
-  means = out_M1_msms$mean$alpha.lr,
-  sds = out_M1_msms$sd$alpha.lr,
-  model = "M1"
-)
-
-m2_alphas_r <- tibble(
-  region = c("NE", "NW", "S"),
-  means = out_M2_msms$mean$alpha.lr,
-  sds = out_M2_msms$sd$alpha.lr,
-  model = "M2"
-)
-
-alphas_r_df <- bind_rows(m1_alphas_r, m2_alphas_r) %>% 
-  mutate(coeff = "r")
+tibble(
+  type = "alpha",
+  covar = c("NE", "NW", "S"),
+  means_m1_psi = out_M1_msms$mean$alpha.lpsi,
+  sd_m1_psi = out_M1_msms$sd$alpha.lpsi,
+  means_m2_psi = out_M2_msms$mean$alpha.lpsi,
+  sd_m2_psi = out_M2_msms$sd$alpha.lpsi,
+  means_m1_r = out_M1_msms$mean$alpha.lr,
+  sds_m1_r = out_M1_msms$sd$alpha.lr,
+  means_m2_r = out_M2_msms$mean$alpha.lr,
+  sds_m2_r = out_M2_msms$sd$alpha.lr
+) %>% 
+  pivot_longer(-c(covar, type)) %>% 
+  mutate(model = paste(str_match(name, "m1|m2")),
+         param = paste(str_match(name, "psi|r")),
+         metric = paste(str_match(name, "mean|sd"))) %>% 
+  select(-name) -> alphas
 
 
-# Betas for psi
-m1_betas_psi <- tibble(
+tibble(
+  type = "beta",
   covar = c("elev", "elev_sqrd", "temp", "temp_sqrd", "physdiv", "precip", "forest", "wetlands"),
-  means = out_M1_msms$mean$beta.lpsi,
-  sds = out_M1_msms$sd$beta.lpsi,
-  model = "M1"
-  )
-
-m2_betas_psi <- tibble(
-  covar = c("elev", "elev_sqrd", "temp", "temp_sqrd", "physdiv", "precip", "forest", "wetlands"),
-  means = out_M2_msms$mean$beta.lpsi,
-  sds = out_M2_msms$sd$beta.lpsi,
-  model = "M2"
-)
-
-
-betas_psi_df <- bind_rows(m1_betas_psi, m2_betas_psi) %>% 
-  mutate(coeff = "psi")
-
-betas_psi_df %>% 
-  ggplot(., aes(x = means, y = covar, color = model)) +
-  geom_point() +
-  geom_errorbarh(aes(xmin = means - sds, xmax = means + sds)) +
-  theme_bw() -> psi_fig
+  means_m1_psi = out_M1_msms$mean$beta.lpsi,
+  sd_m1_psi = out_M1_msms$sd$beta.lpsi,
+  means_m2_psi = out_M2_msms$mean$beta.lpsi,
+  sd_m2_psi = out_M2_msms$sd$beta.lpsi,
+) %>% 
+  pivot_longer(-c(covar, type)) %>% 
+  mutate(model = paste(str_match(name, "m1|m2")),
+         param = paste(str_match(name, "psi|r")),
+         metric = paste(str_match(name, "mean|sd"))) %>% 
+  select(-name) -> betas_psi
 
 
-# Betas for r
-
-m1_betas_r <- tibble(
+tibble(
+  type = "beta",
   covar = c("karst", "forest", "physdiv"),
-  means = out_M1_msms$mean$beta.lr,
-  sds = out_M1_msms$sd$beta.lr,
-  model = "M1"
-)
-
-m2_betas_r <- tibble(
-  covar = c("karst", "forest", "physdiv"),
-  means = out_M2_msms$mean$beta.lr,
-  sds = out_M2_msms$sd$beta.lr,
-  model = "M2"
-)
-
-
-betas_r_df <- bind_rows(m1_betas_r, m2_betas_r) %>% 
-  mutate(coeff = "r")
-
-betas_r_df %>% 
-  ggplot(., aes(x = means, y = covar, color = model)) +
-  geom_point() +
-  geom_errorbarh(aes(xmin = means - sds, xmax = means + sds)) +
-  theme_bw() -> r_fig
+  means_m1_r = out_M1_msms$mean$beta.lr,
+  sds_m1_r = out_M1_msms$sd$beta.lr,
+  means_m2_r = out_M2_msms$mean$beta.lr,
+  sds_m2_r = out_M2_msms$sd$beta.lr
+) %>% 
+  pivot_longer(-c(covar, type)) %>% 
+  mutate(model = paste(str_match(name, "m1|m2")),
+         param = paste(str_match(name, "psi|r")),
+         metric = paste(str_match(name, "mean|sd"))) %>% 
+  select(-name) -> betas_r
 
 
-plot_grid(psi_fig + theme(legend.position = "none"), r_fig, rel_widths = c(0.85, 1))
-
-model_coefficients_psi_r <- bind_rows(betas_psi_df, betas_r_df)
+model_coefficients_psi_r <- bind_rows(alphas, betas_psi, betas_r) %>% 
+                            pivot_wider(names_from = metric, values_from = value) %>% 
+                            mutate(xmin = mean - sd,
+                                   xmax = mean + sd)
 
 saveRDS(model_coefficients_psi_r, file = "modelouts/model_coefficients_psi_r.RDS")
 
-# Make Montana map with medians for bat calls for each of the cells sampled
-# compare that map to a prediction using the model for all of montana
+
+
+# Visualize these coefficients to compare for the models
+
+model_coefficients_psi_r %>% 
+  filter(param == "psi") %>% 
+  ggplot(., aes(x = mean, y = covar, xmin = xmin, xmax = xmax, color = model)) +
+  geom_point() +
+  geom_errorbarh() +
+  theme_bw()
+
+
+model_coefficients_psi_r %>% 
+  filter(param == "r") %>% 
+  ggplot(., aes(x = mean, y = covar, xmin = xmin, xmax = xmax, color = model)) +
+  geom_point() +
+  geom_errorbarh() +
+  theme_bw()
+
+
