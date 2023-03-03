@@ -88,7 +88,7 @@
     "href": "estimation.html#covariates-at-the-grid-level",
     "title": "Estimation",
     "section": "Covariates at the grid level",
-    "text": "Covariates at the grid level\nPlot with the estimates and error bars for each of the variables on each of the parameters to see how they compare across the two models that include them."
+    "text": "Covariates at the grid level\nPlot with the estimates and error bars for each of the variables on each of the parameters to see how they compare across the two models that include them.\n\n\n\n\n\nChanged the regions to reflect the three regions we used during the elicitation. Used google earth to approximate to the map used in the elicitation:\n Need to make this map prettier"
   },
   {
     "objectID": "model.html",

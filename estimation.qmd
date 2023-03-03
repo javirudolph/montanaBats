@@ -131,6 +131,8 @@ Plot with the estimates and error bars for each of the variables on each of the 
 # libraries
 library(tidyverse)
 library(cowplot)
+library(sf)
+
 model_coefficients_psi_r <- readRDS(file = "modelouts/model_coefficients_psi_r.RDS")
 
 
@@ -158,6 +160,21 @@ plot_grid(psi_fig + theme(legend.position = "none"), r_fig, rel_widths = c(0.85,
 
 
 
+Changed the regions to reflect the three regions we used during the elicitation. Used google earth to approximate to the map used in the elicitation:
+
+![regions](docs/images/MT_Map_3_regions.png)
+Need to make this map prettier 
+
+```{r}
+mt_covariates <- readRDS(file = "datafiles/mt_covariates.RDS")
+
+mt_covariates %>% 
+  ggplot() +
+  geom_sf(aes(fill = region)) +
+  theme_bw()
+
+
+```
 
 
 
