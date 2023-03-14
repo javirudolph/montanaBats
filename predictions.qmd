@@ -71,14 +71,23 @@ For now, these parameters are not informed by the data model, they are just to b
 
 ```{r set_params}
 
+
+model_coefficients_psi_r <- readRDS(file = "modelouts/model_coefficients_psi_r.RDS") %>% 
+  filter(model == "m2")
+
+
 ## CELL LEVEL --------
 ncells <- length(unique(mt_covariates$GRTS_ID))
-nregions <- length(unique(mt_covariates$eco3_name))
-nyears <- 5
+nregions <- length(unique(mt_covariates$region))
+nyears <- 10
 
-# Giving intercepts for each ecoregion
-# Idaho batholith was not sampled in the data, so we don't have an estimate for it
-# We are changing those cells to Middle Rockies
+# Giving intercepts for region
+
+# Regions, from lines 168-170 from the estimation script:
+# 1 = Northeast
+# 2 = Northwest
+# 3 = south
+
 alpha.lpsi <- rep(0, nregions)
 alpha.lr <- rep(0, nregions)
 
@@ -87,8 +96,7 @@ alpha.lr <- rep(0, nregions)
 # beta.lr <- rnorm(3)
 
 
-model_coefficients_psi_r <- readRDS(file = "modelouts/model_coefficients_psi_r.RDS") %>% 
-  filter(model == "M2")
+
 
 beta.lpsi <- model_coefficients_psi_r %>% filter(coeff == "psi") %>% pull(means)
 beta.lr <- model_coefficients_psi_r %>% filter(coeff == "r") %>% pull(means)

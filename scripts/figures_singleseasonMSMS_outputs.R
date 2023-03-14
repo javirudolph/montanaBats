@@ -101,3 +101,22 @@ model_coefficients_psi_r %>%
   theme_bw()
 
 
+## explore the models more:
+
+
+rbind(out_null_msms$mean$n.occ,
+  out_M1_msms$mean$n.occ,
+  out_M2_msms$mean$n.occ) %>% 
+  as_tibble() %>% 
+  rename(no_bats = V1,
+         few_bats = V2,
+         many_bats = V3) %>% 
+  rownames_to_column(var = "model") %>% 
+  pivot_longer(-model, names_to = "state", values_to = "n_grids") %>% 
+  mutate(prop_grids = n_grids/98) %>% 
+  ggplot(aes(x = state, y = prop_grids, fill = model)) +
+  geom_col(position = "dodge")
+
+
+
+
