@@ -40,14 +40,16 @@ raw_mtcalls %>%
 # Summary of the bat call data
 
 # bat_threshold <- median(mt_calls$y)
-bat_threshold <- 100
+bat_threshold <- 200
+no_bats_threshold <- 2
 ggplot(data = mt_calls, aes(x = y)) + 
   geom_histogram() + 
+  geom_vline(xintercept = no_bats_threshold, color = "red", linetype = "dashed") +
   geom_vline(xintercept = bat_threshold, color = "red") -> call_dist_plot
 
 mt_calls %>% 
   mutate(yms = case_when(
-    y == 0 ~ 1,
+    y <= no_bats_threshold ~ 1,
     y <= bat_threshold ~ 2, 
     y > bat_threshold ~ 3
   )) -> mt_calls
