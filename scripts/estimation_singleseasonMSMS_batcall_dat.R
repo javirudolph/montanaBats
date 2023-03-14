@@ -41,7 +41,7 @@ raw_mtcalls %>%
 
 # bat_threshold <- median(mt_calls$y)
 bat_threshold <- 200
-no_bats_threshold <- 2
+no_bats_threshold <- 5
 ggplot(data = mt_calls, aes(x = y)) + 
   geom_histogram() + 
   geom_vline(xintercept = no_bats_threshold, color = "red", linetype = "dashed") +
